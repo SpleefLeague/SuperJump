@@ -6,9 +6,10 @@
 package net.spleefleague.superjump;
 
 import com.mongodb.DB;
-import net.spleefleague.core.CorePlugin;
 import net.spleefleague.core.SpleefLeague;
+import net.spleefleague.core.player.GeneralPlayer;
 import net.spleefleague.core.player.PlayerManager;
+import net.spleefleague.core.plugin.QueueableCoreGame;
 import net.spleefleague.superjump.player.SJPlayer;
 import org.bukkit.ChatColor;
 
@@ -16,8 +17,9 @@ import org.bukkit.ChatColor;
  *
  * @author Jonas
  */
-public class SuperJump extends CorePlugin{
+public class SuperJump extends QueueableCoreGame<SJPlayer>{
 
+    private static SuperJump instance;
     private PlayerManager<SJPlayer> playerManager;
     
     public SuperJump(String prefix, String chatPrefix) {
@@ -25,7 +27,8 @@ public class SuperJump extends CorePlugin{
     }
     
     @Override
-    public void onEnable() {
+    public void start() {
+        instance = this;
         playerManager = new PlayerManager<>(this, SJPlayer.class);
     }
 
@@ -36,5 +39,19 @@ public class SuperJump extends CorePlugin{
     
     public PlayerManager<SJPlayer> getPlayerManager() {
         return playerManager;
+    }
+    
+    public static SuperJump getInstance() {
+        return instance;
+    }
+
+    @Override
+    public boolean isIngame(GeneralPlayer gp) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void endGame(GeneralPlayer gp) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }
