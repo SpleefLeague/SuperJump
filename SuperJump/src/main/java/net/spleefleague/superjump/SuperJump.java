@@ -10,17 +10,22 @@ import net.spleefleague.core.SpleefLeague;
 import net.spleefleague.core.player.GeneralPlayer;
 import net.spleefleague.core.player.PlayerManager;
 import net.spleefleague.core.plugin.QueueableCoreGame;
+import net.spleefleague.superjump.game.Arena;
+import net.spleefleague.superjump.game.BattleManager;
+import net.spleefleague.superjump.listener.ConnectionListener;
 import net.spleefleague.superjump.player.SJPlayer;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 
 /**
  *
  * @author Jonas
  */
-public class SuperJump extends QueueableCoreGame<SJPlayer>{
+public class SuperJump extends QueueableCoreGame<SJPlayer, Arena>{
 
     private static SuperJump instance;
     private PlayerManager<SJPlayer> playerManager;
+    private BattleManager battleManager;
     
     public SuperJump(String prefix, String chatPrefix) {
         super("[SuperJump]", ChatColor.GRAY + "[" + ChatColor.GOLD + "SuperJump" + ChatColor.GRAY + "]" + ChatColor.RESET);
@@ -30,6 +35,8 @@ public class SuperJump extends QueueableCoreGame<SJPlayer>{
     public void start() {
         instance = this;
         playerManager = new PlayerManager<>(this, SJPlayer.class);
+        battleManager = new BattleManager(getGameQueue());
+        Bukkit.getPluginManager().registerEvents(new ConnectionListener(), this);
     }
 
     @Override
@@ -39,6 +46,10 @@ public class SuperJump extends QueueableCoreGame<SJPlayer>{
     
     public PlayerManager<SJPlayer> getPlayerManager() {
         return playerManager;
+    }
+    
+    public BattleManager getBattleManager() {
+        return battleManager;
     }
     
     public static SuperJump getInstance() {

@@ -8,15 +8,15 @@ package net.spleefleague.superjump.player;
 import net.spleefleague.core.io.DBLoad;
 import net.spleefleague.core.io.DBSave;
 import net.spleefleague.core.player.GeneralPlayer;
-import net.spleefleague.core.queue.Queueable;
 
 /**
  *
  * @author Jonas
  */
-public class SJPlayer extends GeneralPlayer implements Queueable {
+public class SJPlayer extends GeneralPlayer {
     
     private int rating;
+    private boolean ingame, frozen;
     
     @DBLoad(fieldName = "rating")
     public void setRating(int rating) {
@@ -28,19 +28,27 @@ public class SJPlayer extends GeneralPlayer implements Queueable {
         return rating;
     }
     
+    public void setIngame(boolean ingame) {
+        this.ingame = ingame;
+    }
+    
+    public boolean isIngame() {
+        return ingame;
+    }
+    
+    public void setFrozen(boolean frozen) {
+        this.frozen = frozen;
+    }
+    
+    public boolean isFrozen() {
+        return frozen;
+    }
+    
     @Override
     public void setDefaults() {
         super.setDefaults();
-        rating = 1000;
-    }
-
-    @Override
-    public void onDequeue(String queue) {
-        
-    }
-
-    @Override
-    public void onQueue(String queue) {
-        
+        this.rating = 1000;
+        this.frozen = false;
+        this.ingame = false;
     }
 }

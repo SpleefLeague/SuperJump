@@ -10,21 +10,24 @@ import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import net.spleefleague.core.io.DBEntity;
 import net.spleefleague.core.io.DBLoad;
 import net.spleefleague.core.io.DBLoadable;
+import net.spleefleague.core.queue.Queue;
 import net.spleefleague.core.utils.Area;
 import net.spleefleague.core.utils.EntityBuilder;
 import net.spleefleague.core.utils.TypeConverter;
 import net.spleefleague.superjump.SuperJump;
+import net.spleefleague.superjump.player.SJPlayer;
 import org.bukkit.Location;
 
 /**
  *
  * @author Jonas
  */
-public class Arena extends DBEntity implements DBLoadable{
+public class Arena extends DBEntity implements DBLoadable, Queue{
     
     @DBLoad(fieldName = "border")
     private Area border;
@@ -36,6 +39,10 @@ public class Arena extends DBEntity implements DBLoadable{
     private String creator;
     @DBLoad(fieldName = "name")
     private String name;
+    @DBLoad(fieldName = "rated")
+    private boolean rated;
+    @DBLoad(fieldName = "queued")
+    private boolean queued;
     private boolean occupied = false;
     
     public Arena() {
@@ -62,12 +69,26 @@ public class Arena extends DBEntity implements DBLoadable{
         return name;
     }
     
+    @Override
     public boolean isOccupied() {
         return occupied;
     }
     
     public void setOccupied(boolean occupied) {
         this.occupied = occupied;
+    }
+    
+    public boolean isRated() {
+        return rated;
+    }
+    
+    public boolean isQueued() {
+        return queued;
+    }
+    
+    @Override
+    public int getSize() {
+        return spawns.length;
     }
     
     private static final Map<String, Arena> arenas;
@@ -78,6 +99,15 @@ public class Arena extends DBEntity implements DBLoadable{
     
     public static Collection<Arena> getAll() {
         return arenas.values();
+    }
+    
+    public Battle startBattle(List<SJPlayer> players) {
+        if(!isOccupied()) {
+            Battle battle = new Battle(this, players);
+            battle.start();
+            return battle;
+        }
+        return null;
     }
     
     static {
