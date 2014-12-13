@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import net.spleefleague.core.queue.GameQueue;
 import net.spleefleague.superjump.player.SJPlayer;
-import org.bukkit.entity.Player;
 
 /**
  *

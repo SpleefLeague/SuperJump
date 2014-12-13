@@ -20,7 +20,7 @@ public class SJPlayer extends GeneralPlayer {
     
     @DBLoad(fieldName = "rating")
     public void setRating(int rating) {
-        this.rating = rating;
+        this.rating = (rating > 0) ? rating : 0;
     }
     
     @DBSave(fieldName = "rating")

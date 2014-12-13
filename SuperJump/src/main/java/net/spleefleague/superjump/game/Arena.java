@@ -43,6 +43,8 @@ public class Arena extends DBEntity implements DBLoadable, Queue{
     private boolean rated;
     @DBLoad(fieldName = "queued")
     private boolean queued;
+    @DBLoad(fieldName = "spectatorSpawn", typeConverter = TypeConverter.LocationConverter.class)
+    private Location spectatorSpawn; //null -> default world spawn
     private boolean occupied = false;
     
     public Arena() {
@@ -61,10 +63,15 @@ public class Arena extends DBEntity implements DBLoadable, Queue{
         return border;
     }
     
+    public Location getSpectatorSpawn() {
+        return spectatorSpawn;
+    }
+    
     public String getCreator() {
         return creator;
     }
     
+    @Override
     public String getName() {
         return name;
     }
