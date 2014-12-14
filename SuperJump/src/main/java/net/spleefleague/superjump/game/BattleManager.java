@@ -26,7 +26,7 @@ public class BattleManager {
         this.gameQueue = gameQueue;
     }
     
-    public void addToQueue(SJPlayer player, Arena queue) {
+    public void queue(SJPlayer player, Arena queue) {
         gameQueue.queue(player, queue, queue.isQueued());
         if(!queue.isOccupied()) {
             Collection<SJPlayer> players = gameQueue.request(queue);
@@ -36,7 +36,7 @@ public class BattleManager {
         }
     }
     
-    public void addToQueue(SJPlayer player) {
+    public void queue(SJPlayer player) {
         gameQueue.queue(player);
         HashMap<Arena, Collection<SJPlayer>> requested = gameQueue.request();
         for(Arena arena : requested.keySet()) {
@@ -44,8 +44,12 @@ public class BattleManager {
         }
     }
     
-    public void removeFromQueue(SJPlayer sjp) {
+    public void dequeue(SJPlayer sjp) {
         gameQueue.dequeue(sjp);
+    }
+
+    public boolean isQueued(SJPlayer sjp) {
+        return gameQueue.isQueued(sjp);
     }
     
     public void add(Battle battle) {

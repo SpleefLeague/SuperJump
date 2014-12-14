@@ -8,6 +8,8 @@ package net.spleefleague.superjump.player;
 import net.spleefleague.core.io.DBLoad;
 import net.spleefleague.core.io.DBSave;
 import net.spleefleague.core.player.GeneralPlayer;
+import net.spleefleague.superjump.SuperJump;
+import net.spleefleague.superjump.game.Battle;
 
 /**
  *
@@ -42,6 +44,10 @@ public class SJPlayer extends GeneralPlayer {
     
     public boolean isFrozen() {
         return frozen;
+    }
+    
+    public Battle getCurrentBattle() {
+        return SuperJump.getInstance().getBattleManager().getBattle(this);
     }
     
     @Override

@@ -5,11 +5,14 @@
  */
 package net.spleefleague.superjump.game;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Random;
+import net.spleefleague.core.SpleefLeague;
+import net.spleefleague.core.chat.Theme;
+import net.spleefleague.core.player.PlayerState;
+import net.spleefleague.core.player.SLPlayer;
+import net.spleefleague.core.utils.Area;
 import net.spleefleague.superjump.SuperJump;
 import net.spleefleague.superjump.player.SJPlayer;
 import org.bukkit.Location;
@@ -41,6 +44,25 @@ public class Battle {
         return players;
     }
     
+    public Location getSpawn(SJPlayer sjp) {
+        return data.get(sjp).getSpawn();
+    }
+    
+    public Area getGoal(SJPlayer sjp) {
+        return data.get(sjp).getGoal();
+    }
+    
+    public void removePlayer(SJPlayer sjp) {
+        players.remove(sjp);
+        if(players.size() == 1) {
+            end(players.get(0));
+        }
+        else if(players.size() > 1) {
+            //TODO
+            //Send message
+        }
+    }
+    
     public void start() {
         SuperJump.getInstance().getBattleManager().add(this);
         for(int i = 0; i < players.size(); i++) {
@@ -48,7 +70,8 @@ public class Battle {
             sjp.setIngame(true);
             sjp.setFrozen(true);
             sjp.getPlayer().teleport(arena.getSpawns()[i]);
-            this.data.put(sjp, new PlayerData(sjp, arena.getSpawns()[i]));
+            this.data.put(sjp, new PlayerData(sjp, arena.getSpawns()[i], arena.getGoals()[i % arena.getGoals().length]));
+            SpleefLeague.getInstance().getPlayerManager().get(sjp.getPlayer()).setState(PlayerState.IDLE);
         }
         startCountdown();
     }
@@ -85,12 +108,33 @@ public class Battle {
         br.runTaskTimer(SuperJump.getInstance(), 20, 60);
     }
     
+    public void cancel() {
+        for (SJPlayer pl : players) {
+            pl.getPlayer().sendMessage(SuperJump.getInstance().getPrefix() + " " + Theme.INCOGNITO.buildTheme(false) + "Your battle has been cancelled by a moderator.");
+        }
+        resetPlayers();
+    }
+    
+    public void end(SJPlayer winner) {
+        end(winner, arena.isRated());
+    }
+    
     public void end(SJPlayer winner, boolean rated) {
         clock.cancel();
         if(rated) {
             applyRatingChange(winner);
         }
+        resetPlayers();
         SuperJump.getInstance().getBattleManager().remove(this);
+    }
+    
+    private void resetPlayers() {
+        for(SJPlayer sjp : players) {
+            sjp.getPlayer().teleport(SpleefLeague.DEFAULT_WORLD.getSpawnLocation());
+            sjp.setIngame(false);
+            sjp.setFrozen(false);
+            SpleefLeague.getInstance().getPlayerManager().get(sjp.getPlayer()).setState(PlayerState.IDLE);
+        }
     }
     
     private void applyRatingChange(SJPlayer winner) {
@@ -120,15 +164,21 @@ public class Battle {
         private int falls;
         private final Location spawn;
         private final SJPlayer sjp;
+        private final Area goal;
         
-        public PlayerData(SJPlayer sjp, Location spawn) {
+        public PlayerData(SJPlayer sjp, Location spawn, Area goal) {
             this.sjp = sjp;
             this.spawn = spawn;
             this.falls = 0;
+            this.goal = goal;
         }
         
         public Location getSpawn() {
             return spawn;
+        }
+        
+        public Area getGoal() {
+            return goal;
         }
         
         public int getFalls() {

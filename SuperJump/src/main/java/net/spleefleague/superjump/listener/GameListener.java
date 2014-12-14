@@ -6,13 +6,19 @@
 package net.spleefleague.superjump.listener;
 
 import net.spleefleague.core.SpleefLeague;
+import net.spleefleague.core.utils.PlayerUtil;
 import net.spleefleague.superjump.SuperJump;
 import net.spleefleague.superjump.game.Arena;
 import net.spleefleague.superjump.game.Battle;
 import net.spleefleague.superjump.player.SJPlayer;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 
 /**
@@ -20,6 +26,19 @@ import org.bukkit.event.player.PlayerMoveEvent;
  * @author Jonas
  */
 public class GameListener implements Listener{
+    
+    private static Listener instance;
+    
+    public static void init() {
+        if(instance == null) {
+            instance = new GameListener();
+            Bukkit.getPluginManager().registerEvents(instance, SuperJump.getInstance());
+        }
+    }
+    
+    private GameListener() {
+        
+    }
     
     @EventHandler
     public void onMove(PlayerMoveEvent event) {
@@ -46,7 +65,42 @@ public class GameListener implements Listener{
         }
         else {
             Battle battle = SuperJump.getInstance().getBattleManager().getBattle(sjp);
-            battle.onArenaLeave(sjp);
+            Arena arena = battle.getArena();
+            if(!arena.getBorder().isInArea(sjp.getPlayer().getLocation())) {
+                battle.onArenaLeave(sjp);
+            }
+            else if(arena.isLiquidLose()) {
+                if(PlayerUtil.isInLava(event.getPlayer()) || PlayerUtil.isInWater(event.getPlayer())) {
+                    battle.onArenaLeave(sjp);
+                }
+            }
+            else if(battle.getGoal(sjp).isInArea(sjp.getPlayer().getLocation())) {
+                battle.end(sjp);
+            }
+        }
+    }
+    
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onInteract(PlayerInteractEvent event) {
+        SJPlayer sjp = SuperJump.getInstance().getPlayerManager().get(event.getPlayer());
+        if(sjp.isIngame()) {
+            event.setCancelled(true);
+        }
+    }
+    
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onBlockBreak(BlockBreakEvent event) {
+        SJPlayer sjp = SuperJump.getInstance().getPlayerManager().get(event.getPlayer());
+        if(sjp.isIngame()) {
+            event.setCancelled(true);
+        }
+    }
+    
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onBlockPreak(BlockPlaceEvent event) {
+        SJPlayer sjp = SuperJump.getInstance().getPlayerManager().get(event.getPlayer());
+        if(sjp.isIngame()) {
+            event.setCancelled(true);
         }
     }
 }

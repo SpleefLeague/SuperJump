@@ -1,3 +1,9 @@
 name: SuperJummp
 author: SpleefLeague
 main: net.spleefleague.superjump.SuperJump
+commands:    
+    superjump:
+        description: SuperJump queue command
+        aliases: [sj]
+        usage: |
+          /<command> [arena]

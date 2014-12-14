@@ -7,6 +7,7 @@ package net.spleefleague.superjump.listener;
 
 import net.spleefleague.superjump.SuperJump;
 import net.spleefleague.superjump.player.SJPlayer;
+import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -17,9 +18,27 @@ import org.bukkit.event.player.PlayerQuitEvent;
  */
 public class ConnectionListener implements Listener {
     
+    private static Listener instance;
+    
+    public static void init() {
+        if(instance == null) {
+            instance = new ConnectionListener();
+            Bukkit.getPluginManager().registerEvents(instance, SuperJump.getInstance());
+        }
+    }
+    
+    private ConnectionListener() {
+        
+    }
+    
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         SJPlayer sjp = SuperJump.getInstance().getPlayerManager().get(event.getPlayer());
-        SuperJump.getInstance().getGameQueue().dequeue(sjp);
+        if(sjp.isIngame()) {
+            SuperJump.getInstance().getBattleManager().getBattle(sjp).removePlayer(sjp);
+        }
+        else {
+            SuperJump.getInstance().getGameQueue().dequeue(sjp);
+        }
     } 
 }
