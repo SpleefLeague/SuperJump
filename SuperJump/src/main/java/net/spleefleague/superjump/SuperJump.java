@@ -31,7 +31,7 @@ public class SuperJump extends QueueableCoreGame<SJPlayer, Arena>{
     private PlayerManager<SJPlayer> playerManager;
     private BattleManager battleManager;
     
-    public SuperJump(String prefix, String chatPrefix) {
+    public SuperJump() {
         super("[SuperJump]", ChatColor.GRAY + "[" + ChatColor.GOLD + "SuperJump" + ChatColor.GRAY + "]" + ChatColor.RESET);
     }
     

@@ -1,6 +1,8 @@
-name: SuperJummp
+name: SuperJump
 author: SpleefLeague
 main: net.spleefleague.superjump.SuperJump
+version: 1.0
+depend: [SpleefLeagueCore]
 commands:    
     superjump:
         description: SuperJump queue command
