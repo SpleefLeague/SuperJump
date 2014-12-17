@@ -24,6 +24,9 @@ public class BattleManager {
     public BattleManager(GameQueue<SJPlayer, Arena> gameQueue) {
         this.activeBattles = new HashSet<>();
         this.gameQueue = gameQueue;
+        for(Arena arena : Arena.getAll()) {
+            gameQueue.register(arena);
+        }
     }
     
     public void queue(SJPlayer player, Arena queue) {

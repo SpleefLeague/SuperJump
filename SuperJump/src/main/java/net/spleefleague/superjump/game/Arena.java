@@ -104,7 +104,7 @@ public class Arena extends DBEntity implements DBLoadable, Queue{
         return spawns.length;
     }
     
-    private static final Map<String, Arena> arenas;
+    private static Map<String, Arena> arenas;
     
     public static Arena byName(String name) {
         return arenas.get(name);
@@ -123,13 +123,14 @@ public class Arena extends DBEntity implements DBLoadable, Queue{
         return null;
     }
     
-    static {
+    public static void initialize(){
         arenas = new HashMap<>();
         DBCursor dbc = SuperJump.getInstance().getPluginDB().getCollection("Arenas").find();
         while(dbc.hasNext()) {
             Arena arena = EntityBuilder.load(dbc.next(), Arena.class);
             arenas.put(arena.getName(), arena);
         }
+        SuperJump.getInstance().log("Loaded " + arenas.size() + " arenas!");
     }
     
     public static class AreaArrayConverter extends TypeConverter<BasicDBList, Area[]> {

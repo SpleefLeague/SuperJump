@@ -116,12 +116,13 @@ public class Battle {
             @Override
             public void run() {
                 if(secondsLeft > 0) {
-                    for(SJPlayer sjp : players) {
-                        sjp.getPlayer().sendMessage(SuperJump.getInstance().getChatPrefix() + " " + secondsLeft-- + "...");
+                    for(SJPlayer sjp : getActivePlayers()) {
+                        sjp.getPlayer().sendMessage(SuperJump.getInstance().getChatPrefix() + " " + secondsLeft + "...");
                     }
+                    secondsLeft--;
                 }
                 else {
-                    for(SJPlayer sjp : players) {
+                    for(SJPlayer sjp : getActivePlayers()) {
                         sjp.getPlayer().sendMessage(SuperJump.getInstance().getChatPrefix() + " GO!");
                         sjp.setFrozen(false);
                     }
@@ -141,7 +142,7 @@ public class Battle {
                 clock.runTaskTimer(SuperJump.getInstance(), 0, 1);
             }
         };
-        br.runTaskTimer(SuperJump.getInstance(), 20, 60);
+        br.runTaskTimer(SuperJump.getInstance(), 20, 20);
     }
     
     public void cancel() {
@@ -157,6 +158,7 @@ public class Battle {
     }
     
     public void end(SJPlayer winner, boolean rated) {
+        Bukkit.broadcastMessage("winner: " + winner.getName());
         clock.cancel();
         if(rated) {
             applyRatingChange(winner);
@@ -186,9 +188,11 @@ public class Battle {
                     rating = MIN_RATING;
                 }
                 winnerPoints += rating;
+                Bukkit.broadcastMessage(sjp.getName() + ":" + -rating);
                 sjp.setRating(sjp.getRating() - rating);
             }
         }
+        Bukkit.broadcastMessage(winner.getName() + ":" + winnerPoints);
         winner.setRating(winner.getRating() + winnerPoints);
     }
 

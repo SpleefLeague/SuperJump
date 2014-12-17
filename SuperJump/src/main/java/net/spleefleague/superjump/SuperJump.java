@@ -38,6 +38,7 @@ public class SuperJump extends QueueableCoreGame<SJPlayer, Arena>{
     @Override
     public void start() {
         instance = this;
+        Arena.initialize();
         playerManager = new PlayerManager<>(this, SJPlayer.class);
         battleManager = new BattleManager(getGameQueue());
         ConnectionListener.init();

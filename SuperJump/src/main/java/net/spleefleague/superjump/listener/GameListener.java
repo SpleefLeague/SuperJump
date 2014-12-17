@@ -69,10 +69,8 @@ public class GameListener implements Listener{
             if(!arena.getBorder().isInArea(sjp.getPlayer().getLocation())) {
                 battle.onArenaLeave(sjp);
             }
-            else if(arena.isLiquidLose()) {
-                if(PlayerUtil.isInLava(event.getPlayer()) || PlayerUtil.isInWater(event.getPlayer())) {
-                    battle.onArenaLeave(sjp);
-                }
+            else if(arena.isLiquidLose() && (PlayerUtil.isInLava(event.getPlayer()) || PlayerUtil.isInWater(event.getPlayer()))) {
+                battle.onArenaLeave(sjp);
             }
             else if(battle.getGoal(sjp).isInArea(sjp.getPlayer().getLocation())) {
                 battle.end(sjp);
