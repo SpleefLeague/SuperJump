@@ -38,7 +38,7 @@ public class ConnectionListener implements Listener {
             SuperJump.getInstance().getBattleManager().getBattle(sjp).removePlayer(sjp);
         }
         else {
-            SuperJump.getInstance().getGameQueue().dequeue(sjp);
+            SuperJump.getInstance().getBattleManager().dequeue(sjp);
         }
     } 
 }

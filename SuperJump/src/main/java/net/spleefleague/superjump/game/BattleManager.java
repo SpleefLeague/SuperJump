@@ -21,12 +21,20 @@ public class BattleManager {
     private final Collection<Battle> activeBattles;
     private final GameQueue<SJPlayer, Arena> gameQueue;
     
-    public BattleManager(GameQueue<SJPlayer, Arena> gameQueue) {
+    public BattleManager() {
         this.activeBattles = new HashSet<>();
-        this.gameQueue = gameQueue;
+        this.gameQueue = new GameQueue<>();
         for(Arena arena : Arena.getAll()) {
             gameQueue.register(arena);
         }
+    }
+    
+    public void registerArena(Arena arena) {
+        
+    }
+    
+    public void unregisterArena(Arena arena) {
+        
     }
     
     public void queue(SJPlayer player, Arena queue) {

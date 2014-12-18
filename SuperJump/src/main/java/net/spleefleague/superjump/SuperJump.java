@@ -12,7 +12,7 @@ import net.spleefleague.core.chat.Theme;
 import net.spleefleague.core.command.CommandLoader;
 import net.spleefleague.core.player.GeneralPlayer;
 import net.spleefleague.core.player.PlayerManager;
-import net.spleefleague.core.plugin.QueueableCoreGame;
+import net.spleefleague.core.plugin.CorePlugin;
 import net.spleefleague.superjump.game.Arena;
 import net.spleefleague.superjump.game.Battle;
 import net.spleefleague.superjump.game.BattleManager;
@@ -25,7 +25,7 @@ import org.bukkit.ChatColor;
  *   
  * @author Jonas
  */ 
-public class SuperJump extends QueueableCoreGame<SJPlayer, Arena>{
+public class SuperJump extends CorePlugin {
     
     private static SuperJump instance;
     private PlayerManager<SJPlayer> playerManager;
@@ -40,7 +40,7 @@ public class SuperJump extends QueueableCoreGame<SJPlayer, Arena>{
         instance = this;
         Arena.initialize();
         playerManager = new PlayerManager<>(this, SJPlayer.class);
-        battleManager = new BattleManager(getGameQueue());
+        battleManager = new BattleManager();
         ConnectionListener.init();
         GameListener.init();
         CommandLoader.loadCommands(this, "net.spleefleague.superjump.commands");
@@ -61,17 +61,5 @@ public class SuperJump extends QueueableCoreGame<SJPlayer, Arena>{
     
     public static SuperJump getInstance() {
         return instance;
-    }
-    
-    @Override
-    public boolean isIngame(GeneralPlayer gp) {
-        return battleManager.isIngame(playerManager.get(gp.getPlayer()));
-    }
-    
-    @Override
-    public void endGame(GeneralPlayer gp) {
-        Battle b = playerManager.get(gp.getPlayer()).getCurrentBattle();
-        ChatManager.sendMessage(Theme.SUPER_SECRET + " The battle on " + b.getArena().getName() + " has been cancelled.", "STAFF");
-        playerManager.get(gp.getPlayer()).getCurrentBattle().cancel();
     }
 }   
