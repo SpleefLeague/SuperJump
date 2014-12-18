@@ -93,6 +93,7 @@ public class Battle {
             sjp.setFrozen(true);
             sjp.getPlayer().teleport(arena.getSpawns()[i]);
             this.data.put(sjp, new PlayerData(sjp, arena.getSpawns()[i], arena.getGoals()[i % arena.getGoals().length]));
+            sjp.getPlayer().setScoreboard(scoreboard);
             scoreboard.getObjective("rounds").getScore(sjp.getName()).setScore(data.get(sjp).getFalls());
             SpleefLeague.getInstance().getPlayerManager().get(sjp.getPlayer()).setState(PlayerState.INGAME);
         }
