@@ -61,11 +61,12 @@ public class Battle {
     
     public void removePlayer(SJPlayer sjp) {
         resetPlayer(sjp);
-        if(players.size() == 1) {
+        ArrayList<SJPlayer> activePlayers = getActivePlayers();
+        if(activePlayers.size() == 1) {
             end(players.get(0));
         }
-        else if(players.size() > 1) {   
-            for(SJPlayer pl : getActivePlayers()) {
+        else if(activePlayers.size() > 1) {   
+            for(SJPlayer pl : activePlayers) {
                 pl.getPlayer().sendMessage(SuperJump.getInstance().getPrefix() + " " + Theme.ERROR.buildTheme(false) + sjp.getName() + " has left the game!");
             }
         }

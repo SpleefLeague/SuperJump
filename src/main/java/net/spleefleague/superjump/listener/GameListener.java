@@ -121,7 +121,7 @@ public class GameListener implements Listener{
     }
     
     @EventHandler(priority = EventPriority.HIGH)
-    public void onBlockPreak(BlockPlaceEvent event) {
+    public void onBlockPlace(BlockPlaceEvent event) {
         SJPlayer sjp = SuperJump.getInstance().getPlayerManager().get(event.getPlayer());
         if(sjp.isIngame()) {
             event.setCancelled(true);

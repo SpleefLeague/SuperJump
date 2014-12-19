@@ -40,5 +40,5 @@ public class ConnectionListener implements Listener {
         else {
             SuperJump.getInstance().getBattleManager().dequeue(sjp);
         }
-    } 
+    }
 }
