@@ -7,14 +7,13 @@ package net.spleefleague.superjump;
     
 import com.mongodb.DB;
 import net.spleefleague.core.SpleefLeague;
+import net.spleefleague.core.chat.ChatChannel;
 import net.spleefleague.core.chat.ChatManager;
-import net.spleefleague.core.chat.Theme;
 import net.spleefleague.core.command.CommandLoader;
-import net.spleefleague.core.player.GeneralPlayer;
 import net.spleefleague.core.player.PlayerManager;
+import net.spleefleague.core.player.Rank;
 import net.spleefleague.core.plugin.CorePlugin;
 import net.spleefleague.superjump.game.Arena;
-import net.spleefleague.superjump.game.Battle;
 import net.spleefleague.superjump.game.BattleManager;
 import net.spleefleague.superjump.listener.ConnectionListener;
 import net.spleefleague.superjump.listener.GameListener;
@@ -41,6 +40,7 @@ public class SuperJump extends CorePlugin {
         Arena.initialize();
         playerManager = new PlayerManager<>(this, SJPlayer.class);
         battleManager = new BattleManager();
+        ChatManager.registerPublicChannel(new ChatChannel("GAME_MESSAGE_JUMP", Rank.DEFAULT, true));
         ConnectionListener.init();
         GameListener.init();
         CommandLoader.loadCommands(this, "net.spleefleague.superjump.commands");

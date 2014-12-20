@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import net.spleefleague.core.SpleefLeague;
+import net.spleefleague.core.chat.ChatManager;
 import net.spleefleague.core.chat.Theme;
 import net.spleefleague.core.player.PlayerState;
 import net.spleefleague.core.utils.Area;
@@ -36,6 +37,7 @@ public class Battle {
     private int ticksPassed = 0;
     private BukkitRunnable clock;
     private Scoreboard scoreboard;
+    private boolean inCountdown;
     
     protected Battle(Arena arena, List<SJPlayer> players) {
         this.arena = arena;
@@ -113,6 +115,7 @@ public class Battle {
     }
     
     private void startCountdown() {
+        inCountdown = true;
         BukkitRunnable br = new BukkitRunnable() {
             private int secondsLeft = 3;
             @Override
@@ -129,6 +132,7 @@ public class Battle {
                         sjp.setFrozen(false);
                     }
                     startClock();
+                    inCountdown = false;
                     super.cancel();
                 }
             }
@@ -160,7 +164,6 @@ public class Battle {
     }
     
     public void end(SJPlayer winner, boolean rated) {
-        Bukkit.broadcastMessage("winner: " + winner.getName());
         clock.cancel();
         if(rated) {
             applyRatingChange(winner);
@@ -182,6 +185,7 @@ public class Battle {
     private void applyRatingChange(SJPlayer winner) {
         int winnerPoints = 0;
         final int MIN_RATING = 1, MAX_RATING = 20;
+        String playerList = "";
         for(SJPlayer sjp : players) {
             if(sjp != winner) {
                 float elo = (float) (1f / (1f + Math.pow(2f, ((sjp.getRating() - winner.getRating()) / 400f))));
@@ -190,19 +194,22 @@ public class Battle {
                     rating = MIN_RATING;
                 }
                 winnerPoints += rating;
-                Bukkit.broadcastMessage(sjp.getName() + ":" + -rating);
                 sjp.setRating(sjp.getRating() - rating);
+                playerList += ChatColor.RED + sjp.getName() + ChatColor.WHITE + " (" + sjp.getRating() + ")" + ChatColor.GREEN + " gets " + ChatColor.GRAY + -rating + ChatColor.WHITE + " points. ";
             }
         }
-        Bukkit.broadcastMessage(winner.getName() + ":" + winnerPoints);
         winner.setRating(winner.getRating() + winnerPoints);
+        playerList += ChatColor.RED + winner.getName() + ChatColor.WHITE + " (" + winner.getRating() + ")" + ChatColor.GREEN + " gets " + ChatColor.GRAY + winnerPoints + ChatColor.WHITE + " points. ";
+        ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), ChatColor.GREEN + "Game in arena " + ChatColor.WHITE + arena.getName() + ChatColor.GREEN + " is over. " + playerList, "GAME_MESSAGE_JUMP");
     }
 
     public void onArenaLeave(SJPlayer sjp) {
+        if(inCountdown) {
+            sjp.getPlayer().teleport(data.get(sjp).getSpawn());
+        }
         data.get(sjp).increaseFalls();
         sjp.getPlayer().teleport(data.get(sjp).getSpawn());
-        scoreboard.getObjective("rounds").getScore(sjp.getName()).setScore(data.get(sjp).getFalls());
-        
+        scoreboard.getObjective("rounds").getScore(sjp.getName()).setScore(data.get(sjp).getFalls()); 
     }
     
     private static class PlayerData {
