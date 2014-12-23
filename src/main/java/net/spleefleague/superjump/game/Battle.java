@@ -19,7 +19,10 @@ import net.spleefleague.superjump.player.SJPlayer;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
@@ -92,11 +95,16 @@ public class Battle {
         objective.setDisplayName(ChatColor.GRAY + "0:0:0 | " + ChatColor.RED + "Times Fallen:");
         for(int i = 0; i < players.size(); i++) {
             SJPlayer sjp = players.get(i);
+            Player p = sjp.getPlayer();
             sjp.setIngame(true);
             sjp.setFrozen(true);
-            sjp.getPlayer().teleport(arena.getSpawns()[i]);
             this.data.put(sjp, new PlayerData(sjp, arena.getSpawns()[i], arena.getGoals()[i % arena.getGoals().length]));
-            sjp.getPlayer().setScoreboard(scoreboard);
+            p.setGameMode(GameMode.ADVENTURE);
+            p.setFlying(false);
+            p.setAllowFlight(false);
+            p.teleport(arena.getSpawns()[i]);
+            p.getInventory().clear();
+            p.setScoreboard(scoreboard);
             scoreboard.getObjective("rounds").getScore(sjp.getName()).setScore(data.get(sjp).getFalls());
             SpleefLeague.getInstance().getPlayerManager().get(sjp.getPlayer()).setState(PlayerState.INGAME);
         }
@@ -179,6 +187,7 @@ public class Battle {
         sjp.getPlayer().setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
         sjp.setIngame(false);
         sjp.setFrozen(false);
+        data.get(sjp).restoreOldData();
         SpleefLeague.getInstance().getPlayerManager().get(sjp.getPlayer()).setState(PlayerState.IDLE);
     }
     
@@ -218,12 +227,20 @@ public class Battle {
         private final Location spawn;
         private final SJPlayer sjp;
         private final Area goal;
+        private final GameMode oldGamemode;
+        private final boolean oldFlying, oldAllowFlight;
+        private final ItemStack[] oldInventory;
         
         public PlayerData(SJPlayer sjp, Location spawn, Area goal) {
             this.sjp = sjp;
             this.spawn = spawn;
             this.falls = 0;
             this.goal = goal;
+            Player p = sjp.getPlayer();
+            oldGamemode = p.getGameMode();
+            oldFlying = p.isFlying();
+            oldAllowFlight = p.getAllowFlight();
+            oldInventory = p.getInventory().getContents();
         }
         
         public Location getSpawn() {
@@ -244,6 +261,14 @@ public class Battle {
         
         public SJPlayer getPlayer() {
             return sjp;
+        }
+        
+        public void restoreOldData() {
+            Player p = sjp.getPlayer();
+            p.setGameMode(oldGamemode);
+            p.setFlying(oldFlying);
+            p.setAllowFlight(oldAllowFlight);
+            p.getInventory().setContents(oldInventory);
         }
     }
 }

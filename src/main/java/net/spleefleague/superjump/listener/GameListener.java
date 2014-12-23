@@ -58,7 +58,7 @@ public class GameListener implements Listener{
     
     @EventHandler
     public void onQueueRequest(PlayerQueueEvent event) {
-        if(!event.wasSuccessful()) {    
+        if(event.wasSuccessful()) {    
             SJPlayer sjp = SuperJump.getInstance().getPlayerManager().get(event.getPlayer().getPlayer());
             if(SuperJump.getInstance().getBattleManager().isQueued(sjp)) {
                 event.setSuccessful(false);
