@@ -12,6 +12,7 @@ import java.util.List;
 import net.spleefleague.core.SpleefLeague;
 import net.spleefleague.core.chat.ChatManager;
 import net.spleefleague.core.chat.Theme;
+import net.spleefleague.core.io.EntityBuilder;
 import net.spleefleague.core.player.PlayerState;
 import net.spleefleague.core.utils.Area;
 import net.spleefleague.superjump.SuperJump;
@@ -41,6 +42,7 @@ public class Battle {
     private BukkitRunnable clock;
     private Scoreboard scoreboard;
     private boolean inCountdown;
+    private boolean isOver;
     
     protected Battle(Arena arena, List<SJPlayer> players) {
         this.arena = arena;
@@ -85,6 +87,10 @@ public class Battle {
             }
         }
         return active;
+    }
+    
+    public boolean isOver() {
+        return isOver;
     }
     
     public void start() {
@@ -160,6 +166,8 @@ public class Battle {
     }
     
     public void cancel() {
+        isOver = true;
+        saveGameHistory(null);
         for (SJPlayer sjp : getActivePlayers()) {
             sjp.getPlayer().sendMessage(SuperJump.getInstance().getPrefix() + " " + Theme.INCOGNITO.buildTheme(false) + "Your battle has been cancelled by a moderator.");
             if(sjp.isIngame())
@@ -172,7 +180,9 @@ public class Battle {
     }
     
     public void end(SJPlayer winner, boolean rated) {
+        isOver = true;
         clock.cancel();
+        saveGameHistory(winner);
         if(rated) {
             applyRatingChange(winner);
         }
@@ -180,6 +190,11 @@ public class Battle {
             resetPlayer(sjp);
         }
         SuperJump.getInstance().getBattleManager().remove(this);
+    }
+    
+    private void saveGameHistory(SJPlayer winner) {
+        GameHistory gh = new GameHistory(this, winner);
+        EntityBuilder.save(gh, SuperJump.getInstance().getPluginDB().getCollection("GameHistory"));
     }
     
     private void resetPlayer(SJPlayer sjp) {
@@ -221,7 +236,15 @@ public class Battle {
         scoreboard.getObjective("rounds").getScore(sjp.getName()).setScore(data.get(sjp).getFalls()); 
     }
     
-    private static class PlayerData {
+    protected PlayerData getData(SJPlayer sjp) {
+        return this.data.get(sjp);
+    }
+    
+    protected int getDuration() {
+        return ticksPassed;
+    }
+    
+    protected static class PlayerData {
         
         private int falls;
         private final Location spawn;

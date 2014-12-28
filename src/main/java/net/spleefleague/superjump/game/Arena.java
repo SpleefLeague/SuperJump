@@ -15,10 +15,10 @@ import java.util.Map;
 import net.spleefleague.core.io.DBEntity;
 import net.spleefleague.core.io.DBLoad;
 import net.spleefleague.core.io.DBLoadable;
+import net.spleefleague.core.io.EntityBuilder;
+import net.spleefleague.core.io.TypeConverter;
 import net.spleefleague.core.queue.Queue;
 import net.spleefleague.core.utils.Area;
-import net.spleefleague.core.utils.EntityBuilder;
-import net.spleefleague.core.utils.TypeConverter;
 import net.spleefleague.superjump.SuperJump;
 import net.spleefleague.superjump.player.SJPlayer;
 import org.bukkit.Location;
@@ -31,9 +31,9 @@ public class Arena extends DBEntity implements DBLoadable, Queue{
     
     @DBLoad(fieldName = "border")
     private Area border;
-    @DBLoad(fieldName = "spawns", typeConverter = TypeConverter.LocationArrayConverter.class)
+    @DBLoad(fieldName = "spawns", typeConverter = TypeConverter.LocationConverter.class)
     private Location[] spawns;
-    @DBLoad(fieldName = "goals", typeConverter = AreaArrayConverter.class)
+    @DBLoad(fieldName = "goals")
     private Area[] goals;
     @DBLoad(fieldName = "creator")
     private String creator;
