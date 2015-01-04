@@ -41,7 +41,7 @@ public class GameHistory extends DBEntity implements DBSaveable {
         startDate = new Date(System.currentTimeMillis() - this.duration * 50);
     }
 
-    private static class PlayerData extends DBEntity implements DBSaveable {
+    public static class PlayerData extends DBEntity implements DBSaveable {
 
         @DBSave(fieldName = "uuid", typeConverter = TypeConverter.UUIDStringConverter.class)
         private final UUID uuid;
