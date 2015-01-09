@@ -17,10 +17,12 @@ import net.spleefleague.core.io.DBLoad;
 import net.spleefleague.core.io.DBLoadable;
 import net.spleefleague.core.io.EntityBuilder;
 import net.spleefleague.core.io.TypeConverter;
+import net.spleefleague.core.player.GeneralPlayer;
 import net.spleefleague.core.queue.Queue;
 import net.spleefleague.core.utils.Area;
 import net.spleefleague.superjump.SuperJump;
 import net.spleefleague.superjump.player.SJPlayer;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 
 /**
@@ -103,6 +105,11 @@ public class Arena extends DBEntity implements DBLoadable, Queue{
     public int getSize() {
         return spawns.length;
     }
+
+    @Override
+    public boolean isQueued(GeneralPlayer gp) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
     
     private static Map<String, Arena> arenas;
     
@@ -121,6 +128,40 @@ public class Arena extends DBEntity implements DBLoadable, Queue{
             return battle;
         }
         return null;
+    }
+    
+    @Override
+    public int getQueueLength() {
+        return SuperJump.getInstance().getBattleManager().getGameQueue().getQueueLength(this);
+    }
+
+    @Override
+    public int getQueuePosition(GeneralPlayer gp) {
+        return SuperJump.getInstance().getBattleManager().getGameQueue().getQueuePosition(this, (SJPlayer)gp);
+    }
+
+    @Override
+    public String getCurrentState() {
+        if(occupied) {
+            Battle battle = SuperJump.getInstance().getBattleManager().getBattle(this);
+            if(battle.getArena().getSize() == 2) {
+                return ChatColor.GOLD + battle.getActivePlayers().get(0).getName() + ChatColor.GRAY + ChatColor.ITALIC + " vs. " + ChatColor.RESET + ChatColor.GOLD + battle.getActivePlayers().get(1).getName();
+            }
+            else {
+                StringBuilder sb = new StringBuilder();
+                sb.append(ChatColor.GRAY).append("Currently playing: ");
+                for(SJPlayer sjp : battle.getActivePlayers()) {
+                    if(sb.length() > 0) {
+                        sb.append(ChatColor.GRAY).append(", ");
+                    }
+                    sb.append(ChatColor.GOLD).append(sjp.getName());
+                }
+                return sb.toString();
+            }
+        }
+        else {
+            return ChatColor.BLUE + "Empty";
+        }
     }
     
     public static void initialize(){

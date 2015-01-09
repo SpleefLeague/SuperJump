@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import net.spleefleague.core.queue.GameQueue;
+import net.spleefleague.superjump.SuperJump;
 import net.spleefleague.superjump.player.SJPlayer;
 
 /**
@@ -23,18 +24,22 @@ public class BattleManager {
     
     public BattleManager() {
         this.activeBattles = new HashSet<>();
-        this.gameQueue = new GameQueue<>();
+        this.gameQueue = new GameQueue<>(SuperJump.getInstance(), SuperJump.getInstance().getPlayerManager());
         for(Arena arena : Arena.getAll()) {
             gameQueue.register(arena);
         }
     }
     
+    public GameQueue<SJPlayer, Arena> getGameQueue() {
+        return gameQueue;
+    }
+    
     public void registerArena(Arena arena) {
-        
+        gameQueue.register(arena);
     }
     
     public void unregisterArena(Arena arena) {
-        
+        gameQueue.unregister(arena);
     }
     
     public void queue(SJPlayer player, Arena queue) {
@@ -85,6 +90,15 @@ public class BattleManager {
                 if(sjp == sjplayer) {
                     return battle;
                 }
+            }
+        }
+        return null;
+    }
+    
+    public Battle getBattle(Arena arena) {
+        for(Battle battle : activeBattles) {
+            if(battle.getArena() == arena) {
+                return battle;
             }
         }
         return null;
