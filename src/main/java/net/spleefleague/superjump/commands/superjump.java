@@ -25,7 +25,7 @@ import org.bukkit.entity.Player;
 public class superjump extends BasicCommand {
 
     public superjump(CorePlugin plugin, String name, String usage) {
-        super(plugin, name, usage);
+        super(SuperJump.getInstance(), name, usage);
     }
 
     @Override
