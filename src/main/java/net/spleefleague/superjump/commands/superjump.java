@@ -6,9 +6,9 @@
 package net.spleefleague.superjump.commands;
 
 import net.spleefleague.core.command.BasicCommand;
-import net.spleefleague.core.events.PlayerQueueEvent;
 import net.spleefleague.core.player.SLPlayer;
 import net.spleefleague.core.plugin.CorePlugin;
+import net.spleefleague.core.plugin.GamePlugin;
 import net.spleefleague.superjump.SuperJump;
 import net.spleefleague.superjump.game.Arena;
 import net.spleefleague.superjump.game.BattleManager;
@@ -33,10 +33,7 @@ public class superjump extends BasicCommand {
         SJPlayer sjp = SuperJump.getInstance().getPlayerManager().get(p);
         BattleManager bm = SuperJump.getInstance().getBattleManager();
         if(args.length == 0) {
-            PlayerQueueEvent event = new PlayerQueueEvent(sjp);
-            event.setSuccessful(true);
-            Bukkit.getPluginManager().callEvent(event);
-            if(event.wasSuccessful()) {
+            if(!GamePlugin.isQueuedAll(p)) {
                 bm.queue(sjp);
                 success(p, "You have been added to the queue.");
             }

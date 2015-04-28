@@ -8,9 +8,6 @@ package net.spleefleague.superjump.listener;
 import net.spleefleague.core.SpleefLeague;
 import net.spleefleague.core.chat.ChatManager;
 import net.spleefleague.core.chat.Theme;
-import net.spleefleague.core.events.BattleCancelEvent;
-import net.spleefleague.core.events.PlayerDequeueEvent;
-import net.spleefleague.core.events.PlayerQueueEvent;
 import net.spleefleague.core.utils.PlayerUtil;
 import net.spleefleague.superjump.SuperJump;
 import net.spleefleague.superjump.game.Arena;
@@ -43,40 +40,6 @@ public class GameListener implements Listener{
     
     private GameListener() {
         
-    }
-    
-    @EventHandler
-    public void onLeaveRequest(PlayerDequeueEvent event) {
-        if(!event.wasSuccessful()) {    
-            SJPlayer sjp = SuperJump.getInstance().getPlayerManager().get(event.getPlayer().getPlayer());
-            if(SuperJump.getInstance().getBattleManager().isQueued(sjp)) {
-                SuperJump.getInstance().getBattleManager().dequeue(sjp);
-                event.setSuccessful(true);
-            }
-        }
-    }
-    
-    @EventHandler
-    public void onQueueRequest(PlayerQueueEvent event) {
-        if(event.wasSuccessful()) {    
-            SJPlayer sjp = SuperJump.getInstance().getPlayerManager().get(event.getPlayer().getPlayer());
-            if(SuperJump.getInstance().getBattleManager().isQueued(sjp)) {
-                event.setSuccessful(false);
-            }
-        }
-    }
-    
-    @EventHandler
-    public void onCancelRequest(BattleCancelEvent event) {
-        if(!event.wasSuccessful()) {
-            SJPlayer sjp = SuperJump.getInstance().getPlayerManager().get(event.getPlayer().getPlayer());
-            if(sjp.isIngame()) {
-                Battle b = sjp.getCurrentBattle();
-                b.cancel();
-                event.setSuccessful(true);
-                ChatManager.sendMessage(Theme.SUPER_SECRET + " The battle on " + b.getArena().getName() + " has been cancelled.", "STAFF");
-            }
-        }
     }
     
     @EventHandler
