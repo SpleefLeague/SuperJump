@@ -84,7 +84,19 @@ public class SuperJump extends GamePlugin {
         Battle battle = getBattleManager().getBattle(sjp);
         if(battle != null) {
             battle.cancel();    
-            ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix() + Theme.SUPER_SECRET + " The battle on " + battle.getArena().getName() + " has been cancelled.", "STAFF");
+            ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix() + Theme.SUPER_SECRET.buildTheme(false) + " The battle on " + battle.getArena().getName() + " has been cancelled.", "STAFF");
+        }
+    }
+
+    @Override
+    public void surrender(Player p) {
+        SJPlayer sjp = getPlayerManager().get(p);
+        Battle battle = getBattleManager().getBattle(sjp);
+        if(battle != null) {
+            for(SJPlayer active : battle.getActivePlayers()) {
+                active.sendMessage(SuperJump.getInstance().getChatPrefix() + Theme.SUPER_SECRET.buildTheme(false) + " " + p.getName() + " has surrendered!");
+            }
+            battle.removePlayer(sjp);
         }
     }
 
