@@ -102,6 +102,8 @@ public class Battle {
         for(int i = 0; i < players.size(); i++) {
             SJPlayer sjp = players.get(i);
             Player p = sjp.getPlayer();
+            p.setHealth(p.getMaxHealth());
+            p.setFoodLevel(20);
             sjp.setIngame(true);
             sjp.setFrozen(true);
             this.data.put(sjp, new PlayerData(sjp, arena.getSpawns()[i], arena.getGoals()[i % arena.getGoals().length]));

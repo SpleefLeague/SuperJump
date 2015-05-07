@@ -6,8 +6,6 @@
 package net.spleefleague.superjump.listener;
 
 import net.spleefleague.core.SpleefLeague;
-import net.spleefleague.core.chat.ChatManager;
-import net.spleefleague.core.chat.Theme;
 import net.spleefleague.core.utils.PlayerUtil;
 import net.spleefleague.superjump.SuperJump;
 import net.spleefleague.superjump.game.Arena;
@@ -20,6 +18,8 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 
@@ -102,5 +102,15 @@ public class GameListener implements Listener{
         if(sjp.isIngame()) {
             event.setCancelled(true);
         }
+    }
+    
+    @EventHandler
+    public void onDamage(EntityDamageEvent event) {
+        event.setCancelled(true);
+    }
+    
+    @EventHandler
+    public void onDamage(FoodLevelChangeEvent event) {
+        event.setCancelled(true);
     }
 }
