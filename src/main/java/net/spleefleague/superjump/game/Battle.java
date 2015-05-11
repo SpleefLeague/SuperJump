@@ -10,10 +10,13 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import net.spleefleague.core.SpleefLeague;
+import net.spleefleague.core.chat.ChatChannel;
 import net.spleefleague.core.chat.ChatManager;
 import net.spleefleague.core.chat.Theme;
 import net.spleefleague.core.io.EntityBuilder;
 import net.spleefleague.core.player.PlayerState;
+import net.spleefleague.core.player.Rank;
+import net.spleefleague.core.player.SLPlayer;
 import net.spleefleague.core.utils.Area;
 import net.spleefleague.superjump.SuperJump;
 import net.spleefleague.superjump.player.SJPlayer;
@@ -22,6 +25,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -38,6 +43,8 @@ public class Battle {
     private final Arena arena;
     private final List<SJPlayer> players; //MIGHT CONTAIN PLAYERS WHICH LEFT THE GAME. USE getActivePlayers() FOR ACTIVE PLAYERS INSTEAD
     private final HashMap<SJPlayer, PlayerData> data;
+    private final List<SJPlayer> spectators;
+    private final ChatChannel cc;
     private int ticksPassed = 0;
     private BukkitRunnable clock;
     private Scoreboard scoreboard;
@@ -47,7 +54,9 @@ public class Battle {
     protected Battle(Arena arena, List<SJPlayer> players) {
         this.arena = arena;
         this.players = players;
-        this.data = new HashMap<>();
+        this.spectators = new ArrayList<>();
+        this.data = new HashMap<>();    
+        this.cc = new ChatChannel("GAMECHANNEL" + this.hashCode(), "GAMECHANNEL" + this.hashCode(), Rank.DEFAULT, false, true);
     }
     
     public Arena getArena() {
@@ -64,6 +73,33 @@ public class Battle {
     
     public Area getGoal(SJPlayer sjp) {
         return data.get(sjp).getGoal();
+    }
+    
+    public void addSpectator(SJPlayer sp) {
+        spectators.add(sp);
+        Location spawn = arena.getSpectatorSpawn();
+        if(spawn == null) {
+            int i = 0;
+            for(SJPlayer s : getActivePlayers()) {
+                i++;
+                if(spawn == null) {
+                    spawn = s.getPlayer().getLocation();
+                }
+                else {
+                    spawn = spawn.add(s.getPlayer().getLocation());
+                }
+                spawn.add(0, 1, 0);
+            }
+            spawn.multiply(1.0 / (double)i);
+        }
+        sp.getPlayer().teleport(spawn);
+        sp.getPlayer().setScoreboard(scoreboard);
+        sp.getPlayer().setAllowFlight(true);
+        SpleefLeague.getInstance().getPlayerManager().get(sp.getPlayer()).setState(PlayerState.SPECTATING);
+    }
+    
+    public void removeSpectator(SJPlayer sp) {
+        resetPlayer(sp);
     }
     
     public void removePlayer(SJPlayer sjp) {
@@ -137,14 +173,11 @@ public class Battle {
             @Override
             public void run() {
                 if(secondsLeft > 0) {
-                    for(SJPlayer sjp : getActivePlayers()) {
-                        sjp.getPlayer().sendMessage(SuperJump.getInstance().getChatPrefix() + " " + secondsLeft + "...");
-                    }
+                    ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), secondsLeft + "...", cc.getName());
                     secondsLeft--;
-                }
-                else {
-                    for(SJPlayer sjp : getActivePlayers()) {
-                        sjp.getPlayer().sendMessage(SuperJump.getInstance().getChatPrefix() + " GO!");
+                } else {
+                    ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), "GO!", cc.getName());
+                    for (SJPlayer sjp : getActivePlayers()) {
                         sjp.setFrozen(false);
                     }
                     startClock();
@@ -170,11 +203,20 @@ public class Battle {
     public void cancel() {
         isOver = true;
         saveGameHistory(null);
+        ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), Theme.INCOGNITO.buildTheme(false) + "The battle has been cancelled by a moderator.", cc.getName());
         for (SJPlayer sjp : getActivePlayers()) {
-            sjp.getPlayer().sendMessage(SuperJump.getInstance().getPrefix() + " " + Theme.INCOGNITO.buildTheme(false) + "Your battle has been cancelled by a moderator.");
-            if(sjp.isIngame())
-                resetPlayer(sjp);
+            resetPlayer(sjp);
         }
+        for(SJPlayer sjp : spectators) {
+            resetPlayer(sjp);
+        }
+        cleanup();
+    }
+    
+    private void cleanup() {
+        clock.cancel();
+        SuperJump.getInstance().getBattleManager().remove(this);
+        ChatManager.unregisterChannel(cc);
     }
     
     public void end(SJPlayer winner) {
@@ -199,18 +241,25 @@ public class Battle {
         EntityBuilder.save(gh, SuperJump.getInstance().getPluginDB().getCollection("GameHistory"));
     }
     
-    private void resetPlayer(SJPlayer sjp) {
-        sjp.getPlayer().teleport(SpleefLeague.DEFAULT_WORLD.getSpawnLocation());
-        sjp.getPlayer().setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
-        sjp.setIngame(false);
-        sjp.setFrozen(false);
-        data.get(sjp).restoreOldData();
-        SpleefLeague.getInstance().getPlayerManager().get(sjp.getPlayer()).setState(PlayerState.IDLE);
+    private void resetPlayer(SJPlayer sp) {
+        SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(sp.getPlayer());
+        if(spectators.contains(sp)) {
+            spectators.remove(sp);
+        }
+        else {
+            sp.setIngame(false);
+            sp.setFrozen(false);
+            data.get(sp).restoreOldData();
+        }
+        sp.getPlayer().setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());    
+        sp.getPlayer().teleport(SpleefLeague.DEFAULT_WORLD.getSpawnLocation());
+        slp.removeChatChannel(cc.getName());   
+        slp.setState(PlayerState.IDLE);
     }
     
     private void applyRatingChange(SJPlayer winner) {
         int winnerPoints = 0;
-        final int MIN_RATING = 1, MAX_RATING = 20;
+        final int MIN_RATING = 1, MAX_RATING = 40;
         String playerList = "";
         for(SJPlayer sjp : players) {
             if(sjp != winner) {

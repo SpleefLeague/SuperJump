@@ -43,8 +43,8 @@ public class SuperJump extends GamePlugin {
         Arena.initialize();
         playerManager = new PlayerManager<>(this, SJPlayer.class);
         battleManager = new BattleManager();
-        ChatManager.registerPublicChannel(new ChatChannel("GAME_MESSAGE_SPLEEF_END", "SuperJump game start notifications", Rank.DEFAULT, true));
-        ChatManager.registerPublicChannel(new ChatChannel("GAME_MESSAGE_SPLEEF_START", "SuperJump game result messages", Rank.DEFAULT, true));
+        ChatManager.registerChannel(new ChatChannel("GAME_MESSAGE_SPLEEF_END", "SuperJump game start notifications", Rank.DEFAULT, true));
+        ChatManager.registerChannel(new ChatChannel("GAME_MESSAGE_SPLEEF_START", "SuperJump game result messages", Rank.DEFAULT, true));
         ConnectionListener.init();
         GameListener.init();
         CommandLoader.loadCommands(this, "net.spleefleague.superjump.commands");
