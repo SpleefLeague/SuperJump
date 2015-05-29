@@ -98,6 +98,10 @@ public class Battle {
         SpleefLeague.getInstance().getPlayerManager().get(sp.getPlayer()).setState(PlayerState.SPECTATING);
     }
     
+    public boolean isSpectating(SJPlayer sjp) {
+        return spectators.contains(sjp);
+    }
+    
     public void removeSpectator(SJPlayer sp) {
         resetPlayer(sp);
     }

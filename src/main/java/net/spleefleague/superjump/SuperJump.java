@@ -5,7 +5,7 @@
  */ 
 package net.spleefleague.superjump;
     
-import com.mongodb.DB;
+import com.mongodb.client.MongoDatabase;
 import net.spleefleague.core.SpleefLeague;
 import net.spleefleague.core.chat.ChatChannel;
 import net.spleefleague.core.chat.ChatManager;
@@ -51,8 +51,8 @@ public class SuperJump extends GamePlugin {
     }
     
     @Override
-    public DB getPluginDB() {
-        return SpleefLeague.getInstance().getMongo().getDB("SuperJump");
+    public MongoDatabase getPluginDB() {
+        return SpleefLeague.getInstance().getMongo().getDatabase("SuperJump");
     }
     
     public PlayerManager<SJPlayer> getPlayerManager() {
@@ -68,8 +68,31 @@ public class SuperJump extends GamePlugin {
     }
 
     @Override
-    public void spectate(Player p) {
+    public void spectate(Player target, Player p) {
+        SJPlayer tsjp = getPlayerManager().get(target);
         SJPlayer sjp = getPlayerManager().get(p);
+        tsjp.getCurrentBattle().addSpectator(sjp);
+    }
+    
+    @Override
+    public void unspectate(Player p) {
+        SJPlayer sjp = getPlayerManager().get(p);
+        for(Battle battle : getBattleManager().getAll()) {
+            if(battle.isSpectating(sjp)) {
+                battle.removeSpectator(sjp);
+            }
+        }
+    }
+    
+    @Override
+    public boolean isSpectating(Player p) {
+        SJPlayer sjp = getPlayerManager().get(p);
+        for(Battle battle : getBattleManager().getAll()) {
+            if(battle.isSpectating(sjp)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
