@@ -25,8 +25,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -79,20 +77,8 @@ public class Battle {
         spectators.add(sp);
         Location spawn = arena.getSpectatorSpawn();
         if(spawn == null) {
-            int i = 0;
-            for(SJPlayer s : getActivePlayers()) {
-                i++;
-                if(spawn == null) {
-                    spawn = s.getPlayer().getLocation();
-                }
-                else {
-                    spawn = spawn.add(s.getPlayer().getLocation());
-                }
-                spawn.add(0, 1, 0);
-            }
-            spawn.multiply(1.0 / (double)i);
+            sp.getPlayer().teleport(spawn);
         }
-        sp.getPlayer().teleport(spawn);
         sp.getPlayer().setScoreboard(scoreboard);
         sp.getPlayer().setAllowFlight(true);
         SpleefLeague.getInstance().getPlayerManager().get(sp.getPlayer()).setState(PlayerState.SPECTATING);
@@ -110,7 +96,7 @@ public class Battle {
         resetPlayer(sjp);
         ArrayList<SJPlayer> activePlayers = getActivePlayers();
         if(activePlayers.size() == 1) {
-            end(players.get(0));
+            end(activePlayers.get(0));
         }
         else if(activePlayers.size() > 1) {   
             for(SJPlayer pl : activePlayers) {
@@ -218,6 +204,7 @@ public class Battle {
     }
     
     private void cleanup() {
+        isOver = true;
         clock.cancel();
         SuperJump.getInstance().getBattleManager().remove(this);
         ChatManager.unregisterChannel(cc);
@@ -228,8 +215,6 @@ public class Battle {
     }
     
     public void end(SJPlayer winner, boolean rated) {
-        isOver = true;
-        clock.cancel();
         saveGameHistory(winner);
         if(rated) {
             applyRatingChange(winner);
@@ -237,7 +222,7 @@ public class Battle {
         for(SJPlayer sjp : getActivePlayers()) {
             resetPlayer(sjp);
         }
-        SuperJump.getInstance().getBattleManager().remove(this);
+        cleanup();
     }
     
     private void saveGameHistory(SJPlayer winner) {
