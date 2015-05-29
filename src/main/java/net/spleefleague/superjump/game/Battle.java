@@ -222,6 +222,9 @@ public class Battle {
         for(SJPlayer sjp : getActivePlayers()) {
             resetPlayer(sjp);
         }
+        for(SJPlayer sp : spectators) {
+            resetPlayer(sp);
+        }
         cleanup();
     }
     
