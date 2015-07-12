@@ -40,6 +40,8 @@ public class Arena extends DBEntity implements DBLoadable, Queue{
     private String creator;
     @DBLoad(fieldName = "name")
     private String name;
+    @DBLoad(fieldName = "tpBackSpectators")
+    private boolean tpBackSpectators = true;
     @DBLoad(fieldName = "rated")
     private boolean rated;
     @DBLoad(fieldName = "queued")
@@ -48,6 +50,10 @@ public class Arena extends DBEntity implements DBLoadable, Queue{
     private boolean liquidLose = true;
     @DBLoad(fieldName = "spectatorSpawn", typeConverter = TypeConverter.LocationConverter.class)
     private Location spectatorSpawn; //null -> default world spawn
+    @DBLoad(fieldName = "paused")
+    private boolean paused = false;
+    @DBLoad(fieldName = "area")
+    private Area area;
     private boolean occupied = false;
     
     public Arena() {
@@ -60,6 +66,10 @@ public class Arena extends DBEntity implements DBLoadable, Queue{
     
     public Area[] getGoals() {
         return goals;
+    }
+    
+    public Area getArea() {
+        return area;
     }
     
     public Area getBorder() {
@@ -92,8 +102,16 @@ public class Arena extends DBEntity implements DBLoadable, Queue{
         return rated;
     }
     
+    public boolean isTpBackSpectators() {
+        return tpBackSpectators;
+    }
+    
     public boolean isQueued() {
         return queued;
+    }
+    
+    public boolean isPaused() {
+        return paused;
     }
     
     public boolean isLiquidLose() {
@@ -108,6 +126,11 @@ public class Arena extends DBEntity implements DBLoadable, Queue{
     @Override
     public boolean isQueued(GeneralPlayer gp) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean isAvailable(GeneralPlayer gp) {
+        return SuperJump.getInstance().getPlayerManager().get(gp.getPlayer()).getVisitedArenas().contains(this);
     }
     
     private static Map<String, Arena> arenas;

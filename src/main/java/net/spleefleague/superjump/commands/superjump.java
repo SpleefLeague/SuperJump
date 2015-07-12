@@ -44,8 +44,12 @@ public class superjump extends BasicCommand {
         else if(args.length == 1) {
             Arena arena = Arena.byName(args[0]);
             if(arena != null) {
-                bm.queue(sjp, arena);
-                success(p, "You have been added to the queue for: " + ChatColor.GREEN + arena.getName());
+                if (!arena.isPaused()) {
+                    bm.queue(sjp, arena);
+                    success(p, "You have been added to the queue for: " + ChatColor.GREEN + arena.getName());
+                } else {
+                    error(p, "This arena is currently paused.");
+                }
             }
             else {
                 error(p, "This arena does not exist.");

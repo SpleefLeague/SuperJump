@@ -19,14 +19,18 @@ import net.spleefleague.core.player.Rank;
 import net.spleefleague.core.player.SLPlayer;
 import net.spleefleague.core.utils.Area;
 import net.spleefleague.superjump.SuperJump;
+import net.spleefleague.superjump.game.signs.GameSign;
 import net.spleefleague.superjump.player.SJPlayer;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
@@ -120,6 +124,9 @@ public class Battle {
     }
     
     public void start() {
+        arena.setOccupied(true);
+        GameSign.updateGameSigns(arena);
+        ChatManager.registerChannel(cc);
         SuperJump.getInstance().getBattleManager().add(this);
         scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
         Objective objective = scoreboard.registerNewObjective("rounds", "dummy");
@@ -127,6 +134,7 @@ public class Battle {
         objective.setDisplayName(ChatColor.GRAY + "0:0:0 | " + ChatColor.RED + "Times Fallen:");
         for(int i = 0; i < players.size(); i++) {
             SJPlayer sjp = players.get(i);
+            SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(sjp.getPlayer());
             Player p = sjp.getPlayer();
             p.setHealth(p.getMaxHealth());
             p.setFoodLevel(20);
@@ -136,11 +144,20 @@ public class Battle {
             p.setGameMode(GameMode.ADVENTURE);
             p.setFlying(false);
             p.setAllowFlight(false);
+            for(PotionEffect effect : p.getActivePotionEffects()) {
+                p.removePotionEffect(effect.getType());
+            }
+            for(SJPlayer sjp1 : players) {
+                if(sjp != sjp1) {
+                    p.showPlayer(sjp1.getPlayer());
+                }
+            }
+            slp.addChatChannel(cc.getName());
             p.teleport(arena.getSpawns()[i]);
             p.getInventory().clear();
             p.setScoreboard(scoreboard);
             scoreboard.getObjective("rounds").getScore(sjp.getName()).setScore(data.get(sjp).getFalls());
-            SpleefLeague.getInstance().getPlayerManager().get(sjp.getPlayer()).setState(PlayerState.INGAME);
+            slp.setState(PlayerState.INGAME);
         }
         startCountdown();
     }
@@ -151,43 +168,85 @@ public class Battle {
         }
         Objective objective = scoreboard.getObjective("rounds");
         if (objective != null) {
-            String s = DurationFormatUtils.formatDuration(ticksPassed * 50, "H:m:s", true);
-            objective.setDisplayName(ChatColor.GRAY.toString() + s + " | " + ChatColor.RED + "Times Fallen:");
+            String s = DurationFormatUtils.formatDuration(ticksPassed * 50, "HH:mm:ss", true);
+            objective.setDisplayName(ChatColor.GRAY.toString() + s + " | " + ChatColor.RED + "Score:");
         }
     }
     
-    private void startCountdown() {
+    public void startCountdown() {
         inCountdown = true;
+        for(SJPlayer sjp : getActivePlayers()) {
+            Location spawn = this.data.get(sjp).getSpawn();
+            createSpawnCage(spawn);
+            sjp.setFrozen(true);
+            sjp.getPlayer().setFireTicks(0);
+            sjp.getPlayer().teleport(this.data.get(sjp).getSpawn());
+        }
         BukkitRunnable br = new BukkitRunnable() {
             private int secondsLeft = 3;
+
             @Override
             public void run() {
-                if(secondsLeft > 0) {
+                if (secondsLeft > 0) {
                     ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), secondsLeft + "...", cc.getName());
                     secondsLeft--;
                 } else {
                     ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), "GO!", cc.getName());
-                    for (SJPlayer sjp : getActivePlayers()) {
-                        sjp.setFrozen(false);
+                    for (SJPlayer sp : getActivePlayers()) {
+                        sp.setFrozen(false);
                     }
-                    startClock();
-                    inCountdown = false;
+                    onDone();
                     super.cancel();
                 }
             }
             
-            private void startClock() {
-                clock = new BukkitRunnable() {
-                    @Override
-                    public void run() {
-                        ticksPassed++;
-                        updateScoreboardTime();
-                    }
-                };
-                clock.runTaskTimer(SuperJump.getInstance(), 0, 1);
+            public void onDone() {
+                for(SJPlayer sp : getActivePlayers()) {
+                    removeSpawnCage(data.get(sp).getSpawn());
+                    sp.setFrozen(false);
+                }
+                inCountdown = false;
+                startClock();
             }
         };
         br.runTaskTimer(SuperJump.getInstance(), 20, 20);
+    }
+    
+    private void createSpawnCage(Location s) {
+        modifySpawnCage(s, Material.GLASS);
+    }
+
+    private void removeSpawnCage(Location s) {
+        modifySpawnCage(s, Material.AIR);
+    }
+
+    private void modifySpawnCage(Location s, Material type) {
+        World w = s.getWorld();
+        for (int x = s.getBlockX() - 1; x <= s.getBlockX() + 1; x++) {
+            for (int z = s.getBlockZ() - 1; z <= s.getBlockZ() + 1; z++) {
+                if (x == s.getBlockX() && z == s.getBlockZ()) {
+                    w.getBlockAt(x, s.getBlockY(), z).setType(Material.AIR); //Just in case
+                    w.getBlockAt(x, s.getBlockY() + 1, z).setType(Material.AIR);
+                    w.getBlockAt(x, s.getBlockY() + 2, z).setType(type);
+                } 
+                else {
+                    for (int y = s.getBlockY(); y <= s.getBlockY() + 2; y++) {
+                        w.getBlockAt(x, y, z).setType(type);
+                    }
+                }
+            }
+        }
+    }
+    
+    private void startClock() {
+        clock = new BukkitRunnable() {
+            @Override
+            public void run() {
+                ticksPassed++;
+                updateScoreboardTime();
+            }
+        };
+        clock.runTaskTimer(SuperJump.getInstance(), 0, 1);
     }
     
     public void cancel() {
@@ -208,6 +267,7 @@ public class Battle {
         clock.cancel();
         SuperJump.getInstance().getBattleManager().remove(this);
         ChatManager.unregisterChannel(cc);
+        GameSign.updateGameSigns();
     }
     
     public void end(SJPlayer winner) {
@@ -239,6 +299,7 @@ public class Battle {
             spectators.remove(sp);
         }
         else {
+            removeSpawnCage(this.getData(sp).getSpawn());
             sp.setIngame(false);
             sp.setFrozen(false);
             data.get(sp).restoreOldData();
@@ -267,7 +328,7 @@ public class Battle {
         }
         winner.setRating(winner.getRating() + winnerPoints);
         playerList += ChatColor.RED + winner.getName() + ChatColor.WHITE + " (" + winner.getRating() + ")" + ChatColor.GREEN + " gets " + ChatColor.GRAY + winnerPoints + ChatColor.WHITE + " points. ";
-        ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), ChatColor.GREEN + "Game in arena " + ChatColor.WHITE + arena.getName() + ChatColor.GREEN + " is over. " + playerList, "GAME_MESSAGE_JUMP");
+        ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), ChatColor.GREEN + "Game in arena " + ChatColor.WHITE + arena.getName() + ChatColor.GREEN + " is over. " + playerList, "GAME_MESSAGE_JUMP_END");
     }
 
     public void onArenaLeave(SJPlayer sjp) {

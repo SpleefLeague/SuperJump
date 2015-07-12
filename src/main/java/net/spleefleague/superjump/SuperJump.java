@@ -17,7 +17,9 @@ import net.spleefleague.core.plugin.GamePlugin;
 import net.spleefleague.superjump.game.Arena;
 import net.spleefleague.superjump.game.Battle;
 import net.spleefleague.superjump.game.BattleManager;
+import net.spleefleague.superjump.game.signs.GameSign;
 import net.spleefleague.superjump.listener.ConnectionListener;
+import net.spleefleague.superjump.listener.EnvironmentListener;
 import net.spleefleague.superjump.listener.GameListener;
 import net.spleefleague.superjump.player.SJPlayer;
 import org.bukkit.ChatColor;
@@ -47,6 +49,8 @@ public class SuperJump extends GamePlugin {
         ChatManager.registerChannel(new ChatChannel("GAME_MESSAGE_SPLEEF_START", "SuperJump game result messages", Rank.DEFAULT, true));
         ConnectionListener.init();
         GameListener.init();
+        EnvironmentListener.init();
+        GameSign.initialize();
         CommandLoader.loadCommands(this, "net.spleefleague.superjump.commands");
     }
     
@@ -68,10 +72,17 @@ public class SuperJump extends GamePlugin {
     }
 
     @Override
-    public void spectate(Player target, Player p) {
+    public boolean spectate(Player target, Player p) {
         SJPlayer tsjp = getPlayerManager().get(target);
         SJPlayer sjp = getPlayerManager().get(p);
-        tsjp.getCurrentBattle().addSpectator(sjp);
+        if(sjp.getVisitedArenas().contains(tsjp.getCurrentBattle().getArena())) {
+            tsjp.getCurrentBattle().addSpectator(sjp);
+            return true;
+        }
+        else {
+            p.sendMessage(SuperJump.getInstance().getChatPrefix() + Theme.ERROR.buildTheme(false) + " You can only spectate arenas you have already visited!");
+            return false;
+        }
     }
     
     @Override

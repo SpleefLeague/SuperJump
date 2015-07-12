@@ -5,10 +5,16 @@
  */
 package net.spleefleague.superjump.player;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import net.spleefleague.core.io.DBLoad;
 import net.spleefleague.core.io.DBSave;
+import net.spleefleague.core.io.Settings;
 import net.spleefleague.core.player.GeneralPlayer;
 import net.spleefleague.superjump.SuperJump;
+import net.spleefleague.superjump.game.Arena;
 import net.spleefleague.superjump.game.Battle;
 
 /**
@@ -19,6 +25,11 @@ public class SJPlayer extends GeneralPlayer {
     
     private int rating;
     private boolean ingame, frozen;
+    private Set<Arena> visitedArenas;
+    
+    public SJPlayer() {
+        setDefaults();
+    }
     
     @DBLoad(fieldName = "rating")
     public void setRating(int rating) {
@@ -28,6 +39,22 @@ public class SJPlayer extends GeneralPlayer {
     @DBSave(fieldName = "rating")
     public int getRating() {
         return rating;
+    }
+    
+    @DBSave(fieldName = "visitedArenas")
+    private List<String> saveVisitedArenas() {
+        List<String> arenaNames = new ArrayList<>();
+        for(Arena arena : visitedArenas) {
+            arenaNames.add(arena.getName());
+        }
+        return arenaNames;
+    }
+    
+    @DBLoad(fieldName = "visitedArenas")
+    private void loadVisitedArenas(List<String> arenaNames) {
+        for(String name : arenaNames) {
+            visitedArenas.add(Arena.byName(name));
+        }
     }
     
     public void setIngame(boolean ingame) {
@@ -50,11 +77,19 @@ public class SJPlayer extends GeneralPlayer {
         return SuperJump.getInstance().getBattleManager().getBattle(this);
     }
     
+    public Set<Arena> getVisitedArenas() {
+        return visitedArenas;
+    }
+    
     @Override
     public void setDefaults() {
         super.setDefaults();
         this.rating = 1000;
         this.frozen = false;
         this.ingame = false;
+        visitedArenas = new HashSet<>();
+        for(String name : (List<String>)Settings.getList("default_arenas_jump")) {
+            visitedArenas.add(Arena.byName(name));
+        }
     }
 }
