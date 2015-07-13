@@ -39,7 +39,7 @@ public class SignListener implements Listener {
             if(event.getClickedBlock().getState() instanceof Sign) {
                 for(GameSign gameSign : GameSign.getAll()) {
                     if(gameSign.getLocation().equals(event.getClickedBlock().getLocation())) {
-                        event.getPlayer().performCommand("spleef " + gameSign.getArena().getName());
+                        event.getPlayer().performCommand("superjump " + gameSign.getArena().getName());
                         break;
                     }
                 }

@@ -85,7 +85,9 @@ public class Battle {
         }
         sp.getPlayer().setScoreboard(scoreboard);
         sp.getPlayer().setAllowFlight(true);
-        SpleefLeague.getInstance().getPlayerManager().get(sp.getPlayer()).setState(PlayerState.SPECTATING);
+        SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(sp.getPlayer());
+        slp.setState(PlayerState.SPECTATING);
+        slp.addChatChannel(cc.getName());
     }
     
     public boolean isSpectating(SJPlayer sjp) {
@@ -256,7 +258,7 @@ public class Battle {
         for (SJPlayer sjp : getActivePlayers()) {
             resetPlayer(sjp);
         }
-        for(SJPlayer sjp : spectators) {
+        for(SJPlayer sjp : new ArrayList<>(spectators)) {
             resetPlayer(sjp);
         }
         cleanup();
@@ -265,6 +267,7 @@ public class Battle {
     private void cleanup() {
         isOver = true;
         clock.cancel();
+        arena.setOccupied(false);
         SuperJump.getInstance().getBattleManager().remove(this);
         ChatManager.unregisterChannel(cc);
         GameSign.updateGameSigns();
@@ -282,7 +285,7 @@ public class Battle {
         for(SJPlayer sjp : getActivePlayers()) {
             resetPlayer(sjp);
         }
-        for(SJPlayer sp : spectators) {
+        for(SJPlayer sp : new ArrayList<>(spectators)) {
             resetPlayer(sp);
         }
         cleanup();

@@ -21,6 +21,7 @@ import net.spleefleague.superjump.game.signs.GameSign;
 import net.spleefleague.superjump.listener.ConnectionListener;
 import net.spleefleague.superjump.listener.EnvironmentListener;
 import net.spleefleague.superjump.listener.GameListener;
+import net.spleefleague.superjump.listener.SignListener;
 import net.spleefleague.superjump.player.SJPlayer;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -45,13 +46,19 @@ public class SuperJump extends GamePlugin {
         Arena.initialize();
         playerManager = new PlayerManager<>(this, SJPlayer.class);
         battleManager = new BattleManager();
-        ChatManager.registerChannel(new ChatChannel("GAME_MESSAGE_SPLEEF_END", "SuperJump game start notifications", Rank.DEFAULT, true));
-        ChatManager.registerChannel(new ChatChannel("GAME_MESSAGE_SPLEEF_START", "SuperJump game result messages", Rank.DEFAULT, true));
+        ChatManager.registerChannel(new ChatChannel("GAME_MESSAGE_JUMP_END", "SuperJump game start notifications", Rank.DEFAULT, true));
+        ChatManager.registerChannel(new ChatChannel("GAME_MESSAGE_JUMP_START", "SuperJump game result messages", Rank.DEFAULT, true));
         ConnectionListener.init();
         GameListener.init();
+        SignListener.init();
         EnvironmentListener.init();
         GameSign.initialize();
         CommandLoader.loadCommands(this, "net.spleefleague.superjump.commands");
+    }
+    
+    @Override
+    public void stop() {
+        playerManager.saveAll();
     }
     
     @Override
