@@ -90,7 +90,7 @@ public class BattleManager {
     
     public Battle getBattle(SJPlayer sjplayer) {
         for(Battle battle : activeBattles) {
-            for(SJPlayer sjp : battle.getPlayers()) {
+            for(SJPlayer sjp : battle.getActivePlayers()) {
                 if(sjp == sjplayer) {
                     return battle;
                 }

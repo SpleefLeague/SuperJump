@@ -152,4 +152,11 @@ public class SuperJump extends GamePlugin {
         SJPlayer sjp = getPlayerManager().get(p);
         return getBattleManager().isIngame(sjp);
     }
+
+    @Override
+    public void cancelAll() {
+        for(Battle battle : battleManager.getAll()) {
+            battle.cancel();
+        }
+    }
 }   

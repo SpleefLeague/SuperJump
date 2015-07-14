@@ -208,10 +208,10 @@ public class Battle {
                     sp.setFrozen(false);
                 }
                 inCountdown = false;
-                startClock();
             }
         };
         br.runTaskTimer(SuperJump.getInstance(), 20, 20);
+        startClock();
     }
     
     private void createSpawnCage(Location s) {
@@ -244,7 +244,9 @@ public class Battle {
         clock = new BukkitRunnable() {
             @Override
             public void run() {
-                ticksPassed++;
+                if(!inCountdown) {
+                    ticksPassed++;
+                }
                 updateScoreboardTime();
             }
         };
@@ -308,7 +310,7 @@ public class Battle {
             data.get(sp).restoreOldData();
         }
         sp.getPlayer().setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());    
-        sp.getPlayer().teleport(SpleefLeague.DEFAULT_WORLD.getSpawnLocation());
+        sp.getPlayer().teleport(SpleefLeague.getInstance().getSpawnLocation());
         slp.removeChatChannel(cc.getName());   
         slp.setState(PlayerState.IDLE);
     }

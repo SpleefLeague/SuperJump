@@ -22,6 +22,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 
 /**
  *
@@ -58,7 +59,45 @@ public class GameListener implements Listener{
                 if(arena.isTpBackSpectators() && arena.getBorder().isInArea(sjp.getPlayer().getLocation())) {
                     Location loc = arena.getSpectatorSpawn();
                     if(loc == null) {
-                        loc = SpleefLeague.DEFAULT_WORLD.getSpawnLocation();
+                        loc = SpleefLeague.getInstance().getSpawnLocation();
+                    }
+                    sjp.getPlayer().teleport(loc);
+                    break;
+                }
+            }
+        }
+        else {
+            Battle battle = SuperJump.getInstance().getBattleManager().getBattle(sjp);
+            Arena arena = battle.getArena();
+            if(!arena.getBorder().isInArea(sjp.getPlayer().getLocation())) {
+                battle.onArenaLeave(sjp);
+            }
+            else if(arena.isLiquidLose() && (PlayerUtil.isInLava(event.getPlayer()) || PlayerUtil.isInWater(event.getPlayer()))) {
+                battle.onArenaLeave(sjp);
+            }
+            else if(battle.getGoal(sjp).isInArea(sjp.getPlayer().getLocation())) {
+                battle.end(sjp);
+            }
+        }
+    }
+    
+    @EventHandler
+    public void onTeleport(PlayerTeleportEvent event) {
+        SJPlayer sjp = SuperJump.getInstance().getPlayerManager().get(event.getPlayer());
+        if(sjp.isFrozen()) {
+            Location from = event.getFrom();
+            Location to = event.getTo();
+            from.setY(to.getY());
+            from.setYaw(to.getYaw());
+            from.setPitch(to.getPitch());
+            event.setTo(from);
+        }
+        else if(!sjp.isIngame()) {
+            for(Arena arena : Arena.getAll()) {
+                if(arena.isTpBackSpectators() && arena.getBorder().isInArea(sjp.getPlayer().getLocation())) {
+                    Location loc = arena.getSpectatorSpawn();
+                    if(loc == null) {
+                        loc = SpleefLeague.getInstance().getSpawnLocation();
                     }
                     sjp.getPlayer().teleport(loc);
                     break;
