@@ -6,6 +6,7 @@
 package net.spleefleague.superjump.listener;
 
 import net.spleefleague.core.SpleefLeague;
+import net.spleefleague.core.player.Rank;
 import net.spleefleague.core.utils.PlayerUtil;
 import net.spleefleague.superjump.SuperJump;
 import net.spleefleague.superjump.game.Arena;
@@ -54,53 +55,17 @@ public class GameListener implements Listener{
             from.setPitch(to.getPitch());
             event.setTo(from);
         }
-        else if(!sjp.isIngame()) {
-            for(Arena arena : Arena.getAll()) {
-                if(arena.isTpBackSpectators() && arena.getBorder().isInArea(sjp.getPlayer().getLocation())) {
-                    Location loc = arena.getSpectatorSpawn();
-                    if(loc == null) {
-                        loc = SpleefLeague.getInstance().getSpawnLocation();
+        else if (!sjp.isIngame()) {
+            if(!SpleefLeague.getInstance().getPlayerManager().get(event.getPlayer()).getRank().hasPermission(Rank.MODERATOR)) {
+                for(Arena arena : Arena.getAll()) {
+                    if(arena.isTpBackSpectators() && arena.getBorder().isInArea(sjp.getPlayer().getLocation())) {
+                        Location loc = arena.getSpectatorSpawn();
+                        if(loc == null) {
+                            loc = SpleefLeague.getInstance().getSpawnLocation();
+                        }
+                        sjp.getPlayer().teleport(loc);
+                        break;
                     }
-                    sjp.getPlayer().teleport(loc);
-                    break;
-                }
-            }
-        }
-        else {
-            Battle battle = SuperJump.getInstance().getBattleManager().getBattle(sjp);
-            Arena arena = battle.getArena();
-            if(!arena.getBorder().isInArea(sjp.getPlayer().getLocation())) {
-                battle.onArenaLeave(sjp);
-            }
-            else if(arena.isLiquidLose() && (PlayerUtil.isInLava(event.getPlayer()) || PlayerUtil.isInWater(event.getPlayer()))) {
-                battle.onArenaLeave(sjp);
-            }
-            else if(battle.getGoal(sjp).isInArea(sjp.getPlayer().getLocation())) {
-                battle.end(sjp);
-            }
-        }
-    }
-    
-    @EventHandler
-    public void onTeleport(PlayerTeleportEvent event) {
-        SJPlayer sjp = SuperJump.getInstance().getPlayerManager().get(event.getPlayer());
-        if(sjp.isFrozen()) {
-            Location from = event.getFrom();
-            Location to = event.getTo();
-            from.setY(to.getY());
-            from.setYaw(to.getYaw());
-            from.setPitch(to.getPitch());
-            event.setTo(from);
-        }
-        else if(!sjp.isIngame()) {
-            for(Arena arena : Arena.getAll()) {
-                if(arena.isTpBackSpectators() && arena.getBorder().isInArea(sjp.getPlayer().getLocation())) {
-                    Location loc = arena.getSpectatorSpawn();
-                    if(loc == null) {
-                        loc = SpleefLeague.getInstance().getSpawnLocation();
-                    }
-                    sjp.getPlayer().teleport(loc);
-                    break;
                 }
             }
         }

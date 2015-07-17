@@ -13,6 +13,7 @@ import net.spleefleague.core.plugin.GamePlugin;
 import net.spleefleague.superjump.SuperJump;
 import net.spleefleague.superjump.game.Arena;
 import net.spleefleague.superjump.game.BattleManager;
+import net.spleefleague.superjump.game.signs.GameSign;
 import net.spleefleague.superjump.player.SJPlayer;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -62,14 +63,17 @@ public class superjump extends BasicCommand {
                 }
             }
             else if(args.length == 2) {
-                Arena arena = Arena.byName(args[2]);
+                Arena arena = Arena.byName(args[1]);
                 if(arena != null) {
-                    if(args[1].equalsIgnoreCase("pause")) {
+                    if(args[0].equalsIgnoreCase("pause")) {
                         arena.setPaused(true);
+                        success(p, "You have paused the arena " + arena.getName());
                     }
-                    else if(args[1].equalsIgnoreCase("unpause")) {
+                    else if(args[0].equalsIgnoreCase("unpause")) {
                         arena.setPaused(false);
+                        success(p, "You have unpaused the arena " + arena.getName());
                     }
+                    GameSign.updateGameSigns(arena);
                     EntityBuilder.save(arena, SuperJump.getInstance().getPluginDB().getCollection("Arenas"));
                 }
                 else {
