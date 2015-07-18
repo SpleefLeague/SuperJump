@@ -35,13 +35,9 @@ public class superjump extends BasicCommand {
         BattleManager bm = SuperJump.getInstance().getBattleManager();
         if(!GamePlugin.isIngameGlobal(p)) {
             if(args.length == 0) {
-                if(!GamePlugin.isQueuedGlobal(p)) {
-                    bm.queue(sjp);
-                    success(p, "You have been added to the queue.");
-                }
-                else {
-                    error(p, "You are already in a queue! Enter /leave to leave the queue.");
-                }
+                GamePlugin.dequeueGlobal(p);
+                bm.queue(sjp);
+                success(p, "You have been added to the queue.");
             }
             else if(args.length == 1) {
                 Arena arena = Arena.byName(args[0]);

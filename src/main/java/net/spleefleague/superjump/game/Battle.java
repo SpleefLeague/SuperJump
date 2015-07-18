@@ -134,8 +134,18 @@ public class Battle {
         Objective objective = scoreboard.registerNewObjective("rounds", "dummy");
         objective.setDisplaySlot(DisplaySlot.SIDEBAR);
         objective.setDisplayName(ChatColor.GRAY + "0:0:0 | " + ChatColor.RED + "Times Fallen:");
+        String playerNames = "";
         for(int i = 0; i < players.size(); i++) {
             SJPlayer sjp = players.get(i);
+            if(i == 0) {
+                playerNames = sjp.getName();
+            }
+            else if(i == players.size() - 1) {
+                playerNames += " and " + sjp.getName();
+            }
+            else {
+                playerNames += ", " + sjp.getName();
+            }
             SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(sjp.getPlayer());
             Player p = sjp.getPlayer();
             p.setHealth(p.getMaxHealth());
@@ -161,6 +171,7 @@ public class Battle {
             scoreboard.getObjective("rounds").getScore(sjp.getName()).setScore(data.get(sjp).getFalls());
             slp.setState(PlayerState.INGAME);
         }
+        ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), Theme.SUCCESS.buildTheme(false) + "Beginning match on " + ChatColor.WHITE + arena.getName() + ChatColor.GREEN + " between " + ChatColor.RED + playerNames + "!", "GAME_MESSAGE_JUMP_START");
         startCountdown();
     }
     
