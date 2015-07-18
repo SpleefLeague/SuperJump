@@ -17,6 +17,7 @@ import net.spleefleague.core.io.EntityBuilder;
 import net.spleefleague.core.player.PlayerState;
 import net.spleefleague.core.player.Rank;
 import net.spleefleague.core.player.SLPlayer;
+import net.spleefleague.core.plugin.GamePlugin;
 import net.spleefleague.core.utils.Area;
 import net.spleefleague.superjump.SuperJump;
 import net.spleefleague.superjump.game.signs.GameSign;
@@ -138,6 +139,8 @@ public class Battle {
             SJPlayer sjp = players.get(i);
             SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(sjp.getPlayer());
             Player p = sjp.getPlayer();
+            GamePlugin.dequeueGlobal(p);
+            GamePlugin.unspectateGlobal(p);
             p.setHealth(p.getMaxHealth());
             p.setFoodLevel(20);
             sjp.setIngame(true);
@@ -155,6 +158,7 @@ public class Battle {
                 }
             }
             slp.addChatChannel(cc.getName());
+            p.eject();
             p.teleport(arena.getSpawns()[i]);
             p.getInventory().clear();
             p.setScoreboard(scoreboard);
