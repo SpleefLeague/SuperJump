@@ -86,7 +86,6 @@ public class Battle {
             sp.getPlayer().teleport(spawn);
         }
         sp.getPlayer().setScoreboard(scoreboard);
-        sp.getPlayer().setAllowFlight(true);
         SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(sp.getPlayer());
         slp.setState(PlayerState.SPECTATING);
         slp.addChatChannel(cc.getName());
