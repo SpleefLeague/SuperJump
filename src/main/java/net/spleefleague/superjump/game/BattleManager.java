@@ -20,7 +20,7 @@ import net.spleefleague.superjump.player.SJPlayer;
  */
 public class BattleManager {
     
-    private final Collection<Battle> activeBattles;
+    private final HashSet<Battle> activeBattles;
     private final GameQueue<SJPlayer, Arena> gameQueue;
     
     public BattleManager() {
@@ -85,7 +85,7 @@ public class BattleManager {
     }
     
     public Collection<Battle> getAll() {
-        return activeBattles;
+        return (Collection<Battle>)activeBattles.clone();
     }
     
     public Battle getBattle(SJPlayer sjplayer) {

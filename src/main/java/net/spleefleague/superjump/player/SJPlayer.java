@@ -16,6 +16,7 @@ import net.spleefleague.core.player.GeneralPlayer;
 import net.spleefleague.superjump.SuperJump;
 import net.spleefleague.superjump.game.Arena;
 import net.spleefleague.superjump.game.Battle;
+import org.bson.Document;
 
 /**
  *
@@ -24,7 +25,7 @@ import net.spleefleague.superjump.game.Battle;
 public class SJPlayer extends GeneralPlayer {
     
     private int rating;
-    private boolean ingame, frozen;
+    private boolean ingame, frozen, requestingEndgame;
     private Set<Arena> visitedArenas;
     
     public SJPlayer() {
@@ -41,6 +42,10 @@ public class SJPlayer extends GeneralPlayer {
         return rating;
     }
     
+    public int getRank() {
+        return (int)SuperJump.getInstance().getPluginDB().getCollection("Players").count(new Document("rating", new Document("$gt", rating))) + 1;
+    }
+    
     @DBSave(fieldName = "visitedArenas")
     private List<String> saveVisitedArenas() {
         List<String> arenaNames = new ArrayList<>();
@@ -55,6 +60,14 @@ public class SJPlayer extends GeneralPlayer {
         for(String name : arenaNames) {
             visitedArenas.add(Arena.byName(name));
         }
+    }
+    
+    public void setRequestingEndgame(boolean requestingEndgame) {
+        this.requestingEndgame = requestingEndgame;
+    }
+    
+    public boolean isRequestingEndgame() {
+        return requestingEndgame;
     }
     
     public void setIngame(boolean ingame) {

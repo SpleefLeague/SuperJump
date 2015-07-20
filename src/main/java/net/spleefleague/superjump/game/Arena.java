@@ -57,6 +57,10 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queue{
     private boolean paused = false;
     @DBLoad(fieldName = "area")
     private Area area;
+    @DBLoad(fieldName = "debuggerStart")
+    private String debuggerStart;
+    @DBLoad(fieldName = "debuggerEnd")
+    private String debuggerEnd;
     private boolean occupied = false;
     
     public Arena() {
@@ -85,6 +89,14 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queue{
     
     public String getCreator() {
         return creator;
+    }
+    
+    public String getStartDebugger() {
+        return debuggerStart;
+    }
+    
+    public String getEndDebugger() {
+        return debuggerEnd;
     }
     
     @Override

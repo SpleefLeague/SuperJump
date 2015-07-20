@@ -19,6 +19,7 @@ import net.spleefleague.core.player.Rank;
 import net.spleefleague.core.player.SLPlayer;
 import net.spleefleague.core.plugin.GamePlugin;
 import net.spleefleague.core.utils.Area;
+import net.spleefleague.core.utils.RuntimeCompiler;
 import net.spleefleague.superjump.SuperJump;
 import net.spleefleague.superjump.game.signs.GameSign;
 import net.spleefleague.superjump.player.SJPlayer;
@@ -127,6 +128,9 @@ public class Battle {
     }
     
     public void start() {
+        if(arena.getStartDebugger() != null) {
+            RuntimeCompiler.debugFromHastebin(arena.getStartDebugger());
+        }
         arena.setOccupied(true);
         GameSign.updateGameSigns(arena);
         ChatManager.registerChannel(cc);
@@ -269,9 +273,15 @@ public class Battle {
     }
     
     public void cancel() {
+        cancel(true);
+    }
+    
+    public void cancel(boolean moderator) {
         isOver = true;
         saveGameHistory(null);
-        ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), Theme.INCOGNITO.buildTheme(false) + "The battle has been cancelled by a moderator.", cc.getName());
+        if(moderator) {
+            ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), Theme.INCOGNITO.buildTheme(false) + "The battle has been cancelled by a moderator.", cc.getName());
+        }
         for (SJPlayer sjp : getActivePlayers()) {
             resetPlayer(sjp);
         }
@@ -288,6 +298,9 @@ public class Battle {
         SuperJump.getInstance().getBattleManager().remove(this);
         ChatManager.unregisterChannel(cc);
         GameSign.updateGameSigns();
+        if(arena.getEndDebugger() != null) {
+            RuntimeCompiler.debugFromHastebin(arena.getEndDebugger());
+        }
     }
     
     public void end(SJPlayer winner) {
@@ -322,6 +335,7 @@ public class Battle {
             removeSpawnCage(this.getData(sp).getSpawn());
             sp.setIngame(false);
             sp.setFrozen(false);
+            sp.setRequestingEndgame(false);
             data.get(sp).restoreOldData();
         }
         sp.getPlayer().setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());    
@@ -375,7 +389,6 @@ public class Battle {
         private final SJPlayer sjp;
         private final Area goal;
         private final GameMode oldGamemode;
-        private final boolean oldFlying, oldAllowFlight;
         private final ItemStack[] oldInventory;
         
         public PlayerData(SJPlayer sjp, Location spawn, Area goal) {
@@ -385,8 +398,6 @@ public class Battle {
             this.goal = goal;
             Player p = sjp.getPlayer();
             oldGamemode = p.getGameMode();
-            oldFlying = p.isFlying();
-            oldAllowFlight = p.getAllowFlight();
             oldInventory = p.getInventory().getContents();
         }
         
@@ -413,8 +424,7 @@ public class Battle {
         public void restoreOldData() {
             Player p = sjp.getPlayer();
             p.setGameMode(oldGamemode);
-            p.setFlying(oldFlying);
-            p.setAllowFlight(oldAllowFlight);
+            p.setFlying(false);
             p.getInventory().setContents(oldInventory);
         }
     }

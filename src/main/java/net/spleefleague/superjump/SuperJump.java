@@ -6,6 +6,7 @@
 package net.spleefleague.superjump;
     
 import com.mongodb.client.MongoDatabase;
+import java.util.Iterator;
 import net.spleefleague.core.SpleefLeague;
 import net.spleefleague.core.chat.ChatChannel;
 import net.spleefleague.core.chat.ChatManager;
@@ -35,6 +36,7 @@ public class SuperJump extends GamePlugin {
     private static SuperJump instance;
     private PlayerManager<SJPlayer> playerManager;
     private BattleManager battleManager;
+    private boolean queuesOpen = true;
     
     public SuperJump() {
         super("[SuperJump]", ChatColor.GRAY + "[" + ChatColor.GOLD + "SuperJump" + ChatColor.GRAY + "]" + ChatColor.RESET);
@@ -58,6 +60,9 @@ public class SuperJump extends GamePlugin {
     
     @Override
     public void stop() {
+        for(Battle battle : battleManager.getAll()) {
+            battle.cancel(false);
+        }
         playerManager.saveAll();
     }
     
@@ -151,12 +156,56 @@ public class SuperJump extends GamePlugin {
     public boolean isIngame(Player p) {
         SJPlayer sjp = getPlayerManager().get(p);
         return getBattleManager().isIngame(sjp);
-    }
-
+     }
+   
     @Override
     public void cancelAll() {
         for(Battle battle : battleManager.getAll()) {
             battle.cancel();
         }
+    }
+
+    @Override
+    public void printStats(Player p) {
+        SJPlayer sjp = playerManager.get(p);
+        p.sendMessage(Theme.INFO + p.getName() + "'s SuperJump stats");
+        p.sendMessage(Theme.INCOGNITO + "Rating: " + ChatColor.YELLOW + sjp.getRating());
+        p.sendMessage(Theme.INCOGNITO + "Rank: " + ChatColor.YELLOW + sjp.getRank());
+    }
+    
+    @Override
+    public void requestEndgame(Player p) {
+        SJPlayer sp = SuperJump.getInstance().getPlayerManager().get(p);
+        Battle battle = sp.getCurrentBattle();
+        if(battle != null) {
+            sp.setRequestingEndgame(true);
+            boolean shouldEnd = true;
+            for(SJPlayer spleefplayer : battle.getActivePlayers()) {
+                if(!spleefplayer.isRequestingEndgame()) {
+                    shouldEnd = false;
+                    break;
+                }
+            }
+            if(shouldEnd) {
+                battle.cancel(false);
+            }
+            else {
+                for(SJPlayer spleefplayer : battle.getActivePlayers()) {
+                    if(!spleefplayer.isRequestingEndgame()) {
+                        spleefplayer.getPlayer().sendMessage(SuperJump.getInstance().getChatPrefix() + " " + Theme.WARNING.buildTheme(false) + "Your opponent wants to end this game. To agree enter " + ChatColor.YELLOW + "/endgame.");
+                    }
+                }
+                sp.sendMessage(SuperJump.getInstance().getChatPrefix() + " " + Theme.WARNING.buildTheme(false) + "You requested this game to be cancelled.");
+            }
+        }
+    }
+
+    @Override
+    public void setQueueStatus(boolean open) {
+        queuesOpen = open;
+    }
+    
+    public boolean queuesOpen() {
+        return queuesOpen;
     }
 }   
