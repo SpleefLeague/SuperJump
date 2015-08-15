@@ -3,24 +3,26 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package net.spleefleague.superjump.commands;
+package com.spleefleague.superjump.commands;
 
+import com.spleefleague.core.command.BasicCommand;
+import com.spleefleague.core.io.EntityBuilder;
+import com.spleefleague.core.player.Rank;
+import com.spleefleague.core.player.SLPlayer;
+import com.spleefleague.core.plugin.CorePlugin;
+import com.spleefleague.core.plugin.GamePlugin;
+import com.spleefleague.superjump.SuperJump;
+import com.spleefleague.superjump.game.Arena;
+import com.spleefleague.superjump.game.BattleManager;
+import com.spleefleague.superjump.game.signs.GameSign;
+import com.spleefleague.superjump.player.SJPlayer;
 import java.util.ArrayList;
-import net.spleefleague.core.command.BasicCommand;
-import net.spleefleague.core.io.EntityBuilder;
-import net.spleefleague.core.player.Rank;
-import net.spleefleague.core.player.SLPlayer;
-import net.spleefleague.core.plugin.CorePlugin;
-import net.spleefleague.core.plugin.GamePlugin;
-import net.spleefleague.superjump.SuperJump;
-import net.spleefleague.superjump.game.Arena;
-import net.spleefleague.superjump.game.BattleManager;
-import net.spleefleague.superjump.game.signs.GameSign;
-import net.spleefleague.superjump.player.SJPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
+import static sun.management.Agent.error;
+
 
 /**
  *

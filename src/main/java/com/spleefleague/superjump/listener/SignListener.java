@@ -3,10 +3,10 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package net.spleefleague.superjump.listener;
+package com.spleefleague.superjump.listener;
 
-import net.spleefleague.superjump.SuperJump;
-import net.spleefleague.superjump.game.signs.GameSign;
+import com.spleefleague.superjump.SuperJump;
+import com.spleefleague.superjump.game.signs.GameSign;
 import org.bukkit.Bukkit;
 import org.bukkit.block.Sign;
 import org.bukkit.event.EventHandler;

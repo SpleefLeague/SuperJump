@@ -3,14 +3,14 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package net.spleefleague.superjump.listener;
+package com.spleefleague.superjump.listener;
 
-import net.spleefleague.core.SpleefLeague;
-import net.spleefleague.core.player.PlayerState;
-import net.spleefleague.core.utils.PlayerUtil;
-import net.spleefleague.superjump.SuperJump;
-import net.spleefleague.superjump.game.Arena;
-import net.spleefleague.superjump.player.SJPlayer;
+import com.spleefleague.core.SpleefLeague;
+import com.spleefleague.core.player.PlayerState;
+import com.spleefleague.core.utils.PlayerUtil;
+import com.spleefleague.superjump.SuperJump;
+import com.spleefleague.superjump.game.Arena;
+import com.spleefleague.superjump.player.SJPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;

@@ -3,19 +3,19 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package net.spleefleague.superjump.player;
+package com.spleefleague.superjump.player;
 
+import com.spleefleague.core.io.DBLoad;
+import com.spleefleague.core.io.DBSave;
+import com.spleefleague.core.io.Settings;
+import com.spleefleague.core.player.GeneralPlayer;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import net.spleefleague.core.io.DBLoad;
-import net.spleefleague.core.io.DBSave;
-import net.spleefleague.core.io.Settings;
-import net.spleefleague.core.player.GeneralPlayer;
-import net.spleefleague.superjump.SuperJump;
-import net.spleefleague.superjump.game.Arena;
-import net.spleefleague.superjump.game.Battle;
+import com.spleefleague.superjump.SuperJump;
+import com.spleefleague.superjump.game.Arena;
+import com.spleefleague.superjump.game.Battle;
 import org.bson.Document;
 
 /**

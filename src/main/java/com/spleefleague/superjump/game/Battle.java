@@ -3,26 +3,26 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package net.spleefleague.superjump.game;
+package com.spleefleague.superjump.game;
 
+import com.spleefleague.core.SpleefLeague;
+import com.spleefleague.core.chat.ChatChannel;
+import com.spleefleague.core.chat.ChatManager;
+import com.spleefleague.core.chat.Theme;
+import com.spleefleague.core.io.EntityBuilder;
+import com.spleefleague.core.player.PlayerState;
+import com.spleefleague.core.player.Rank;
+import com.spleefleague.core.player.SLPlayer;
+import com.spleefleague.core.plugin.GamePlugin;
+import com.spleefleague.core.utils.Area;
+import com.spleefleague.core.utils.RuntimeCompiler;
+import com.spleefleague.superjump.SuperJump;
+import com.spleefleague.superjump.game.signs.GameSign;
+import com.spleefleague.superjump.player.SJPlayer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import net.spleefleague.core.SpleefLeague;
-import net.spleefleague.core.chat.ChatChannel;
-import net.spleefleague.core.chat.ChatManager;
-import net.spleefleague.core.chat.Theme;
-import net.spleefleague.core.io.EntityBuilder;
-import net.spleefleague.core.player.PlayerState;
-import net.spleefleague.core.player.Rank;
-import net.spleefleague.core.player.SLPlayer;
-import net.spleefleague.core.plugin.GamePlugin;
-import net.spleefleague.core.utils.Area;
-import net.spleefleague.core.utils.RuntimeCompiler;
-import net.spleefleague.superjump.SuperJump;
-import net.spleefleague.superjump.game.signs.GameSign;
-import net.spleefleague.superjump.player.SJPlayer;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -37,6 +37,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
+
 
 /**
  *

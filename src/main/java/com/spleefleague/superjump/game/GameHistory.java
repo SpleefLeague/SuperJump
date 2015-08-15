@@ -3,16 +3,17 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package net.spleefleague.superjump.game;
+package com.spleefleague.superjump.game;
 
+import com.spleefleague.core.io.DBEntity;
+import com.spleefleague.core.io.DBSave;
+import com.spleefleague.core.io.DBSaveable;
+import com.spleefleague.core.io.TypeConverter;
+import com.spleefleague.superjump.player.SJPlayer;
 import java.util.Collection;
 import java.util.Date;
 import java.util.UUID;
-import net.spleefleague.core.io.DBEntity;
-import net.spleefleague.core.io.DBSave;
-import net.spleefleague.core.io.DBSaveable;
-import net.spleefleague.core.io.TypeConverter;
-import net.spleefleague.superjump.player.SJPlayer;
+
 
 /**
  *
