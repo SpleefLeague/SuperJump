@@ -55,7 +55,7 @@ public class SuperJump extends GamePlugin {
         SignListener.init();
         EnvironmentListener.init();
         GameSign.initialize();
-        CommandLoader.loadCommands(this, "net.spleefleague.superjump.commands");
+        CommandLoader.loadCommands(this, "com.spleefleague.superjump.commands");
     }
     
     @Override

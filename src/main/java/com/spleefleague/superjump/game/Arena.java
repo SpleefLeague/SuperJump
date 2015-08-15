@@ -223,4 +223,9 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queue{
         }
         SuperJump.getInstance().log("Loaded " + arenas.size() + " arenas!");
     }
+
+    @Override
+    public boolean isInGeneral() {
+        return queued;
+    }
 }

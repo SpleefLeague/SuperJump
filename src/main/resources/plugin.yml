@@ -1,6 +1,6 @@
 name: SuperJump
 author: SpleefLeague
-main: net.spleefleague.superjump.SuperJump
+main: com.spleefleague.superjump.SuperJump
 version: 1.0
 depend: [SpleefLeagueCore]
 commands:    
