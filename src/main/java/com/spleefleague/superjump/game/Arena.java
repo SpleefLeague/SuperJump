@@ -14,7 +14,7 @@ import com.spleefleague.core.io.DBSaveable;
 import com.spleefleague.core.io.EntityBuilder;
 import com.spleefleague.core.io.TypeConverter;
 import com.spleefleague.core.player.GeneralPlayer;
-import com.spleefleague.core.queue.Queue;
+import com.spleefleague.core.queue.QueueableArena;
 import com.spleefleague.core.utils.Area;
 import com.spleefleague.superjump.SuperJump;
 import com.spleefleague.superjump.player.SJPlayer;
@@ -31,7 +31,7 @@ import org.bukkit.Location;
  *
  * @author Jonas
  */
-public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queue{
+public class Arena extends DBEntity implements DBLoadable, DBSaveable, QueueableArena{
     
     @DBLoad(fieldName = "border")
     private Area border;
@@ -122,10 +122,6 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queue{
         return tpBackSpectators;
     }
     
-    public boolean isQueued() {
-        return queued;
-    }
-    
     @Override
     public boolean isPaused() {
         return paused;
@@ -142,11 +138,6 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queue{
     @Override
     public int getSize() {
         return spawns.length;
-    }
-
-    @Override
-    public boolean isQueued(GeneralPlayer gp) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override

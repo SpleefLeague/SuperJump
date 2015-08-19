@@ -6,7 +6,6 @@
 package com.spleefleague.superjump.game;
 
 import com.spleefleague.core.queue.GameQueue;
-import com.spleefleague.superjump.SuperJump;
 import com.spleefleague.superjump.game.signs.GameSign;
 import com.spleefleague.superjump.player.SJPlayer;
 import java.util.ArrayList;
@@ -26,7 +25,7 @@ public class BattleManager {
     
     public BattleManager() {
         this.activeBattles = new HashSet<>();
-        this.gameQueue = new GameQueue<>(SuperJump.getInstance(), SuperJump.getInstance().getPlayerManager());
+        this.gameQueue = new GameQueue<>();
         for(Arena arena : Arena.getAll()) {
             gameQueue.register(arena);
         }
@@ -45,7 +44,7 @@ public class BattleManager {
     }
     
     public void queue(SJPlayer player, Arena queue) {
-        gameQueue.queue(player, queue, queue.isQueued());
+        gameQueue.queue(player, queue);
         if(!queue.isPaused() && !queue.isOccupied()) {
             Collection<SJPlayer> players = gameQueue.request(queue);
             if(players != null) {
