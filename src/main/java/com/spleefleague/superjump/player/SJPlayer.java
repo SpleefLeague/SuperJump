@@ -58,7 +58,8 @@ public class SJPlayer extends GeneralPlayer {
     @DBLoad(fieldName = "visitedArenas")
     private void loadVisitedArenas(List<String> arenaNames) {
         for(String name : arenaNames) {
-            visitedArenas.add(Arena.byName(name));
+            Arena arena = Arena.byName(name);
+            if(arena != null) visitedArenas.add(arena);
         }
     }
     
