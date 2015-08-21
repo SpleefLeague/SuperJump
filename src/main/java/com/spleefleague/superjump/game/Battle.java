@@ -350,7 +350,7 @@ public class Battle {
         String playerList = "";
         for(SJPlayer sjp : players) {
             if(sjp != winner) {
-                float elo = (float) (1f / (1f + Math.pow(2f, ((sjp.getRating() - winner.getRating()) / 400f))));
+                float elo = (float) (1f / (1f + Math.pow(2f, ((sjp.getRating() - winner.getRating()) / 250f))));
                 int rating = (int) Math.round(MAX_RATING * (1f - elo));
                 if (rating < MIN_RATING) {
                     rating = MIN_RATING;
