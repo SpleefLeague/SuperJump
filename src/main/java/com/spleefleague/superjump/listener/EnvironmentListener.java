@@ -43,7 +43,7 @@ public class EnvironmentListener implements Listener {
             SJPlayer sp = SuperJump.getInstance().getPlayerManager().get(event.getPlayer());
             for(Arena arena : Arena.getAll()) {
                 if(!sp.getVisitedArenas().contains(arena)) {
-                    if(arena.getArea().isInArea(event.getTo())) {
+                    if(arena.getArea() != null && arena.getArea().isInArea(event.getTo())) {
                         sp.getVisitedArenas().add(arena);
                         String title = ChatColor.GREEN + "You have discovered " + ChatColor.RED + arena.getName() + ChatColor.GREEN + "!";
                         String subtitle = ChatColor.GRAY + String.valueOf(sp.getVisitedArenas().size()) + "/" + String.valueOf(Arena.getAll().size()) + ChatColor.GOLD + " SJ arenas found!";

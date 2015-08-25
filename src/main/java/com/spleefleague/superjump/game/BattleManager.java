@@ -6,6 +6,7 @@
 package com.spleefleague.superjump.game;
 
 import com.spleefleague.core.queue.GameQueue;
+import com.spleefleague.superjump.SuperJump;
 import com.spleefleague.superjump.game.signs.GameSign;
 import com.spleefleague.superjump.player.SJPlayer;
 import java.util.ArrayList;
@@ -21,7 +22,7 @@ import java.util.HashSet;
 public class BattleManager {
     
     private final HashSet<Battle> activeBattles;
-    private final GameQueue<SJPlayer, Arena> gameQueue;
+    private final GameQueue<Arena> gameQueue;
     
     public BattleManager() {
         this.activeBattles = new HashSet<>();
@@ -31,7 +32,7 @@ public class BattleManager {
         }
     }
     
-    public GameQueue<SJPlayer, Arena> getGameQueue() {
+    public GameQueue<Arena> getGameQueue() {
         return gameQueue;
     }
     
@@ -44,9 +45,9 @@ public class BattleManager {
     }
     
     public void queue(SJPlayer player, Arena queue) {
-        gameQueue.queue(player, queue);
+        gameQueue.queue(player.getUUID(), queue);
         if(!queue.isPaused() && !queue.isOccupied()) {
-            Collection<SJPlayer> players = gameQueue.request(queue);
+            Collection<SJPlayer> players = gameQueue.request(queue, SuperJump.getInstance().getPlayerManager());
             if(players != null) {
                 queue.startBattle(new ArrayList<>(players));
             }
@@ -55,8 +56,8 @@ public class BattleManager {
     }
     
     public void queue(SJPlayer player) {
-        gameQueue.queue(player);
-        HashMap<Arena, Collection<SJPlayer>> requested = gameQueue.request();
+        gameQueue.queue(player.getUUID());
+        HashMap<Arena, Collection<SJPlayer>> requested = gameQueue.request(SuperJump.getInstance().getPlayerManager());
         for(Arena arena : requested.keySet()) {
             arena.startBattle(new ArrayList<>(requested.get(arena)));
         }
@@ -64,12 +65,12 @@ public class BattleManager {
     }
     
     public void dequeue(SJPlayer sjp) {
-        gameQueue.dequeue(sjp);
+        gameQueue.dequeue(sjp.getUUID());
         GameSign.updateGameSigns();
     }
 
     public boolean isQueued(SJPlayer sjp) {
-        return gameQueue.isQueued(sjp);
+        return gameQueue.isQueued(sjp.getUUID());
     }
     
     public void add(Battle battle) {
@@ -78,7 +79,7 @@ public class BattleManager {
     
     public void remove(Battle battle) {
         activeBattles.remove(battle);
-        Collection<SJPlayer> players = gameQueue.request(battle.getArena());
+        Collection<SJPlayer> players = gameQueue.request(battle.getArena(), SuperJump.getInstance().getPlayerManager());
         if(players != null) {
             battle.getArena().startBattle(new ArrayList<>(players));
         }

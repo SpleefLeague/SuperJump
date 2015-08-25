@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.bson.Document;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -137,30 +138,12 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
     
     @Override
     public int getSize() {
-        return spawns.length;
+        return getSpawns().length;
     }
 
     @Override
-    public boolean isAvailable(GeneralPlayer gp) {
-        return SuperJump.getInstance().getPlayerManager().get(gp.getPlayer()).getVisitedArenas().contains(this);
-    }
-    
-    private static Map<String, Arena> arenas;
-    
-    public static Arena byName(String name) {
-        Arena arena = arenas.get(name);
-        if(arena == null) {
-            for(Arena a : arenas.values()) {
-                if(a.getName().equalsIgnoreCase(name)) {
-                    arena = a;
-                }
-            }
-        }
-        return arena;
-    }
-    
-    public static Collection<Arena> getAll() {
-        return arenas.values();
+    public boolean isAvailable(UUID uuid) {
+        return SuperJump.getInstance().getPlayerManager().get(uuid).getVisitedArenas().contains(this);
     }
     
     public Battle startBattle(List<SJPlayer> players) {
@@ -178,8 +161,13 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
     }
 
     @Override
-    public int getQueuePosition(GeneralPlayer gp) {
-        return SuperJump.getInstance().getBattleManager().getGameQueue().getQueuePosition(this, (SJPlayer)gp);
+    public int getQueuePosition(UUID uuid) {
+        return SuperJump.getInstance().getBattleManager().getGameQueue().getQueuePosition(this, uuid);
+    }
+
+    @Override
+    public boolean isInGeneral() {
+        return queued;
     }
 
     @Override
@@ -206,18 +194,38 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
         }
     }
     
+    private static Map<String, Arena> arenas;
+    
+    public static Arena byName(String name) {
+        Arena arena = arenas.get(name);
+        if(arena == null) {
+            for(Arena a : arenas.values()) {
+                if(a.getName().equalsIgnoreCase(name)) {
+                    arena = a;
+                }
+            }
+        }
+        return arena;
+    }
+    
+    public static Collection<Arena> getAll() {
+        return arenas.values();
+    }
+    
     public static void initialize(){
         arenas = new HashMap<>();
         MongoCursor<Document> dbc = SuperJump.getInstance().getPluginDB().getCollection("Arenas").find().iterator();
         while(dbc.hasNext()) {
-            Arena arena = EntityBuilder.load(dbc.next(), Arena.class);
+            Document d = dbc.next();
+            Arena arena;
+            if(!d.containsKey("isRandom") || !d.getBoolean("isRandom")) {
+                arena = EntityBuilder.load(d, Arena.class);
+            }
+            else {
+                arena = EntityBuilder.load(d, RandomArena.class);
+            }
             arenas.put(arena.getName(), arena);
         }
         SuperJump.getInstance().log("Loaded " + arenas.size() + " arenas!");
-    }
-
-    @Override
-    public boolean isInGeneral() {
-        return queued;
     }
 }
