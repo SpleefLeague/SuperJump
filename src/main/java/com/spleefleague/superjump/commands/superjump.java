@@ -105,7 +105,7 @@ public class superjump extends BasicCommand {
                     }
                 }
                 else if (args.length == 2) {
-                    if(slp.getRank().hasPermission(Rank.MODERATOR)) {
+                    if(slp.getRank().hasPermission(Rank.MODERATOR) || slp.getRank() == Rank.ORGANIZER) {
                         Arena arena = Arena.byName(args[1]);
                         if (arena != null) {
                             if (args[0].equalsIgnoreCase("pause")) {
