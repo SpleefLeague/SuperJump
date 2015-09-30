@@ -1,5 +1,6 @@
 name: SuperJump
 author: SpleefLeague
+authors: [Joba, Akaiyo, Manuman]
 main: com.spleefleague.superjump.SuperJump
 version: 1.0
 depend: [SpleefLeagueCore]
