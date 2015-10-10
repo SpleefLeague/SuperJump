@@ -32,10 +32,6 @@ public class GameSign extends DBEntity implements  DBLoadable{
     private Location location;
     private Arena arena;
     
-    public GameSign() {
-        
-    }
-    
     @DBLoad(fieldName = "location", typeConverter = TypeConverter.LocationConverter.class)
     private void setSign(Location location) {
         this.location = location;

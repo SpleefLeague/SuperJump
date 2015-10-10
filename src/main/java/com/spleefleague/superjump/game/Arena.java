@@ -65,10 +65,6 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
     private String debuggerEnd;
     private boolean occupied = false;
     
-    public Arena() {
-        
-    }
-    
     public Location[] getSpawns() {
         return spawns;
     }
