@@ -208,7 +208,7 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
         return arenas.values();
     }
     
-    public static void initialize(){
+    public static void init(){
         arenas = new HashMap<>();
         MongoCursor<Document> dbc = SuperJump.getInstance().getPluginDB().getCollection("Arenas").find().iterator();
         while(dbc.hasNext()) {

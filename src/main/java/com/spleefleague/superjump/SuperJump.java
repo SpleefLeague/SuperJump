@@ -45,7 +45,7 @@ public class SuperJump extends GamePlugin {
     @Override
     public void start() {
         instance = this;
-        Arena.initialize();
+        Arena.init();
         playerManager = new PlayerManager<>(this, SJPlayer.class);
         battleManager = new BattleManager();
         ChatManager.registerChannel(new ChatChannel("GAME_MESSAGE_JUMP_END", "SuperJump game start notifications", Rank.DEFAULT, true));
