@@ -27,7 +27,7 @@ public class RandomArena extends Arena{
     private int jumpCount;
     private Location[] spawns;
     private Area[] goals;
-    private Area border;
+    private Area[] borders;
     
     public RandomArena() {
         super();
@@ -46,12 +46,12 @@ public class RandomArena extends Arena{
     
     @Override
     public Area getArea() {
-        return border;
+        return borders[0];
     }
     
     @Override
-    public Area getBorder() {
-        return border;
+    public Area[] getBorders() {
+        return borders;
     }
     
     @Override
@@ -63,7 +63,8 @@ public class RandomArena extends Arena{
     public void setOccupied(boolean occupied) {
         super.setOccupied(occupied);
         if(!occupied) {
-            if(border != null) {
+            if(borders != null) {
+                Area border = borders[0];
                 for(int x = border.getLow().getBlockX(); x <= border.getHigh().getBlockX(); x++) {
                     for(int y = border.getLow().getBlockY(); y <= border.getHigh().getBlockY(); y++) {
                         for(int z = border.getLow().getBlockZ(); z <= border.getHigh().getBlockZ(); z++) {
@@ -84,7 +85,7 @@ public class RandomArena extends Arena{
             spawns[0] = data.spawn1;
             spawns[1] = data.spawn2;
             goals[0] = data.goal;
-            border = data.border;
+            borders = data.borders;
             Battle battle = new Battle(this, players);
             battle.start();
             return battle;
@@ -130,7 +131,7 @@ public class RandomArena extends Arena{
         Area goalArea = new Area(goal.clone().add(-0.3, 1, -0.3), goal.clone().add(1.3, 3, 1.3));
         Area border = new Area(locSmallest.add(-3, -3, -3), locHighest.add(3, 3, 3));
         spawn2.setYaw((spawn1.getYaw() + 180) % 360);
-        return new ArenaData(spawn1.clone().add(0, 1.2, 0), spawn2.add(0, 1.2, 0), goalArea, border);
+        return new ArenaData(spawn1.clone().add(0, 1.2, 0), spawn2.add(0, 1.2, 0), goalArea, new Area[]{border});
     }
     
     private static Location getMin(Location a, Location b) {
@@ -248,13 +249,13 @@ public class RandomArena extends Arena{
     private static class ArenaData {
         
         private final Location spawn1, spawn2;
-        private final Area goal, border;
+        private final Area goal, borders[];
         
-        public ArenaData(Location spawn1, Location spawn2, Area goal, Area border) {
+        public ArenaData(Location spawn1, Location spawn2, Area goal, Area[] borders) {
             this.spawn1 = spawn1;
             this.spawn2 = spawn2;
             this.goal = goal;
-            this.border = border;
+            this.borders = borders;
         }
     }
     

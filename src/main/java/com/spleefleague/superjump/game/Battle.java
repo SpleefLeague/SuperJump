@@ -174,6 +174,7 @@ public class Battle {
             slp.addChatChannel(cc.getName());
             p.eject();
             p.teleport(arena.getSpawns()[i]);
+            p.closeInventory();
             p.getInventory().clear();
             p.setScoreboard(scoreboard);
             scoreboard.getObjective("rounds").getScore(sjp.getName()).setScore(data.get(sjp).getFalls());
@@ -336,6 +337,7 @@ public class Battle {
             sp.setIngame(false);
             sp.setFrozen(false);
             sp.setRequestingEndgame(false);
+            sp.getPlayer().closeInventory();
             data.get(sp).restoreOldData();
         }
         sp.getPlayer().setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());    

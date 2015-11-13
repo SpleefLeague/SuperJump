@@ -35,7 +35,7 @@ import org.bukkit.Location;
 public class Arena extends DBEntity implements DBLoadable, DBSaveable, QueueableArena{
     
     @DBLoad(fieldName = "border")
-    private Area border;
+    private Area[] borders;
     @DBLoad(fieldName = "spawns", typeConverter = TypeConverter.LocationConverter.class)
     private Location[] spawns;
     @DBLoad(fieldName = "goals")
@@ -77,8 +77,8 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
         return area;
     }
     
-    public Area getBorder() {
-        return border;
+    public Area[] getBorders() {
+        return borders;
     }
     
     public Location getSpectatorSpawn() {
