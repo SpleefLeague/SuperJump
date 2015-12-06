@@ -14,10 +14,13 @@ import com.spleefleague.core.io.DBSaveable;
 import com.spleefleague.core.io.EntityBuilder;
 import com.spleefleague.core.io.TypeConverter;
 import com.spleefleague.core.player.GeneralPlayer;
+import com.spleefleague.core.player.SLPlayer;
 import com.spleefleague.core.queue.QueueableArena;
 import com.spleefleague.core.utils.Area;
+import com.spleefleague.core.utils.function.Dynamic;
 import com.spleefleague.superjump.SuperJump;
 import com.spleefleague.superjump.player.SJPlayer;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -164,6 +167,33 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
     @Override
     public boolean isInGeneral() {
         return queued;
+    }
+    
+    public Dynamic<List<String>> getDynamicDescription() {
+        return (SLPlayer slp) -> {
+            List<String> description = new ArrayList<>();
+            SJPlayer sjp = SuperJump.getInstance().getPlayerManager().get(slp.getUUID());
+            if(Arena.this.isAvailable(sjp.getUUID())) {
+                if(Arena.this.isPaused()) {
+                    description.add(ChatColor.RED + "This arena is");
+                    description.add(ChatColor.RED + "currently paused.");
+                }
+                else if(Arena.this.isOccupied()) {
+                    Battle battle = SuperJump.getInstance().getBattleManager().getBattle(Arena.this);
+                    description.add(ChatColor.GOLD + battle.getActivePlayers().get(0).getName() + ChatColor.GRAY + ChatColor.ITALIC + " vs. " + ChatColor.RESET + ChatColor.GOLD + battle.getActivePlayers().get(1).getName());
+                    description.add(ChatColor.DARK_GRAY + "" + ChatColor.ITALIC + "Click to spectate");
+                }
+                else {
+                    description.add(ChatColor.GREEN + "Queue: " + Arena.this.getQueueLength() + ChatColor.GRAY + "/" + ChatColor.GREEN + Arena.this.getSize());
+                    description.add(ChatColor.DARK_GRAY + "" + ChatColor.ITALIC + "Click to join the queue");
+                }
+            }
+            else {
+                description.add(ChatColor.RED + "You have not discovered");
+                description.add(ChatColor.RED + "this arena yet.");
+            }
+            return description;
+        };
     }
 
     @Override

@@ -11,9 +11,12 @@ import com.spleefleague.core.chat.ChatChannel;
 import com.spleefleague.core.chat.ChatManager;
 import com.spleefleague.core.chat.Theme;
 import com.spleefleague.core.command.CommandLoader;
+import com.spleefleague.core.menus.InventoryMenuTemplateRepository;
 import com.spleefleague.core.player.PlayerManager;
 import com.spleefleague.core.player.Rank;
 import com.spleefleague.core.plugin.GamePlugin;
+import static com.spleefleague.core.utils.inventorymenu.InventoryMenuAPI.item;
+import com.spleefleague.core.utils.inventorymenu.InventoryMenuTemplateBuilder;
 import com.spleefleague.superjump.game.Arena;
 import com.spleefleague.superjump.game.Battle;
 import com.spleefleague.superjump.game.BattleManager;
@@ -24,6 +27,7 @@ import com.spleefleague.superjump.listener.GameListener;
 import com.spleefleague.superjump.listener.SignListener;
 import com.spleefleague.superjump.player.SJPlayer;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
     
@@ -46,6 +50,7 @@ public class SuperJump extends GamePlugin {
     public void start() {
         instance = this;
         Arena.init();
+        createGameMenu();
         playerManager = new PlayerManager<>(this, SJPlayer.class);
         battleManager = new BattleManager();
         ChatManager.registerChannel(new ChatChannel("GAME_MESSAGE_JUMP_END", "SuperJump game start notifications", Rank.DEFAULT, true));
@@ -207,5 +212,35 @@ public class SuperJump extends GamePlugin {
     
     public boolean queuesOpen() {
         return queuesOpen;
+    }
+    
+    private void createGameMenu() {
+        InventoryMenuTemplateBuilder menu = InventoryMenuTemplateRepository.getNewGamemodeMenu();
+        menu
+                .displayName("SuperJump")
+                .displayIcon(Material.LEATHER_BOOTS)
+                .exitOnClickOutside(true)
+                .visibilityController((slp) -> (queuesOpen));
+        Arena.getAll().stream().forEach((arena) -> {
+            menu.component(item()
+                    .displayName(arena.getName())
+                    .description(arena.getDynamicDescription())
+                    .displayIcon((slp) -> (arena.isAvailable(slp.getUUID()) ? Material.MAP : Material.EMPTY_MAP))
+                    .onClick((event) -> {
+                        SJPlayer sp = getPlayerManager().get(event.getPlayer());
+                        if(arena.isAvailable(sp.getUUID())) {
+                            if(arena.isOccupied()) {
+                                battleManager.getBattle(arena).addSpectator(sp);
+                            }
+                            else {
+                                if(!arena.isPaused()) {
+                                    battleManager.queue(sp, arena);
+                                    event.getItem().getParent().update();
+                                }
+                            }
+                        }
+                    })
+            );
+        });
     }
 }   
