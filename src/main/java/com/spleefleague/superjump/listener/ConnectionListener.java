@@ -5,6 +5,7 @@
  */
 package com.spleefleague.superjump.listener;
 
+import com.spleefleague.core.events.GeneralPlayerLoadedEvent;
 import com.spleefleague.superjump.SuperJump;
 import com.spleefleague.superjump.player.SJPlayer;
 import org.bukkit.Bukkit;
@@ -41,4 +42,11 @@ public class ConnectionListener implements Listener {
             SuperJump.getInstance().getBattleManager().dequeue(sjp);
         }
     }
+    
+//    @EventHandler
+//    public void onJoin(GeneralPlayerLoadedEvent event) {
+//        if(event.getGeneralPlayer() instanceof SJPlayer) {
+//            SuperJump.handleVisibility((SJPlayer) event.getGeneralPlayer());
+//        }
+//    }
 }

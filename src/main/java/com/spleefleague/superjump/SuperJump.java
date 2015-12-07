@@ -38,9 +38,10 @@ import org.bukkit.entity.Player;
 public class SuperJump extends GamePlugin {
     
     private static SuperJump instance;
+    
     private PlayerManager<SJPlayer> playerManager;
     private BattleManager battleManager;
-    private boolean queuesOpen = true;
+    private boolean queuesOpen = true, allowMultipleMatches = true;
     
     public SuperJump() {
         super("[SuperJump]", ChatColor.GRAY + "[" + ChatColor.GOLD + "SuperJump" + ChatColor.GRAY + "]" + ChatColor.RESET);
@@ -203,6 +204,10 @@ public class SuperJump extends GamePlugin {
                 sp.sendMessage(SuperJump.getInstance().getChatPrefix() + " " + Theme.WARNING.buildTheme(false) + "You requested this game to be cancelled.");
             }
         }
+    }
+    
+    public boolean isAllowMultipleMatches() {
+        return allowMultipleMatches;
     }
 
     @Override

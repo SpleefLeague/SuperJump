@@ -15,6 +15,7 @@ import com.spleefleague.core.player.Rank;
 import com.spleefleague.core.player.SLPlayer;
 import com.spleefleague.core.plugin.GamePlugin;
 import com.spleefleague.core.utils.Area;
+import com.spleefleague.core.utils.MultiBlockChangeUtil;
 import com.spleefleague.core.utils.RuntimeCompiler;
 import com.spleefleague.superjump.SuperJump;
 import com.spleefleague.superjump.game.signs.GameSign;
@@ -30,6 +31,7 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
@@ -81,15 +83,23 @@ public class Battle {
     }
     
     public void addSpectator(SJPlayer sp) {
-        spectators.add(sp);
         Location spawn = arena.getSpectatorSpawn();
-        if(spawn == null) {
+        if(spawn != null) {
             sp.getPlayer().teleport(spawn);
         }
         sp.getPlayer().setScoreboard(scoreboard);
         SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(sp.getPlayer());
         slp.setState(PlayerState.SPECTATING);
         slp.addChatChannel(cc.getName());
+        for(SJPlayer sjp : getActivePlayers()) {
+            sjp.getPlayer().showPlayer(sp.getPlayer());
+            sp.getPlayer().showPlayer(sjp.getPlayer());
+        }
+        for(SJPlayer sjp : spectators) {
+            sjp.getPlayer().showPlayer(sp.getPlayer());
+            sp.getPlayer().showPlayer(sjp.getPlayer());
+        }
+        spectators.add(sp);
     }
     
     public boolean isSpectating(SJPlayer sjp) {
@@ -152,6 +162,8 @@ public class Battle {
                 playerNames += ", " + sjp.getName();
             }
             SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(sjp.getPlayer());
+            slp.addChatChannel(cc.getName());
+            slp.setState(PlayerState.INGAME);
             Player p = sjp.getPlayer();
             GamePlugin.dequeueGlobal(p);
             GamePlugin.unspectateGlobal(p);
@@ -171,17 +183,35 @@ public class Battle {
                     p.showPlayer(sjp1.getPlayer());
                 }
             }
-            slp.addChatChannel(cc.getName());
             p.eject();
             p.teleport(arena.getSpawns()[i]);
             p.closeInventory();
             p.getInventory().clear();
             p.setScoreboard(scoreboard);
             scoreboard.getObjective("rounds").getScore(sjp.getName()).setScore(data.get(sjp).getFalls());
-            slp.setState(PlayerState.INGAME);
         }
+        hidePlayers();
         ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), Theme.SUCCESS.buildTheme(false) + "Beginning match on " + ChatColor.WHITE + arena.getName() + ChatColor.GREEN + " between " + ChatColor.RED + playerNames + "!", "GAME_MESSAGE_JUMP_START");
         startCountdown();
+    }
+    
+    private void hidePlayers() {
+        List<SJPlayer> battlePlayers = getActivePlayers();
+        battlePlayers.addAll(spectators);
+        for(SJPlayer sjp : SuperJump.getInstance().getPlayerManager().getAll()) {
+            hidePlayers(sjp);
+        }
+    }
+    
+    private void hidePlayers(SJPlayer target) {
+        List<SJPlayer> battlePlayers = getActivePlayers();
+        battlePlayers.addAll(spectators);
+        for(SJPlayer active : battlePlayers) {
+            if(!battlePlayers.contains(target)) {
+                target.getPlayer().hidePlayer(active.getPlayer());
+                active.getPlayer().hidePlayer(target.getPlayer());
+            }
+        }
     }
     
     private void updateScoreboardTime() {
@@ -197,9 +227,8 @@ public class Battle {
     
     public void startCountdown() {
         inCountdown = true;
+        createSpawnCages();
         for(SJPlayer sjp : getActivePlayers()) {
-            Location spawn = this.data.get(sjp).getSpawn();
-            createSpawnCage(spawn);
             sjp.setFrozen(true);
             sjp.getPlayer().setFireTicks(0);
             sjp.getPlayer().teleport(this.data.get(sjp).getSpawn());
@@ -223,8 +252,8 @@ public class Battle {
             }
             
             public void onDone() {
+                removeSpawnCages();
                 for(SJPlayer sp : getActivePlayers()) {
-                    removeSpawnCage(data.get(sp).getSpawn());
                     sp.setFrozen(false);
                 }
                 inCountdown = false;
@@ -234,30 +263,48 @@ public class Battle {
         startClock();
     }
     
-    private void createSpawnCage(Location s) {
-        modifySpawnCage(s, Material.GLASS);
+    private void createSpawnCages() {
+        MultiBlockChangeUtil.changeBlocks(getSpawnCageBlocks(), Material.GLASS, getPacketRecipients());
     }
-
-    private void removeSpawnCage(Location s) {
-        modifySpawnCage(s, Material.AIR);
+    
+    private void removeSpawnCages() {
+        MultiBlockChangeUtil.changeBlocks(getSpawnCageBlocks(), Material.AIR, getPacketRecipients());
     }
-
-    private void modifySpawnCage(Location s, Material type) {
-        World w = s.getWorld();
-        for (int x = s.getBlockX() - 1; x <= s.getBlockX() + 1; x++) {
-            for (int z = s.getBlockZ() - 1; z <= s.getBlockZ() + 1; z++) {
-                if (x == s.getBlockX() && z == s.getBlockZ()) {
-                    w.getBlockAt(x, s.getBlockY(), z).setType(Material.AIR); //Just in case
-                    w.getBlockAt(x, s.getBlockY() + 1, z).setType(Material.AIR);
-                    w.getBlockAt(x, s.getBlockY() + 2, z).setType(type);
-                } 
-                else {
-                    for (int y = s.getBlockY(); y <= s.getBlockY() + 2; y++) {
-                        w.getBlockAt(x, y, z).setType(type);
+    
+    private Block[] getSpawnCageBlocks() {
+        final ArrayList<Block> blocks = new ArrayList<>();
+        for (SJPlayer sjp : getActivePlayers()) {
+            Location spawn = getData(sjp).getSpawn();
+            blocks.addAll(getCageBlocks(spawn));
+        }
+        return blocks.toArray(new Block[blocks.size()]);
+    }
+    
+    private Player[] getPacketRecipients() {
+        List<Player> players = new ArrayList<>();
+        for(SJPlayer active : getActivePlayers()) {
+            players.add(active.getPlayer());
+        }
+        for(SJPlayer spectator : spectators) {
+            players.add(spectator.getPlayer());
+        }
+        return players.toArray(new Player[players.size()]);
+    }
+    
+    private ArrayList<Block> getCageBlocks(Location loc) {
+        ArrayList<Block> blocks = new ArrayList<>();
+        for (int x = -1; x <= 1; x++) {
+            for (int z = -1; z <= 1; z++) {
+                if (x == 0 && z == 0) {
+                    blocks.add(loc.clone().add(x, 2, z).getBlock());
+                } else {
+                    for (int y = 0; y <= 2; y++) {
+                        blocks.add(loc.clone().add(x, y, z).getBlock());
                     }
                 }
             }
         }
+        return blocks;
     }
     
     private void startClock() {
@@ -333,7 +380,7 @@ public class Battle {
             spectators.remove(sp);
         }
         else {
-            removeSpawnCage(this.getData(sp).getSpawn());
+            MultiBlockChangeUtil.changeBlocks(getCageBlocks(getData(sp).getSpawn()).toArray(new Block[0]), Material.AIR, getPacketRecipients());
             sp.setIngame(false);
             sp.setFrozen(false);
             sp.setRequestingEndgame(false);
@@ -342,8 +389,10 @@ public class Battle {
         }
         sp.getPlayer().setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());    
         sp.getPlayer().teleport(SpleefLeague.getInstance().getSpawnLocation());
-        slp.removeChatChannel(cc.getName());   
+        hidePlayers(sp);
+        slp.removeChatChannel(cc.getName());
         slp.setState(PlayerState.IDLE);
+        slp.resetVisibility();
     }
     
     private void applyRatingChange(SJPlayer winner) {

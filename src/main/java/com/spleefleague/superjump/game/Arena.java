@@ -13,7 +13,6 @@ import com.spleefleague.core.io.DBSave;
 import com.spleefleague.core.io.DBSaveable;
 import com.spleefleague.core.io.EntityBuilder;
 import com.spleefleague.core.io.TypeConverter;
-import com.spleefleague.core.player.GeneralPlayer;
 import com.spleefleague.core.player.SLPlayer;
 import com.spleefleague.core.queue.QueueableArena;
 import com.spleefleague.core.utils.Area;
@@ -107,7 +106,7 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
     
     @Override
     public boolean isOccupied() {
-        return occupied;
+        return occupied && !SuperJump.getInstance().isAllowMultipleMatches();
     }
     
     public void setOccupied(boolean occupied) {
