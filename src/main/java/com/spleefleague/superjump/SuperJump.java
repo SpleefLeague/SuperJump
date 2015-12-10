@@ -24,6 +24,7 @@ import com.spleefleague.superjump.game.signs.GameSign;
 import com.spleefleague.superjump.listener.ConnectionListener;
 import com.spleefleague.superjump.listener.EnvironmentListener;
 import com.spleefleague.superjump.listener.GameListener;
+import com.spleefleague.superjump.listener.PacketListener;
 import com.spleefleague.superjump.listener.SignListener;
 import com.spleefleague.superjump.player.SJPlayer;
 import org.bukkit.ChatColor;
@@ -58,6 +59,7 @@ public class SuperJump extends GamePlugin {
         ChatManager.registerChannel(new ChatChannel("GAME_MESSAGE_JUMP_START", "SuperJump game result messages", Rank.DEFAULT, true));
         ConnectionListener.init();
         GameListener.init();
+        PacketListener.init();
         SignListener.init();
         EnvironmentListener.init();
         GameSign.initialize();
@@ -198,7 +200,7 @@ public class SuperJump extends GamePlugin {
             else {
                 for(SJPlayer spleefplayer : battle.getActivePlayers()) {
                     if(!spleefplayer.isRequestingEndgame()) {
-                        spleefplayer.getPlayer().sendMessage(SuperJump.getInstance().getChatPrefix() + " " + Theme.WARNING.buildTheme(false) + "Your opponent wants to end this game. To agree enter " + ChatColor.YELLOW + "/endgame.");
+                        spleefplayer.sendMessage(SuperJump.getInstance().getChatPrefix() + " " + Theme.WARNING.buildTheme(false) + "Your opponent wants to end this game. To agree enter " + ChatColor.YELLOW + "/endgame.");
                     }
                 }
                 sp.sendMessage(SuperJump.getInstance().getChatPrefix() + " " + Theme.WARNING.buildTheme(false) + "You requested this game to be cancelled.");
@@ -230,10 +232,10 @@ public class SuperJump extends GamePlugin {
             menu.component(item()
                     .displayName(arena.getName())
                     .description(arena.getDynamicDescription())
-                    .displayIcon((slp) -> (arena.isAvailable(slp.getUUID()) ? Material.MAP : Material.EMPTY_MAP))
+                    .displayIcon((slp) -> (arena.isAvailable(slp.getUniqueId()) ? Material.MAP : Material.EMPTY_MAP))
                     .onClick((event) -> {
                         SJPlayer sp = getPlayerManager().get(event.getPlayer());
-                        if(arena.isAvailable(sp.getUUID())) {
+                        if(arena.isAvailable(sp.getUniqueId())) {
                             if(arena.isOccupied()) {
                                 battleManager.getBattle(arena).addSpectator(sp);
                             }

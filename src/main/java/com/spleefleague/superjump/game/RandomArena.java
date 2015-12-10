@@ -28,6 +28,7 @@ public class RandomArena extends Arena{
     private Location[] spawns;
     private Area[] goals;
     private Area[] borders;
+    private boolean occupied = false;
     
     public RandomArena() {
         super();
@@ -60,8 +61,13 @@ public class RandomArena extends Arena{
     }
     
     @Override
+    public boolean isOccupied() {
+        return occupied;
+    }
+    
+    @Override
     public void setOccupied(boolean occupied) {
-        super.setOccupied(occupied);
+        this.occupied = occupied;
         if(!occupied) {
             if(borders != null) {
                 Area border = borders[0];
