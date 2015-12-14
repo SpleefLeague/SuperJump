@@ -5,19 +5,20 @@
  */
 package com.spleefleague.superjump.game;
 
-import com.comphenix.packetwrapper.WrapperPlayServerMapChunk;
 import com.spleefleague.core.SpleefLeague;
 import com.spleefleague.core.chat.ChatChannel;
 import com.spleefleague.core.chat.ChatManager;
 import com.spleefleague.core.chat.Theme;
 import com.spleefleague.core.io.EntityBuilder;
+import com.spleefleague.core.listeners.FakeBlockHandler;
+import com.spleefleague.core.player.GeneralPlayer;
 import com.spleefleague.core.player.PlayerState;
 import com.spleefleague.core.player.Rank;
 import com.spleefleague.core.player.SLPlayer;
 import com.spleefleague.core.plugin.GamePlugin;
 import com.spleefleague.core.utils.Area;
+import com.spleefleague.core.utils.FakeArea;
 import com.spleefleague.core.utils.FakeBlock;
-import com.spleefleague.core.utils.MultiBlockChangeUtil;
 import com.spleefleague.core.utils.RuntimeCompiler;
 import com.spleefleague.superjump.SuperJump;
 import com.spleefleague.superjump.game.signs.GameSign;
@@ -25,19 +26,13 @@ import com.spleefleague.superjump.player.SJPlayer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import net.minecraft.server.v1_8_R3.Chunk;
-import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.block.Block;
-import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
@@ -54,11 +49,11 @@ import org.bukkit.scoreboard.Scoreboard;
 public class Battle {
     
     private final Arena arena;
+    private final FakeArea fakeBlocks;
     private final List<SJPlayer> players; //MIGHT CONTAIN PLAYERS WHICH LEFT THE GAME. USE getActivePlayers() FOR ACTIVE PLAYERS INSTEAD
     private final HashMap<SJPlayer, PlayerData> data;
     private final List<SJPlayer> spectators;
     private final ChatChannel cc;
-    private final Collection<FakeBlock> fakeBlocks;
     private int ticksPassed = 0;
     private BukkitRunnable clock;
     private Scoreboard scoreboard;
@@ -70,7 +65,7 @@ public class Battle {
         this.players = players;
         this.spectators = new ArrayList<>();
         this.data = new HashMap<>(); 
-        this.fakeBlocks = new HashSet<>();
+        this.fakeBlocks = new FakeArea();
         this.cc = new ChatChannel("GAMECHANNEL" + this.hashCode(), "GAMECHANNEL" + this.hashCode(), Rank.DEFAULT, false, true);
     }
     
@@ -97,6 +92,7 @@ public class Battle {
         }
         sp.setScoreboard(scoreboard);
         SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(sp.getPlayer());
+        FakeBlockHandler.addArea(fakeBlocks, sp.getPlayer());
         slp.setState(PlayerState.SPECTATING);
         slp.addChatChannel(cc.getName());
         for(SJPlayer sjp : getActivePlayers()) {
@@ -107,8 +103,6 @@ public class Battle {
             sjp.showPlayer(sp);
             sp.showPlayer(sjp);
         }
-//        MultiBlockChangeUtil.preloadChunks(fakeBlocks.toArray(new FakeBlock[fakeBlocks.size()]), sp.getPlayer());
-        MultiBlockChangeUtil.changeBlocks(fakeBlocks.toArray(new FakeBlock[fakeBlocks.size()]), sp.getPlayer());
         spectators.add(sp);
     }
     
@@ -160,6 +154,7 @@ public class Battle {
         objective.setDisplaySlot(DisplaySlot.SIDEBAR);
         objective.setDisplayName(ChatColor.GRAY + "0:0:0 | " + ChatColor.RED + "Times Fallen:");
         String playerNames = "";
+        FakeBlockHandler.addArea(fakeBlocks, GeneralPlayer.toBukkitPlayer(players.toArray(new SJPlayer[players.size()])));
         for(int i = 0; i < players.size(); i++) {
             SJPlayer sjp = players.get(i);
             if(i == 0) {
@@ -238,15 +233,8 @@ public class Battle {
     
     public void startCountdown() {
         inCountdown = true;
-        Player[] bPlayers = new Player[players.size()];
-        for(int i = 0; i < players.size(); i++) {
-            bPlayers[i] = players.get(i).getPlayer();
-        }
-//        MultiBlockChangeUtil.preloadChunks(fakeBlocks.toArray(new FakeBlock[fakeBlocks.size()]), bPlayers);
-        
         createSpawnCages();
         for(SJPlayer sjp : getActivePlayers()) {
-//            getData(sjp).setChunksPreloaded(true);
             sjp.setFrozen(true);
             sjp.setFireTicks(0);
             sjp.teleport(this.data.get(sjp).getSpawn());
@@ -261,7 +249,7 @@ public class Battle {
                     secondsLeft--;
                 } else {
                     ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), "GO!", cc.getName());
-                    for (SJPlayer sp : getActivePlayers()) {
+                    for(SJPlayer sp : getActivePlayers()) {
                         sp.setFrozen(false);
                     }
                     onDone();
@@ -282,53 +270,40 @@ public class Battle {
     }
     
     private void createSpawnCages() {
-        Block[] blocks = getSpawnCageBlocks();
-        for(Block block : blocks) {
-            fakeBlocks.add(new FakeBlock(block.getLocation(), Material.GLASS));
-        }
-        MultiBlockChangeUtil.changeBlocks(blocks, Material.GLASS, getPacketRecipients());
+        fakeBlocks.clear();
+        fakeBlocks.add(getSpawnCageBlocks(Material.GLASS));
+        FakeBlockHandler.update(fakeBlocks);
     }
     
     private void removeSpawnCages() {
-        Block[] blocks = getSpawnCageBlocks();
         fakeBlocks.clear();
-        MultiBlockChangeUtil.changeBlocks(getSpawnCageBlocks(), Material.AIR, getPacketRecipients());
+        fakeBlocks.add(getSpawnCageBlocks(Material.AIR));
+        FakeBlockHandler.update(fakeBlocks);
     }
     
-    private Block[] getSpawnCageBlocks() {
-        final ArrayList<Block> blocks = new ArrayList<>();
-        for (SJPlayer sjp : getActivePlayers()) {
-            Location spawn = getData(sjp).getSpawn();
-            blocks.addAll(getCageBlocks(spawn));
+    private FakeArea getSpawnCageBlocks(Material m) {
+        FakeArea area = new FakeArea();
+        for(Location spawn : arena.getSpawns()) {
+            area.add(getCageBlocks(spawn, m));
         }
-        return blocks.toArray(new Block[blocks.size()]);
+        return area;
     }
     
-    private Player[] getPacketRecipients() {
-        List<Player> players = new ArrayList<>();
-        for(SJPlayer active : getActivePlayers()) {
-            players.add(active.getPlayer());
-        }
-        for(SJPlayer spectator : spectators) {
-            players.add(spectator.getPlayer());
-        }
-        return players.toArray(new Player[players.size()]);
-    }
-    
-    private ArrayList<Block> getCageBlocks(Location loc) {
-        ArrayList<Block> blocks = new ArrayList<>();
+    private FakeArea getCageBlocks(Location loc, Material m) {
+        loc = loc.getBlock().getLocation();
+        FakeArea area = new FakeArea();
         for (int x = -1; x <= 1; x++) {
             for (int z = -1; z <= 1; z++) {
                 if (x == 0 && z == 0) {
-                    blocks.add(loc.clone().add(x, 2, z).getBlock());
+                    area.addBlock(new FakeBlock(loc.clone().add(x, 2, z), m));
                 } else {
                     for (int y = 0; y <= 2; y++) {
-                        blocks.add(loc.clone().add(x, y, z).getBlock());
+                        area.addBlock(new FakeBlock(loc.clone().add(x, y, z), m));
                     }
                 }
             }
         }
-        return blocks;
+        return area;
     }
     
     private void startClock() {
@@ -400,11 +375,11 @@ public class Battle {
     
     private void resetPlayer(SJPlayer sp) {
         SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(sp.getPlayer());
+        FakeBlockHandler.removeArea(fakeBlocks, slp.getPlayer());
         if(spectators.contains(sp)) {
             spectators.remove(sp);
         }
         else {
-            MultiBlockChangeUtil.changeBlocks(getCageBlocks(getData(sp).getSpawn()).toArray(new Block[0]), Material.AIR, getPacketRecipients());
             sp.setIngame(false);
             sp.setFrozen(false);
             sp.setRequestingEndgame(false);
@@ -449,17 +424,9 @@ public class Battle {
         scoreboard.getObjective("rounds").getScore(sjp.getName()).setScore(data.get(sjp).getFalls()); 
     }
     
-    public Collection<FakeBlock> getUsedBlocks() {
-        return fakeBlocks;
-    }
-    
     public PlayerData getData(SJPlayer sjp) {
         return this.data.get(sjp);
     }
-    
-//    public Chunk getFakeBlockChunks() {
-//        WrapperPlayServerMapChunk  packet = new WrapperPlayServerMapChunk(event.getPacket());
-//    }
     
     protected int getDuration() {
         return ticksPassed;
@@ -473,14 +440,12 @@ public class Battle {
         private final Area goal;
         private final GameMode oldGamemode;
         private final ItemStack[] oldInventory;
-        private boolean chunksPreloaded;
         
         public PlayerData(SJPlayer sjp, Location spawn, Area goal) {
             this.sjp = sjp;
             this.spawn = spawn;
             this.falls = 0;
             this.goal = goal;
-            this.chunksPreloaded = false;
             Player p = sjp.getPlayer();
             oldGamemode = p.getGameMode();
             oldInventory = p.getInventory().getContents();
@@ -504,14 +469,6 @@ public class Battle {
         
         public SJPlayer getPlayer() {
             return sjp;
-        }
-        
-        public boolean areChunksPreloaded() {
-            return chunksPreloaded;
-        }
-        
-        public void setChunksPreloaded(boolean chunksPreloaded) {
-            this.chunksPreloaded = chunksPreloaded;
         }
         
         public void restoreOldData() {

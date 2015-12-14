@@ -24,7 +24,6 @@ import com.spleefleague.superjump.game.signs.GameSign;
 import com.spleefleague.superjump.listener.ConnectionListener;
 import com.spleefleague.superjump.listener.EnvironmentListener;
 import com.spleefleague.superjump.listener.GameListener;
-import com.spleefleague.superjump.listener.PacketListener;
 import com.spleefleague.superjump.listener.SignListener;
 import com.spleefleague.superjump.player.SJPlayer;
 import org.bukkit.ChatColor;
@@ -59,7 +58,6 @@ public class SuperJump extends GamePlugin {
         ChatManager.registerChannel(new ChatChannel("GAME_MESSAGE_JUMP_START", "SuperJump game result messages", Rank.DEFAULT, true));
         ConnectionListener.init();
         GameListener.init();
-        PacketListener.init();
         SignListener.init();
         EnvironmentListener.init();
         GameSign.initialize();
