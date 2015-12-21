@@ -12,6 +12,7 @@ import com.spleefleague.core.chat.ChatManager;
 import com.spleefleague.core.chat.Theme;
 import com.spleefleague.core.command.CommandLoader;
 import com.spleefleague.core.menus.InventoryMenuTemplateRepository;
+import com.spleefleague.core.menus.SLMenu;
 import com.spleefleague.core.player.PlayerManager;
 import com.spleefleague.core.player.Rank;
 import com.spleefleague.core.plugin.GamePlugin;
@@ -41,7 +42,8 @@ public class SuperJump extends GamePlugin {
     
     private PlayerManager<SJPlayer> playerManager;
     private BattleManager battleManager;
-    private boolean queuesOpen = true, allowMultipleMatches = true;
+    private boolean queuesOpen = true;
+    private ChatChannel start, end;
     
     public SuperJump() {
         super("[SuperJump]", ChatColor.GRAY + "[" + ChatColor.GOLD + "SuperJump" + ChatColor.GRAY + "]" + ChatColor.RESET);
@@ -54,8 +56,8 @@ public class SuperJump extends GamePlugin {
         createGameMenu();
         playerManager = new PlayerManager<>(this, SJPlayer.class);
         battleManager = new BattleManager();
-        ChatManager.registerChannel(new ChatChannel("GAME_MESSAGE_JUMP_END", "SuperJump game start notifications", Rank.DEFAULT, true));
-        ChatManager.registerChannel(new ChatChannel("GAME_MESSAGE_JUMP_START", "SuperJump game result messages", Rank.DEFAULT, true));
+        start = ChatChannel.valueOf("GAME_MESSAGE_SUPERJUMP_START");
+        end = ChatChannel.valueOf("GAME_MESSAGE_SUPERJUMP_END");
         ConnectionListener.init();
         GameListener.init();
         SignListener.init();
@@ -136,7 +138,7 @@ public class SuperJump extends GamePlugin {
         Battle battle = getBattleManager().getBattle(sjp);
         if(battle != null) {
             battle.cancel();    
-            ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix() + Theme.SUPER_SECRET.buildTheme(false) + " The battle on " + battle.getArena().getName() + " has been cancelled.", "STAFF");
+            ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix() + Theme.SUPER_SECRET.buildTheme(false) + " The battle on " + battle.getArena().getName() + " has been cancelled.", ChatChannel.STAFF_NOTIFICATIONS);
         }
     }
 
@@ -205,10 +207,6 @@ public class SuperJump extends GamePlugin {
             }
         }
     }
-    
-    public boolean isAllowMultipleMatches() {
-        return allowMultipleMatches;
-    }
 
     @Override
     public void setQueueStatus(boolean open) {
@@ -219,9 +217,16 @@ public class SuperJump extends GamePlugin {
         return queuesOpen;
     }
     
+    public ChatChannel getStartMessageChannel() {
+        return start;
+    }
+    
+    public ChatChannel getEndMessageChannel() {
+        return end;
+    }
+    
     private void createGameMenu() {
-        InventoryMenuTemplateBuilder menu = InventoryMenuTemplateRepository.getNewGamemodeMenu();
-        menu
+        InventoryMenuTemplateBuilder menu = SLMenu.getNewGamemodeMenu()
                 .displayName("SuperJump")
                 .displayIcon(Material.LEATHER_BOOTS)
                 .exitOnClickOutside(true)
@@ -233,12 +238,12 @@ public class SuperJump extends GamePlugin {
                     .displayIcon((slp) -> (arena.isAvailable(slp.getUniqueId()) ? Material.MAP : Material.EMPTY_MAP))
                     .onClick((event) -> {
                         SJPlayer sp = getPlayerManager().get(event.getPlayer());
-                        if(arena.isAvailable(sp.getUniqueId())) {
-                            if(arena.isOccupied()) {
+                        if (arena.isAvailable(sp.getUniqueId())) {
+                            if (arena.isOccupied()) {
                                 battleManager.getBattle(arena).addSpectator(sp);
                             }
                             else {
-                                if(!arena.isPaused()) {
+                                if (!arena.isPaused()) {
                                     battleManager.queue(sp, arena);
                                     event.getItem().getParent().update();
                                 }

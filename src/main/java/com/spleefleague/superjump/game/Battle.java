@@ -11,6 +11,7 @@ import com.spleefleague.core.chat.ChatManager;
 import com.spleefleague.core.chat.Theme;
 import com.spleefleague.core.io.EntityBuilder;
 import com.spleefleague.core.listeners.FakeBlockHandler;
+import com.spleefleague.core.listeners.VisibilityHandler;
 import com.spleefleague.core.player.GeneralPlayer;
 import com.spleefleague.core.player.PlayerState;
 import com.spleefleague.core.player.Rank;
@@ -66,7 +67,7 @@ public class Battle {
         this.spectators = new ArrayList<>();
         this.data = new HashMap<>(); 
         this.fakeBlocks = new FakeArea();
-        this.cc = new ChatChannel("GAMECHANNEL" + this.hashCode(), "GAMECHANNEL" + this.hashCode(), Rank.DEFAULT, false, true);
+        this.cc = ChatChannel.createTemporaryChannel("GAMECHANNEL" + this.hashCode(), null, Rank.DEFAULT, false, false);
     }
     
     public Arena getArena() {
@@ -94,16 +95,17 @@ public class Battle {
         SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(sp.getPlayer());
         FakeBlockHandler.addArea(fakeBlocks, sp.getPlayer());
         slp.setState(PlayerState.SPECTATING);
-        slp.addChatChannel(cc.getName());
+        slp.addChatChannel(cc);
         for(SJPlayer sjp : getActivePlayers()) {
-            sjp.showPlayer(sp);
-            sp.showPlayer(sjp);
+            sjp.showPlayerEntity(sp);
+            sp.showPlayerEntity(sjp);
         }
         for(SJPlayer sjp : spectators) {
-            sjp.showPlayer(sp);
-            sp.showPlayer(sjp);
+            sjp.showPlayerEntity(sp);
+            sp.showPlayerEntity(sjp);
         }
         spectators.add(sp);
+        hidePlayers(sp);
     }
     
     public boolean isSpectating(SJPlayer sjp) {
@@ -167,7 +169,7 @@ public class Battle {
                 playerNames += ", " + sjp.getName();
             }
             SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(sjp.getPlayer());
-            slp.addChatChannel(cc.getName());
+            slp.addChatChannel(cc);
             slp.setState(PlayerState.INGAME);
             Player p = sjp.getPlayer();
             GamePlugin.dequeueGlobal(p);
@@ -186,7 +188,7 @@ public class Battle {
             }
             for(SJPlayer sjp1 : players) {
                 if(sjp != sjp1) {
-                    p.showPlayer(sjp1.getPlayer());
+                    sjp.showPlayerEntity(sjp1.getPlayer());
                 }
             }
             p.eject();
@@ -197,7 +199,7 @@ public class Battle {
             scoreboard.getObjective("rounds").getScore(sjp.getName()).setScore(pdata.getFalls());
         }
         hidePlayers();
-        ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), Theme.SUCCESS.buildTheme(false) + "Beginning match on " + ChatColor.WHITE + arena.getName() + ChatColor.GREEN + " between " + ChatColor.RED + playerNames + "!", "GAME_MESSAGE_JUMP_START");
+        ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), Theme.SUCCESS.buildTheme(false) + "Beginning match on " + ChatColor.WHITE + arena.getName() + ChatColor.GREEN + " between " + ChatColor.RED + playerNames + "!", SuperJump.getInstance().getStartMessageChannel());
         startCountdown();
     }
     
@@ -214,8 +216,8 @@ public class Battle {
         battlePlayers.addAll(spectators);
         for(SJPlayer active : battlePlayers) {
             if(!battlePlayers.contains(target)) {
-                target.hidePlayer(active);
-                active.hidePlayer(target);
+                target.hidePlayerEntity(active);
+                active.hidePlayerEntity(target);
             }
         }
     }
@@ -245,10 +247,10 @@ public class Battle {
             @Override
             public void run() {
                 if (secondsLeft > 0) {
-                    ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), secondsLeft + "...", cc.getName());
+                    ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), secondsLeft + "...", cc);
                     secondsLeft--;
                 } else {
-                    ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), "GO!", cc.getName());
+                    ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), "GO!", cc);
                     for(SJPlayer sp : getActivePlayers()) {
                         sp.setFrozen(false);
                     }
@@ -327,7 +329,7 @@ public class Battle {
         isOver = true;
         saveGameHistory(null);
         if(moderator) {
-            ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), Theme.INCOGNITO.buildTheme(false) + "The battle has been cancelled by a moderator.", cc.getName());
+            ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), Theme.INCOGNITO.buildTheme(false) + "The battle has been cancelled by a moderator.", cc);
         }
         for (SJPlayer sjp : getActivePlayers()) {
             resetPlayer(sjp);
@@ -389,7 +391,7 @@ public class Battle {
         sp.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());    
         sp.teleport(SpleefLeague.getInstance().getSpawnLocation());
         hidePlayers(sp);
-        slp.removeChatChannel(cc.getName());
+        slp.removeChatChannel(cc);
         slp.setState(PlayerState.IDLE);
         slp.resetVisibility();
     }
@@ -412,7 +414,7 @@ public class Battle {
         }
         winner.setRating(winner.getRating() + winnerPoints);
         playerList += ChatColor.RED + winner.getName() + ChatColor.WHITE + " (" + winner.getRating() + ")" + ChatColor.GREEN + " gets " + ChatColor.GRAY + winnerPoints + ChatColor.WHITE + " points. ";
-        ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), ChatColor.GREEN + "Game in arena " + ChatColor.WHITE + arena.getName() + ChatColor.GREEN + " is over. " + playerList, "GAME_MESSAGE_JUMP_END");
+        ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), ChatColor.GREEN + "Game in arena " + ChatColor.WHITE + arena.getName() + ChatColor.GREEN + " is over. " + playerList, SuperJump.getInstance().getEndMessageChannel());
     }
 
     public void onArenaLeave(SJPlayer sjp) {

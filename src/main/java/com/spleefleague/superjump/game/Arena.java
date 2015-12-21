@@ -106,7 +106,7 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
     
     @Override
     public boolean isOccupied() {
-        return occupied && !SuperJump.getInstance().isAllowMultipleMatches();
+        return false;
     }
     
     public void setOccupied(boolean occupied) {
