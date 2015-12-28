@@ -11,7 +11,6 @@ import com.spleefleague.core.chat.ChatManager;
 import com.spleefleague.core.chat.Theme;
 import com.spleefleague.core.io.EntityBuilder;
 import com.spleefleague.core.listeners.FakeBlockHandler;
-import com.spleefleague.core.listeners.VisibilityHandler;
 import com.spleefleague.core.player.GeneralPlayer;
 import com.spleefleague.core.player.PlayerState;
 import com.spleefleague.core.player.Rank;
