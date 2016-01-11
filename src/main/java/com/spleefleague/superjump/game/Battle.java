@@ -46,7 +46,7 @@ import org.bukkit.scoreboard.Scoreboard;
  *
  * @author Jonas
  */
-public class Battle {
+public class Battle implements com.spleefleague.core.queue.Battle<Arena, SJPlayer> {
     
     private final Arena arena;
     private final FakeArea fakeBlocks;
@@ -69,6 +69,7 @@ public class Battle {
         this.cc = ChatChannel.createTemporaryChannel("GAMECHANNEL" + this.hashCode(), null, Rank.DEFAULT, false, false);
     }
     
+    @Override
     public Arena getArena() {
         return arena;
     }
@@ -96,12 +97,12 @@ public class Battle {
         slp.setState(PlayerState.SPECTATING);
         slp.addChatChannel(cc);
         for(SJPlayer sjp : getActivePlayers()) {
-            sjp.showPlayerEntity(sp);
-            sp.showPlayerEntity(sjp);
+            sjp.showPlayer(sp.getPlayer());
+            sp.showPlayer(sjp.getPlayer());
         }
         for(SJPlayer sjp : spectators) {
-            sjp.showPlayerEntity(sp);
-            sp.showPlayerEntity(sjp);
+            sjp.showPlayer(sp.getPlayer());
+            sp.showPlayer(sjp.getPlayer());
         }
         spectators.add(sp);
         hidePlayers(sp);
@@ -128,6 +129,7 @@ public class Battle {
         }
     }
     
+    @Override
     public ArrayList<SJPlayer> getActivePlayers() {
         ArrayList<SJPlayer> active = new ArrayList<>();
         for(SJPlayer sjp : players) {
@@ -146,7 +148,7 @@ public class Battle {
         if(arena.getStartDebugger() != null) {
             RuntimeCompiler.debugFromHastebin(arena.getStartDebugger());
         }
-        arena.setOccupied(true);
+        arena.registerGameStart();
         GameSign.updateGameSigns(arena);
         ChatManager.registerChannel(cc);
         SuperJump.getInstance().getBattleManager().add(this);
@@ -187,7 +189,7 @@ public class Battle {
             }
             for(SJPlayer sjp1 : players) {
                 if(sjp != sjp1) {
-                    sjp.showPlayerEntity(sjp1.getPlayer());
+                    sjp.showPlayer(sjp1.getPlayer());
                 }
             }
             p.eject();
@@ -215,8 +217,8 @@ public class Battle {
         battlePlayers.addAll(spectators);
         for(SJPlayer active : battlePlayers) {
             if(!battlePlayers.contains(target)) {
-                target.hidePlayerEntity(active);
-                active.hidePlayerEntity(target);
+                target.hidePlayer(active.getPlayer());
+                active.hidePlayer(target.getPlayer());
             }
         }
     }
@@ -342,7 +344,7 @@ public class Battle {
     private void cleanup() {
         isOver = true;
         clock.cancel();
-        arena.setOccupied(false);
+        arena.registerGameEnd();
         SuperJump.getInstance().getBattleManager().remove(this);
         ChatManager.unregisterChannel(cc);
         GameSign.updateGameSigns();

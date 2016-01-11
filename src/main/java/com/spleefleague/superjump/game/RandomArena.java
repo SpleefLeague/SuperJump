@@ -62,20 +62,18 @@ public class RandomArena extends Arena{
     
     @Override
     public boolean isOccupied() {
-        return occupied;
+        return super.getRunningGamesCount() > 0;
     }
     
     @Override
-    public void setOccupied(boolean occupied) {
-        this.occupied = occupied;
-        if(!occupied) {
-            if(borders != null) {
-                Area border = borders[0];
-                for(int x = border.getLow().getBlockX(); x <= border.getHigh().getBlockX(); x++) {
-                    for(int y = border.getLow().getBlockY(); y <= border.getHigh().getBlockY(); y++) {
-                        for(int z = border.getLow().getBlockZ(); z <= border.getHigh().getBlockZ(); z++) {
-                            SpleefLeague.DEFAULT_WORLD.getBlockAt(x, y, z).setType(Material.AIR);
-                        }
+    public void registerGameEnd() {
+        super.registerGameEnd();
+        if(borders != null) {
+            Area border = borders[0];
+            for(int x = border.getLow().getBlockX(); x <= border.getHigh().getBlockX(); x++) {
+                for(int y = border.getLow().getBlockY(); y <= border.getHigh().getBlockY(); y++) {
+                    for(int z = border.getLow().getBlockZ(); z <= border.getHigh().getBlockZ(); z++) {
+                        SpleefLeague.DEFAULT_WORLD.getBlockAt(x, y, z).setType(Material.AIR);
                     }
                 }
             }

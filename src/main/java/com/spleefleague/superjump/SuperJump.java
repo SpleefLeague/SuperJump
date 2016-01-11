@@ -11,22 +11,22 @@ import com.spleefleague.core.chat.ChatChannel;
 import com.spleefleague.core.chat.ChatManager;
 import com.spleefleague.core.chat.Theme;
 import com.spleefleague.core.command.CommandLoader;
-import com.spleefleague.core.menus.InventoryMenuTemplateRepository;
 import com.spleefleague.core.menus.SLMenu;
 import com.spleefleague.core.player.PlayerManager;
-import com.spleefleague.core.player.Rank;
 import com.spleefleague.core.plugin.GamePlugin;
 import static com.spleefleague.core.utils.inventorymenu.InventoryMenuAPI.item;
 import com.spleefleague.core.utils.inventorymenu.InventoryMenuTemplateBuilder;
 import com.spleefleague.superjump.game.Arena;
 import com.spleefleague.superjump.game.Battle;
-import com.spleefleague.superjump.game.BattleManager;
+import com.spleefleague.core.queue.BattleManager;
 import com.spleefleague.superjump.game.signs.GameSign;
 import com.spleefleague.superjump.listener.ConnectionListener;
 import com.spleefleague.superjump.listener.EnvironmentListener;
 import com.spleefleague.superjump.listener.GameListener;
 import com.spleefleague.superjump.listener.SignListener;
 import com.spleefleague.superjump.player.SJPlayer;
+import java.util.ArrayList;
+import java.util.List;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -41,7 +41,7 @@ public class SuperJump extends GamePlugin {
     private static SuperJump instance;
     
     private PlayerManager<SJPlayer> playerManager;
-    private BattleManager battleManager;
+    private BattleManager<Arena, SJPlayer, Battle> battleManager;
     private boolean queuesOpen = true;
     private ChatChannel start, end;
     
@@ -52,10 +52,15 @@ public class SuperJump extends GamePlugin {
     @Override
     public void start() {
         instance = this;
+        playerManager = new PlayerManager<>(this, SJPlayer.class);
+        battleManager = new BattleManager<Arena, SJPlayer, Battle>() {
+            @Override
+            public void startBattle(Arena queue, List<SJPlayer> players) {
+                queue.startBattle(players);
+            }
+        };
         Arena.init();
         createGameMenu();
-        playerManager = new PlayerManager<>(this, SJPlayer.class);
-        battleManager = new BattleManager();
         start = ChatChannel.valueOf("GAME_MESSAGE_SUPERJUMP_START");
         end = ChatChannel.valueOf("GAME_MESSAGE_SUPERJUMP_END");
         ConnectionListener.init();
@@ -83,7 +88,7 @@ public class SuperJump extends GamePlugin {
         return playerManager;
     }
     
-    public BattleManager getBattleManager() {
+    public BattleManager<Arena, SJPlayer, Battle> getBattleManager() {
         return battleManager;
     }
     
@@ -168,7 +173,7 @@ public class SuperJump extends GamePlugin {
    
     @Override
     public void cancelAll() {
-        for(Battle battle : battleManager.getAll()) {
+        for(Battle battle : new ArrayList<>(battleManager.getAll())) {
             battle.cancel();
         }
     }
@@ -235,10 +240,10 @@ public class SuperJump extends GamePlugin {
             menu.component(item()
                     .displayName(arena.getName())
                     .description(arena.getDynamicDescription())
-                    .displayIcon((slp) -> (arena.isAvailable(slp.getUniqueId()) ? Material.MAP : Material.EMPTY_MAP))
+                    .displayIcon((slp) -> (arena.isAvailable(playerManager.get(slp)) ? Material.MAP : Material.EMPTY_MAP))
                     .onClick((event) -> {
                         SJPlayer sp = getPlayerManager().get(event.getPlayer());
-                        if (arena.isAvailable(sp.getUniqueId())) {
+                        if (arena.isAvailable(sp)) {
                             if (arena.isOccupied()) {
                                 battleManager.getBattle(arena).addSpectator(sp);
                             }
