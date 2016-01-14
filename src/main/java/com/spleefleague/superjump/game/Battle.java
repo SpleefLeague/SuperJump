@@ -96,12 +96,12 @@ public class Battle {
         slp.setState(PlayerState.SPECTATING);
         slp.addChatChannel(cc);
         for(SJPlayer sjp : getActivePlayers()) {
-            sjp.showPlayerEntity(sp);
-            sp.showPlayerEntity(sjp);
+            sjp.showPlayer(sp);
+            sp.showPlayer(sjp);
         }
         for(SJPlayer sjp : spectators) {
-            sjp.showPlayerEntity(sp);
-            sp.showPlayerEntity(sjp);
+            sjp.showPlayer(sp);
+            sp.showPlayer(sjp);
         }
         spectators.add(sp);
         hidePlayers(sp);
@@ -187,7 +187,7 @@ public class Battle {
             }
             for(SJPlayer sjp1 : players) {
                 if(sjp != sjp1) {
-                    sjp.showPlayerEntity(sjp1.getPlayer());
+                    sjp.showPlayer(sjp1.getPlayer());
                 }
             }
             p.eject();
@@ -215,8 +215,8 @@ public class Battle {
         battlePlayers.addAll(spectators);
         for(SJPlayer active : battlePlayers) {
             if(!battlePlayers.contains(target)) {
-                target.hidePlayerEntity(active);
-                active.hidePlayerEntity(target);
+                target.hidePlayer(active);
+                active.hidePlayer(target);
             }
         }
     }
