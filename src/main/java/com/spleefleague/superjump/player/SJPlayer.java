@@ -9,7 +9,6 @@ import com.spleefleague.core.io.DBLoad;
 import com.spleefleague.core.io.DBSave;
 import com.spleefleague.core.io.Settings;
 import com.spleefleague.core.player.GeneralPlayer;
-import com.spleefleague.core.queue.RatedPlayer;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -23,7 +22,7 @@ import org.bson.Document;
  *
  * @author Jonas
  */
-public class SJPlayer extends GeneralPlayer implements RatedPlayer {
+public class SJPlayer extends GeneralPlayer {
     
     private int rating;
     private boolean ingame, frozen, requestingEndgame;
@@ -38,7 +37,6 @@ public class SJPlayer extends GeneralPlayer implements RatedPlayer {
         this.rating = (rating > 0) ? rating : 0;
     }
     
-    @Override
     @DBSave(fieldName = "rating")
     public int getRating() {
         return rating;

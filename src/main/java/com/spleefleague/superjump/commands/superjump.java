@@ -13,7 +13,7 @@ import com.spleefleague.core.plugin.CorePlugin;
 import com.spleefleague.core.plugin.GamePlugin;
 import com.spleefleague.superjump.SuperJump;
 import com.spleefleague.superjump.game.Arena;
-import com.spleefleague.core.queue.BattleManager;
+import com.spleefleague.superjump.game.BattleManager;
 import com.spleefleague.superjump.game.signs.GameSign;
 import com.spleefleague.superjump.player.SJPlayer;
 import java.util.ArrayList;

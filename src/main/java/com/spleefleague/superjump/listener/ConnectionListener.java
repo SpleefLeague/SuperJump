@@ -5,6 +5,7 @@
  */
 package com.spleefleague.superjump.listener;
 
+import com.spleefleague.core.events.GeneralPlayerLoadedEvent;
 import com.spleefleague.superjump.SuperJump;
 import com.spleefleague.superjump.player.SJPlayer;
 import org.bukkit.Bukkit;

@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.bson.Document;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -33,7 +34,7 @@ import org.bukkit.Location;
  *
  * @author Jonas
  */
-public class Arena extends DBEntity implements DBLoadable, DBSaveable, QueueableArena<SJPlayer>{
+public class Arena extends DBEntity implements DBLoadable, DBSaveable, QueueableArena{
     
     @DBLoad(fieldName = "border")
     private Area[] borders;
@@ -64,7 +65,7 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
     private String debuggerStart;
     @DBLoad(fieldName = "debuggerEnd")
     private String debuggerEnd;
-    private int runningGames = 0;
+    private boolean occupied = false;
     
     public Location[] getSpawns() {
         return spawns;
@@ -108,16 +109,8 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
         return false;
     }
     
-    public int getRunningGamesCount() {
-        return runningGames;
-    }
-    
-    public void registerGameStart() {
-        runningGames++;
-    }
-    
-    public void registerGameEnd() {
-        runningGames--;
+    public void setOccupied(boolean occupied) {
+        this.occupied = occupied;
     }
     
     public boolean isRated() {
@@ -145,6 +138,11 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
     public int getSize() {
         return getSpawns().length;
     }
+
+    @Override
+    public boolean isAvailable(UUID uuid) {
+        return SuperJump.getInstance().getPlayerManager().get(uuid).getVisitedArenas().contains(this);
+    }
     
     public Battle startBattle(List<SJPlayer> players) {
         if(!isOccupied()) {
@@ -154,27 +152,38 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
         }
         return null;
     }
-
+    
     @Override
-    public boolean isQueued() {
-        return queued;
+    public int getQueueLength() {
+        return SuperJump.getInstance().getBattleManager().getGameQueue().getQueueLength(this);
     }
 
     @Override
-    public boolean isAvailable(SJPlayer sjp) {
-        return sjp.getVisitedArenas().contains(this);
+    public int getQueuePosition(UUID uuid) {
+        return SuperJump.getInstance().getBattleManager().getGameQueue().getQueuePosition(this, uuid);
+    }
+
+    @Override
+    public boolean isInGeneral() {
+        return queued;
     }
     
     public Dynamic<List<String>> getDynamicDescription() {
         return (SLPlayer slp) -> {
             List<String> description = new ArrayList<>();
             SJPlayer sjp = SuperJump.getInstance().getPlayerManager().get(slp.getUniqueId());
-            if(Arena.this.isAvailable(sjp)) {
+            if(Arena.this.isAvailable(sjp.getUniqueId())) {
                 if(Arena.this.isPaused()) {
                     description.add(ChatColor.RED + "This arena is");
                     description.add(ChatColor.RED + "currently paused.");
                 }
-                else if(getRunningGamesCount() == 0) {
+                else if(Arena.this.isOccupied()) {
+                    Battle battle = SuperJump.getInstance().getBattleManager().getBattle(Arena.this);
+                    description.add(ChatColor.GOLD + battle.getActivePlayers().get(0).getName() + ChatColor.GRAY + ChatColor.ITALIC + " vs. " + ChatColor.RESET + ChatColor.GOLD + battle.getActivePlayers().get(1).getName());
+                    description.add(ChatColor.DARK_GRAY + "" + ChatColor.ITALIC + "Click to spectate");
+                }
+                else {
+                    description.add(ChatColor.GREEN + "Queue: " + Arena.this.getQueueLength() + ChatColor.GRAY + "/" + ChatColor.GREEN + Arena.this.getSize());
                     description.add(ChatColor.DARK_GRAY + "" + ChatColor.ITALIC + "Click to join the queue");
                 }
             }
@@ -184,6 +193,30 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
             }
             return description;
         };
+    }
+
+    @Override
+    public String getCurrentState() {
+        if(occupied) {
+            Battle battle = SuperJump.getInstance().getBattleManager().getBattle(this);
+            if(battle.getArena().getSize() == 2) {
+                return ChatColor.GOLD + battle.getActivePlayers().get(0).getName() + ChatColor.GRAY + ChatColor.ITALIC + " vs. " + ChatColor.RESET + ChatColor.GOLD + battle.getActivePlayers().get(1).getName();
+            }
+            else {
+                StringBuilder sb = new StringBuilder();
+                sb.append(ChatColor.GRAY).append("Currently playing: ");
+                for(SJPlayer sjp : battle.getActivePlayers()) {
+                    if(sb.length() > 0) {
+                        sb.append(ChatColor.GRAY).append(", ");
+                    }
+                    sb.append(ChatColor.GOLD).append(sjp.getName());
+                }
+                return sb.toString();
+            }
+        }
+        else {
+            return ChatColor.BLUE + "Empty";
+        }
     }
     
     private static Map<String, Arena> arenas;
@@ -216,10 +249,7 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
             else {
                 arena = EntityBuilder.load(d, RandomArena.class);
             }
-            if(arena.getSize() == 2) {
-                arenas.put(arena.getName(), arena);
-                SuperJump.getInstance().getBattleManager().registerArena(arena);
-            }
+            arenas.put(arena.getName(), arena);
         }
         SuperJump.getInstance().log("Loaded " + arenas.size() + " arenas!");
     }

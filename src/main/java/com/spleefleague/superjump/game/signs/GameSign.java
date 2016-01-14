@@ -42,7 +42,7 @@ public class GameSign extends DBEntity implements  DBLoadable{
     private void setArena(String name) {
         arena = Arena.byName(name);
         if(signs.get(arena) == null) {
-            signs.put(arena, new HashSet<>());
+            signs.put(arena, new HashSet<GameSign>());
         }
         signs.get(arena).add(this);
     }
@@ -75,8 +75,15 @@ public class GameSign extends DBEntity implements  DBLoadable{
             sign.setLine(0, "[" + (arena.isPaused() ? ChatColor.DARK_RED + "Closed" : (arena.isOccupied() ? ChatColor.YELLOW + "Occupied" : ChatColor.GREEN + "Free")) + ChatColor.RESET + "]");
             sign.setLine(1, getArena().getName());
             if (!arena.isPaused()) {
-                sign.setLine(2, ChatColor.ITALIC + "Click here to");
-                sign.setLine(3, ChatColor.ITALIC + "enter the queue");
+                if (!arena.isOccupied()) {
+                    int required = (arena.getSize() - arena.getQueueLength());
+                    sign.setLine(2, "Waiting for " + required);
+                    sign.setLine(3, "more player" + (required == 1 ? "" : "s"));
+                } else {
+                    int waiting = arena.getQueueLength();
+                    sign.setLine(2, waiting + " player" + (waiting == 1 ? "" : "s"));
+                    sign.setLine(3, "currently waiting");
+                }
             }
             sign.update();
         }
@@ -93,7 +100,7 @@ public class GameSign extends DBEntity implements  DBLoadable{
     
     public static HashSet<GameSign> getGameSigns(Arena arena) {
         HashSet<GameSign> set = signs.get(arena);
-        return set != null ? set : new HashSet<>();
+        return set != null ? set : new HashSet<GameSign>();
     }
     
     public static void updateGameSigns(Arena arena) {
