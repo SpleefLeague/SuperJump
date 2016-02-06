@@ -390,7 +390,7 @@ public class Battle implements com.spleefleague.core.queue.Battle<Arena, SJPlaye
             data.get(sp).restoreOldData();
         }
         sp.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());    
-        sp.teleport(SpleefLeague.getInstance().getSpawnLocation());
+        sp.teleport(SpleefLeague.getInstance().getSpawnManager().getNext().getLocation());
         hidePlayers(sp);
         slp.removeChatChannel(cc);
         slp.setState(PlayerState.IDLE);
