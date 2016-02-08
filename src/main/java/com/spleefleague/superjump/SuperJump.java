@@ -11,6 +11,8 @@ import com.spleefleague.core.chat.ChatChannel;
 import com.spleefleague.core.chat.ChatManager;
 import com.spleefleague.core.chat.Theme;
 import com.spleefleague.core.command.CommandLoader;
+import com.spleefleague.core.events.BattleEndEvent.EndReason;
+import com.spleefleague.core.events.BattleStartEvent.StartReason;
 import com.spleefleague.core.menus.SLMenu;
 import com.spleefleague.core.player.PlayerManager;
 import com.spleefleague.core.plugin.GamePlugin;
@@ -56,7 +58,7 @@ public class SuperJump extends GamePlugin {
         battleManager = new BattleManager<Arena, SJPlayer, Battle>() {
             @Override
             public void startBattle(Arena queue, List<SJPlayer> players) {
-                queue.startBattle(players);
+                queue.startBattle(players, StartReason.QUEUE);
             }
         };
         Arena.init();
@@ -74,7 +76,7 @@ public class SuperJump extends GamePlugin {
     @Override
     public void stop() {
         for(Battle battle : battleManager.getAll()) {
-            battle.cancel(false);
+            battle.cancel();
         }
         playerManager.saveAll();
     }
@@ -155,7 +157,7 @@ public class SuperJump extends GamePlugin {
             for(SJPlayer active : battle.getActivePlayers()) {
                 active.sendMessage(SuperJump.getInstance().getChatPrefix() + Theme.SUPER_SECRET.buildTheme(false) + " " + p.getName() + " has surrendered!");
             }
-            battle.removePlayer(sjp);
+            battle.removePlayer(sjp, true);
         }
     }
 
@@ -200,7 +202,7 @@ public class SuperJump extends GamePlugin {
                 }
             }
             if(shouldEnd) {
-                battle.cancel(false);
+                battle.end(null, EndReason.ENDGAME);
             }
             else {
                 for(SJPlayer spleefplayer : battle.getActivePlayers()) {

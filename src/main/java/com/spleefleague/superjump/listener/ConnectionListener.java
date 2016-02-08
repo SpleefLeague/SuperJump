@@ -35,17 +35,10 @@ public class ConnectionListener implements Listener {
     public void onQuit(PlayerQuitEvent event) {
         SJPlayer sjp = SuperJump.getInstance().getPlayerManager().get(event.getPlayer());
         if(sjp.isIngame()) {
-            SuperJump.getInstance().getBattleManager().getBattle(sjp).removePlayer(sjp);
+            SuperJump.getInstance().getBattleManager().getBattle(sjp).removePlayer(sjp, false);
         }
         else {
             SuperJump.getInstance().getBattleManager().dequeue(sjp);
         }
     }
-    
-//    @EventHandler
-//    public void onJoin(GeneralPlayerLoadedEvent event) {
-//        if(event.getGeneralPlayer() instanceof SJPlayer) {
-//            SuperJump.handleVisibility((SJPlayer) event.getGeneralPlayer());
-//        }
-//    }
 }

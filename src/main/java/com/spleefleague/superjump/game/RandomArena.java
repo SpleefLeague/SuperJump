@@ -6,6 +6,7 @@
 package com.spleefleague.superjump.game;
 
 import com.spleefleague.core.SpleefLeague;
+import com.spleefleague.core.events.BattleStartEvent.StartReason;
 import com.spleefleague.core.io.DBLoad;
 import com.spleefleague.core.io.TypeConverter;
 import com.spleefleague.core.utils.Area;
@@ -81,7 +82,7 @@ public class RandomArena extends Arena{
     }
     
     @Override
-    public Battle startBattle(List<SJPlayer> players) {
+    public Battle startBattle(List<SJPlayer> players, StartReason reason) {
         if(!isOccupied()) {
             ArenaData data = generate(spawn1, jumpCount);
             spawns = new Location[2];
@@ -91,7 +92,7 @@ public class RandomArena extends Arena{
             goals[0] = data.goal;
             borders = data.borders;
             Battle battle = new Battle(this, players);
-            battle.start();
+            battle.start(reason);
             return battle;
         }
         return null;

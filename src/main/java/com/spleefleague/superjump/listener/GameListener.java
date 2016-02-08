@@ -6,6 +6,7 @@
 package com.spleefleague.superjump.listener;
 
 import com.spleefleague.core.SpleefLeague;
+import com.spleefleague.core.events.BattleEndEvent.EndReason;
 import com.spleefleague.core.player.Rank;
 import com.spleefleague.core.player.SLPlayer;
 import com.spleefleague.core.utils.Area;
@@ -21,7 +22,6 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
@@ -82,7 +82,7 @@ public class GameListener implements Listener {
                     battle.onArenaLeave(sjp);
                 }
                 else if (battle.getGoal(sjp).isInArea(sjp.getLocation())) {
-                    battle.end(sjp);
+                    battle.end(sjp, EndReason.NORMAL);
                 }
             }
         }
