@@ -8,7 +8,6 @@ package com.spleefleague.superjump.player;
 import com.spleefleague.core.io.DBLoad;
 import com.spleefleague.core.io.DBSave;
 import com.spleefleague.core.io.Settings;
-import com.spleefleague.core.player.GeneralPlayer;
 import com.spleefleague.core.queue.RatedPlayer;
 import java.util.ArrayList;
 import java.util.HashSet;
