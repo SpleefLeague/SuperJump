@@ -23,7 +23,7 @@ import org.bson.Document;
  *
  * @author Jonas
  */
-public class SJPlayer extends GeneralPlayer implements RatedPlayer {
+public class SJPlayer extends RatedPlayer {
     
     private int rating;
     private boolean ingame, frozen, requestingEndgame;
