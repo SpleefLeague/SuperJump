@@ -152,6 +152,10 @@ public class Battle implements com.spleefleague.core.queue.Battle<Arena, SJPlaye
     }
     
     public void start(StartReason reason) {
+        for(SJPlayer player : players) {
+            GamePlugin.unspectateGlobal(player);
+            GamePlugin.dequeueGlobal(player);    
+        }
         BattleStartEvent event = new BattleStartEvent(this, reason);
         Bukkit.getPluginManager().callEvent(event);
         if(!event.isCancelled()) {
@@ -167,7 +171,6 @@ public class Battle implements com.spleefleague.core.queue.Battle<Arena, SJPlaye
             objective.setDisplaySlot(DisplaySlot.SIDEBAR);
             objective.setDisplayName(ChatColor.GRAY + "0:0:0 | " + ChatColor.RED + "Times Fallen:");
             String playerNames = "";
-            FakeBlockHandler.addArea(fakeBlocks, GeneralPlayer.toBukkitPlayer(players.toArray(new SJPlayer[players.size()])));
             for(int i = 0; i < players.size(); i++) {
                 SJPlayer sjp = players.get(i);
                 if(i == 0) {
@@ -183,8 +186,6 @@ public class Battle implements com.spleefleague.core.queue.Battle<Arena, SJPlaye
                 slp.addChatChannel(cc);
                 slp.setState(PlayerState.INGAME);
                 Player p = sjp.getPlayer();
-                GamePlugin.dequeueGlobal(p);
-                GamePlugin.unspectateGlobal(p);
                 p.setHealth(p.getMaxHealth());
                 p.setFoodLevel(20);
                 sjp.setIngame(true);
@@ -210,6 +211,8 @@ public class Battle implements com.spleefleague.core.queue.Battle<Arena, SJPlaye
                 scoreboard.getObjective("rounds").getScore(sjp.getName()).setScore(pdata.getFalls());
             }
             hidePlayers();
+            getSpawnCageBlocks();
+            FakeBlockHandler.addArea(fakeBlocks, false, GeneralPlayer.toBukkitPlayer(players.toArray(new SJPlayer[players.size()])));
             ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), Theme.SUCCESS.buildTheme(false) + "Beginning match on " + ChatColor.WHITE + arena.getName() + ChatColor.GREEN + " between " + ChatColor.RED + playerNames + "!", SuperJump.getInstance().getStartMessageChannel());
             startCountdown();
         }
@@ -284,23 +287,23 @@ public class Battle implements com.spleefleague.core.queue.Battle<Arena, SJPlaye
     }
     
     private void createSpawnCages() {
-        fakeBlocks.clear();
-        fakeBlocks.add(getSpawnCageBlocks(Material.GLASS));
-        FakeBlockHandler.update(fakeBlocks);
-    }
-    
-    private void removeSpawnCages() {
-        fakeBlocks.clear();
-        fakeBlocks.add(getSpawnCageBlocks(Material.AIR));
-        FakeBlockHandler.update(fakeBlocks);
-    }
-    
-    private FakeArea getSpawnCageBlocks(Material m) {
-        FakeArea area = new FakeArea();
-        for(Location spawn : arena.getSpawns()) {
-            area.add(getCageBlocks(spawn, m));
+        for(FakeBlock block : fakeBlocks.getBlocks()) {
+            block.setType(Material.GLASS);
         }
-        return area;
+        FakeBlockHandler.update(fakeBlocks);
+    }    
+
+    private void removeSpawnCages() {
+        for(FakeBlock block : fakeBlocks.getBlocks()) {
+            block.setType(Material.AIR);
+        }
+        FakeBlockHandler.update(fakeBlocks);
+    }
+    
+    private void getSpawnCageBlocks() {
+        for(Location spawn : arena.getSpawns()) {
+            fakeBlocks.add(getCageBlocks(spawn, Material.AIR));
+        }
     }
     
     private FakeArea getCageBlocks(Location loc, Material m) {
