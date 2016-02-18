@@ -59,12 +59,27 @@ public class ConnectionListener implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         List<Player> ingamePlayers = new ArrayList<>();
+        List<Battle> toCancel = new ArrayList<>();//Workaround
         for(Battle battle : SuperJump.getInstance().getBattleManager().getAll()) {
             for(SJPlayer p : battle.getActivePlayers()) {
-                event.getPlayer().hidePlayer(p.getPlayer());
-                p.getPlayer().hidePlayer(event.getPlayer());
-                ingamePlayers.add(p.getPlayer());
+                if(p.getPlayer() != null) {
+                    event.getPlayer().hidePlayer(p.getPlayer());
+                    p.getPlayer().hidePlayer(event.getPlayer());
+                    ingamePlayers.add(p.getPlayer());
+                }
+                else {
+                    toCancel.add(battle);
+                    break;
+                }
             }
+        }
+        for(Battle battle : toCancel) {
+            for(SJPlayer p : battle.getActivePlayers()) {
+                if(p.getPlayer() != null) {
+                    p.kick("An error has occured. Please reconnect");
+                }
+            }
+            SuperJump.getInstance().getBattleManager().remove(battle);
         }
         Bukkit.getScheduler().runTaskLater(SuperJump.getInstance(), () -> {
             List<PlayerInfoData> list = new ArrayList<>();
