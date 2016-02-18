@@ -5,9 +5,11 @@
  */
 package com.spleefleague.superjump.commands;
 
+import com.spleefleague.core.SpleefLeague;
 import com.spleefleague.core.command.BasicCommand;
 import com.spleefleague.core.events.BattleStartEvent.StartReason;
 import com.spleefleague.core.io.EntityBuilder;
+import com.spleefleague.core.player.PlayerState;
 import com.spleefleague.core.player.Rank;
 import com.spleefleague.core.player.SLPlayer;
 import com.spleefleague.core.plugin.CorePlugin;
@@ -15,9 +17,12 @@ import com.spleefleague.core.plugin.GamePlugin;
 import com.spleefleague.superjump.SuperJump;
 import com.spleefleague.superjump.game.Arena;
 import com.spleefleague.core.queue.BattleManager;
+import com.spleefleague.core.queue.Challenge;
 import com.spleefleague.superjump.game.signs.GameSign;
 import com.spleefleague.superjump.player.SJPlayer;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -129,6 +134,56 @@ public class superjump extends BasicCommand {
                     }
                     else {
                         sendUsage(p);
+                    }
+                }
+                else if (args.length == 3 && args[0].equalsIgnoreCase("challenge")) {
+                    Arena arena = Arena.byName(args[1]);
+                    if(arena != null) {
+                        if(args.length - 1 == arena.getSize()) {
+                            Collection<SLPlayer> players = new ArrayList<>();
+                            for(int i = 2; i < args.length; i++) {
+                                Player t = Bukkit.getPlayer(args[i]);
+                                if(t != null) {
+                                    SLPlayer splayer = SpleefLeague.getInstance().getPlayerManager().get(t.getUniqueId());
+                                    if(splayer.getState() == PlayerState.INGAME) {
+                                        error(p, splayer.getName() + " is currently ingame!");
+                                        return;
+                                    }
+                                    SJPlayer spt = SuperJump.getInstance().getPlayerManager().get(t.getUniqueId());
+                                    if(!arena.isAvailable(spt)) {
+                                        error(p, spt.getName() + " has not visited this arena yet!");
+                                    }
+                                    players.add(splayer);
+                                }
+                                else {
+                                    error(p, "The player " + args[i] + " is not online.");
+                                    return;
+                                }
+                            }
+                            Challenge challenge = new Challenge(slp, arena.getSize()) {
+                                @Override
+                                public void start(Collection<SLPlayer> accepted) {
+                                    List<SJPlayer> players = new ArrayList<>();
+                                    for(SLPlayer slpt : accepted) {
+                                        players.add(SuperJump.getInstance().getPlayerManager().get(slpt));
+                                    }
+                                    arena.startBattle(players, StartReason.CHALLENGE);
+                                }
+                            };
+                            success(p, "The players have been challenged.");
+                            Collection<Player> bplayers = new ArrayList<>();
+                            for(SLPlayer slpt : players) {
+                                slpt.addChallenge(challenge);
+                                bplayers.add(slpt.getPlayer());
+                            }
+                            challenge.sendMessages(SuperJump.getInstance().getChatPrefix(), arena.getName(), bplayers);
+                        }
+                        else {
+                            error(p, "This arena requires " + arena.getSize() + " players.");
+                        }
+                    }
+                    else {
+                        error(p, "The arnea " + args[1] + " does not exist.");
                     }
                 }
                 else {
