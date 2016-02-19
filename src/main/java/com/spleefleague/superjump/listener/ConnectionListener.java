@@ -76,7 +76,7 @@ public class ConnectionListener implements Listener {
         for(Battle battle : toCancel) {
             for(SJPlayer p : battle.getActivePlayers()) {
                 if(p.getPlayer() != null) {
-                    p.kick("An error has occured. Please reconnect");
+                    p.kickPlayer("An error has occured. Please reconnect");
                 }
             }
             SuperJump.getInstance().getBattleManager().remove(battle);

@@ -13,8 +13,10 @@ import com.spleefleague.core.chat.Theme;
 import com.spleefleague.core.command.CommandLoader;
 import com.spleefleague.core.events.BattleEndEvent.EndReason;
 import com.spleefleague.core.events.BattleStartEvent.StartReason;
+import com.spleefleague.core.io.EntityBuilder;
 import com.spleefleague.core.menus.SLMenu;
 import com.spleefleague.core.player.PlayerManager;
+import com.spleefleague.core.player.SLPlayer;
 import com.spleefleague.core.plugin.GamePlugin;
 import static com.spleefleague.core.utils.inventorymenu.InventoryMenuAPI.item;
 import com.spleefleague.core.utils.inventorymenu.InventoryMenuTemplateBuilder;
@@ -218,6 +220,14 @@ public class SuperJump extends GamePlugin {
     @Override
     public void setQueueStatus(boolean open) {
         queuesOpen = open;
+    }
+    
+    @Override
+    public void syncSave(Player p) {
+        SJPlayer slp = playerManager.get(p);
+        if(slp != null) {
+            EntityBuilder.save(slp, getPluginDB().getCollection("Players"));
+        }
     }
     
     public boolean queuesOpen() {
