@@ -213,14 +213,14 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
             Arena arena;
             if(!d.containsKey("isRandom") || !d.getBoolean("isRandom")) {
                 arena = EntityBuilder.load(d, Arena.class);
+                if(arena.getSize() == 2) {
+                    arenas.put(arena.getName(), arena);
+                    SuperJump.getInstance().getBattleManager().registerArena(arena);
+                }
             }
-            else {
-                arena = EntityBuilder.load(d, RandomArena.class);
-            }
-            if(arena.getSize() == 2) {
-                arenas.put(arena.getName(), arena);
-                SuperJump.getInstance().getBattleManager().registerArena(arena);
-            }
+//            else {
+//                arena = EntityBuilder.load(d, RandomArena.class);
+//            }
         }
         SuperJump.getInstance().log("Loaded " + arenas.size() + " arenas!");
     }
