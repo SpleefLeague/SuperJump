@@ -264,11 +264,11 @@ public class RandomArena extends Arena{
         }
     }
     
-    static {
-        random = new Random();
-        frequencySum = 0;
-        for(Jump jump : possibleJumps) {
-            frequencySum += jump.getFrequency();
-        }
-    }
+//    static {
+//        random = new Random();
+//        frequencySum = 0;
+//        for(Jump jump : possibleJumps) {
+//            frequencySum += jump.getFrequency();
+//        }
+//    }
 }

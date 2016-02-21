@@ -16,13 +16,13 @@ import com.spleefleague.core.events.BattleStartEvent.StartReason;
 import com.spleefleague.core.io.EntityBuilder;
 import com.spleefleague.core.menus.SLMenu;
 import com.spleefleague.core.player.PlayerManager;
-import com.spleefleague.core.player.SLPlayer;
 import com.spleefleague.core.plugin.GamePlugin;
 import static com.spleefleague.core.utils.inventorymenu.InventoryMenuAPI.item;
 import com.spleefleague.core.utils.inventorymenu.InventoryMenuTemplateBuilder;
 import com.spleefleague.superjump.game.Arena;
 import com.spleefleague.superjump.game.Battle;
 import com.spleefleague.core.queue.BattleManager;
+import com.spleefleague.core.queue.RatedBattleManager;
 import com.spleefleague.superjump.game.signs.GameSign;
 import com.spleefleague.superjump.listener.ConnectionListener;
 import com.spleefleague.superjump.listener.EnvironmentListener;
@@ -45,7 +45,7 @@ public class SuperJump extends GamePlugin {
     private static SuperJump instance;
     
     private PlayerManager<SJPlayer> playerManager;
-    private BattleManager<Arena, SJPlayer, Battle> battleManager;
+    private RatedBattleManager<Arena, SJPlayer, Battle> battleManager;
     private boolean queuesOpen = true;
     private ChatChannel start, end;
     
@@ -57,7 +57,7 @@ public class SuperJump extends GamePlugin {
     public void start() {
         instance = this;
         playerManager = new PlayerManager<>(this, SJPlayer.class);
-        battleManager = new BattleManager<Arena, SJPlayer, Battle>() {
+        battleManager = new RatedBattleManager<Arena, SJPlayer, Battle>() {
             @Override
             public void startBattle(Arena queue, List<SJPlayer> players) {
                 queue.startBattle(players, StartReason.QUEUE);
