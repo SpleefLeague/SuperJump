@@ -441,11 +441,11 @@ public class Battle implements com.spleefleague.core.queue.Battle<Arena, SJPlaye
                 }
                 winnerPoints += rating;
                 sjp.setRating(sjp.getRating() - rating);
-                playerList += ChatColor.RED + sjp.getName() + ChatColor.WHITE + " (" + sjp.getRating() + ")" + ChatColor.GREEN + " gets " + ChatColor.GRAY + ChatColor.WHITE + (-rating == 0 ? " point." : " points.");
+                playerList += ChatColor.RED + sjp.getName() + ChatColor.WHITE + " (" + sjp.getRating() + ")" + ChatColor.GREEN + " gets " + ChatColor.GRAY + ChatColor.WHITE + (-rating == 1 ? " point." : " points.");
             }
         }
         winner.setRating(winner.getRating() + winnerPoints);
-        playerList += ChatColor.RED + winner.getName() + ChatColor.WHITE + " (" + winner.getRating() + ")" + ChatColor.GREEN + " gets " + ChatColor.GRAY + winnerPoints + ChatColor.WHITE + (winnerPoints == 0 ? " point." : " points. ");
+        playerList += ChatColor.RED + winner.getName() + ChatColor.WHITE + " (" + winner.getRating() + ")" + ChatColor.GREEN + " gets " + ChatColor.GRAY + winnerPoints + ChatColor.WHITE + (winnerPoints == 1 ? " point." : " points. ");
         ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), ChatColor.GREEN + "Game in arena " + ChatColor.WHITE + arena.getName() + ChatColor.GREEN + " is over. " + playerList, SuperJump.getInstance().getEndMessageChannel());
     }
 
