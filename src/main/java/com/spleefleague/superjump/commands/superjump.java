@@ -187,7 +187,7 @@ public class superjump extends BasicCommand {
                     else {
                         error(p, "The arnea " + args[1] + " does not exist.");
                     }
-                } else if(args.length > 0 && args[0].equalsIgnoreCase("points") && (slp.getRank() != null && slp.getRank().hasPermission(Rank.MODERATOR) || Collections.singletonList(Rank.MODERATOR).contains(slp.getRank()))) {
+                } else if(args.length > 0 && args[0].equalsIgnoreCase("points") && (slp.getRank() != null && slp.getRank().hasPermission(Rank.SENIOR_MODERATOR) || Collections.singletonList(Rank.MODERATOR).contains(slp.getRank()))) {
                     if(args.length != 4 || !(args[1].equalsIgnoreCase("add") || args[1].equalsIgnoreCase("remove"))) {
                         p.sendMessage(plugin.getChatPrefix() + " " + Theme.ERROR.buildTheme(false) + "Correct Usage: ");
                         p.sendMessage(plugin.getChatPrefix() + " " + Theme.INCOGNITO.buildTheme(false) + "/sj points <add|remove> <player> <points>");
