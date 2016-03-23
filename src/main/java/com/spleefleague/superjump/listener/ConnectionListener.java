@@ -31,51 +31,49 @@ import org.bukkit.event.player.PlayerQuitEvent;
  * @author Jonas
  */
 public class ConnectionListener implements Listener {
-    
+
     private static Listener instance;
-    
+
     public static void init() {
-        if(instance == null) {
+        if (instance == null) {
             instance = new ConnectionListener();
             Bukkit.getPluginManager().registerEvents(instance, SuperJump.getInstance());
         }
     }
-    
+
     private ConnectionListener() {
-        
+
     }
-    
+
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         SJPlayer sjp = SuperJump.getInstance().getPlayerManager().get(event.getPlayer());
-        if(sjp.isIngame()) {
+        if (sjp.isIngame()) {
             SuperJump.getInstance().getBattleManager().getBattle(sjp).removePlayer(sjp, false);
-        }
-        else {
+        } else {
             SuperJump.getInstance().getBattleManager().dequeue(sjp);
         }
     }
-    
+
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         List<Player> ingamePlayers = new ArrayList<>();
         List<Battle> toCancel = new ArrayList<>();//Workaround
-        for(Battle battle : SuperJump.getInstance().getBattleManager().getAll()) {
-            for(SJPlayer p : battle.getActivePlayers()) {
-                if(p.getPlayer() != null) {
+        for (Battle battle : SuperJump.getInstance().getBattleManager().getAll()) {
+            for (SJPlayer p : battle.getActivePlayers()) {
+                if (p.getPlayer() != null) {
                     event.getPlayer().hidePlayer(p.getPlayer());
                     p.getPlayer().hidePlayer(event.getPlayer());
                     ingamePlayers.add(p.getPlayer());
-                }
-                else {
+                } else {
                     toCancel.add(battle);
                     break;
                 }
             }
         }
-        for(Battle battle : toCancel) {
-            for(SJPlayer p : battle.getActivePlayers()) {
-                if(p.getPlayer() != null) {
+        for (Battle battle : toCancel) {
+            for (SJPlayer p : battle.getActivePlayers()) {
+                if (p.getPlayer() != null) {
                     p.kickPlayer("An error has occured. Please reconnect");
                 }
             }
@@ -91,7 +89,7 @@ public class ConnectionListener implements Listener {
             list.clear();
             ingamePlayers.forEach((Player p) -> {
                 SLPlayer generalPlayer = SpleefLeague.getInstance().getPlayerManager().get(p);
-                list.add(new PlayerInfoData(WrappedGameProfile.fromPlayer(p), ((CraftPlayer)p).getHandle().ping, EnumWrappers.NativeGameMode.SURVIVAL, WrappedChatComponent.fromText(generalPlayer.getRank().getColor() + generalPlayer.getName())));
+                list.add(new PlayerInfoData(WrappedGameProfile.fromPlayer(p), ((CraftPlayer) p).getHandle().ping, EnumWrappers.NativeGameMode.SURVIVAL, WrappedChatComponent.fromText(generalPlayer.getRank().getColor() + generalPlayer.getName())));
             });
             packet.setData(list);
             SpleefLeague.getInstance().getPlayerManager().getAll().forEach((SLPlayer slPlayer) -> packet.sendPacket(slPlayer.getPlayer()));

@@ -21,24 +21,24 @@ import org.bukkit.event.player.PlayerInteractEvent;
 public class SignListener implements Listener {
 
     private static Listener instance;
-    
+
     public static void init() {
         if (instance == null) {
             instance = new SignListener();
             Bukkit.getPluginManager().registerEvents(instance, SuperJump.getInstance());
         }
     }
-    
+
     private SignListener() {
-    
+
     }
-    
+
     @EventHandler
     public void onClick(PlayerInteractEvent event) {
-        if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-            if(event.getClickedBlock().getState() instanceof Sign) {
-                for(GameSign gameSign : GameSign.getAll()) {
-                    if(gameSign.getLocation().equals(event.getClickedBlock().getLocation())) {
+        if (event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+            if (event.getClickedBlock().getState() instanceof Sign) {
+                for (GameSign gameSign : GameSign.getAll()) {
+                    if (gameSign.getLocation().equals(event.getClickedBlock().getLocation())) {
                         event.getPlayer().performCommand("superjump " + gameSign.getArena().getName());
                         break;
                     }

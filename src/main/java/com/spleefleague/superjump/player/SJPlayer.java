@@ -23,79 +23,81 @@ import org.bson.Document;
  * @author Jonas
  */
 public class SJPlayer extends RatedPlayer {
-    
+
     private int rating;
     private boolean ingame, frozen, requestingEndgame;
     private Set<Arena> visitedArenas;
-    
+
     public SJPlayer() {
         setDefaults();
     }
-    
+
     @DBLoad(fieldName = "rating")
     public void setRating(int rating) {
         this.rating = (rating > 0) ? rating : 0;
     }
-    
+
     @Override
     @DBSave(fieldName = "rating")
     public int getRating() {
         return rating;
     }
-    
+
     public int getRank() {
-        return (int)SuperJump.getInstance().getPluginDB().getCollection("Players").count(new Document("rating", new Document("$gt", rating))) + 1;
+        return (int) SuperJump.getInstance().getPluginDB().getCollection("Players").count(new Document("rating", new Document("$gt", rating))) + 1;
     }
-    
+
     @DBSave(fieldName = "visitedArenas")
     private List<String> saveVisitedArenas() {
         List<String> arenaNames = new ArrayList<>();
-        for(Arena arena : visitedArenas) {
+        for (Arena arena : visitedArenas) {
             arenaNames.add(arena.getName());
         }
         return arenaNames;
     }
-    
+
     @DBLoad(fieldName = "visitedArenas")
     private void loadVisitedArenas(List<String> arenaNames) {
-        for(String name : arenaNames) {
+        for (String name : arenaNames) {
             Arena arena = Arena.byName(name);
-            if(arena != null) visitedArenas.add(arena);
+            if (arena != null) {
+                visitedArenas.add(arena);
+            }
         }
     }
-    
+
     public void setRequestingEndgame(boolean requestingEndgame) {
         this.requestingEndgame = requestingEndgame;
     }
-    
+
     public boolean isRequestingEndgame() {
         return requestingEndgame;
     }
-    
+
     public void setIngame(boolean ingame) {
         this.ingame = ingame;
     }
-    
+
     public boolean isIngame() {
         return ingame;
     }
-    
+
     public void setFrozen(boolean frozen) {
         this.frozen = frozen;
     }
-    
+
     public boolean isFrozen() {
         return frozen;
     }
-    
+
     public Battle getCurrentBattle() {
         return SuperJump.getInstance().getBattleManager().getBattle(this);
     }
-    
+
     public Set<Arena> getVisitedArenas() {
         return visitedArenas;
     }
-    
+
     @Override
     public void setDefaults() {
         super.setDefaults();
@@ -103,7 +105,7 @@ public class SJPlayer extends RatedPlayer {
         this.frozen = false;
         this.ingame = false;
         visitedArenas = new HashSet<>();
-        for(String name : (List<String>)Settings.getList("default_arenas_jump")) {
+        for (String name : (List<String>) Settings.getList("default_arenas_jump")) {
             visitedArenas.add(Arena.byName(name));
         }
     }

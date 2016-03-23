@@ -51,13 +51,12 @@ import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
 
-
 /**
  *
  * @author Jonas
  */
 public class Battle implements com.spleefleague.core.queue.Battle<Arena, SJPlayer> {
-    
+
     private final Arena arena;
     private final FakeArea fakeBlocks;
     private final List<SJPlayer> players; //MIGHT CONTAIN PLAYERS WHICH LEFT THE GAME. USE getActivePlayers() FOR ACTIVE PLAYERS INSTEAD
@@ -69,36 +68,36 @@ public class Battle implements com.spleefleague.core.queue.Battle<Arena, SJPlaye
     private Scoreboard scoreboard;
     private boolean inCountdown;
     private boolean isOver;
-    
+
     protected Battle(Arena arena, List<SJPlayer> players) {
         this.arena = arena;
         this.players = players;
         this.spectators = new ArrayList<>();
-        this.data = new HashMap<>(); 
+        this.data = new HashMap<>();
         this.fakeBlocks = new FakeArea();
         this.cc = ChatChannel.createTemporaryChannel("GAMECHANNEL" + this.hashCode(), null, Rank.DEFAULT, false, false);
     }
-    
+
     @Override
     public Arena getArena() {
         return arena;
     }
-    
+
     public Collection<SJPlayer> getPlayers() {
         return players;
     }
-    
+
     public Location getSpawn(SJPlayer sjp) {
         return data.get(sjp).getSpawn();
     }
-    
+
     public Area getGoal(SJPlayer sjp) {
         return data.get(sjp).getGoal();
     }
-    
+
     public void addSpectator(SJPlayer sp) {
         Location spawn = arena.getSpectatorSpawn();
-        if(spawn != null) {
+        if (spawn != null) {
             sp.teleport(spawn);
         }
         sp.setScoreboard(scoreboard);
@@ -106,25 +105,25 @@ public class Battle implements com.spleefleague.core.queue.Battle<Arena, SJPlaye
         FakeBlockHandler.addArea(fakeBlocks, sp.getPlayer());
         slp.setState(PlayerState.SPECTATING);
         slp.addChatChannel(cc);
-        for(SJPlayer sjp : getActivePlayers()) {
+        for (SJPlayer sjp : getActivePlayers()) {
             sjp.showPlayer(sp.getPlayer());
             sp.showPlayer(sjp.getPlayer());
         }
-        for(SJPlayer sjp : spectators) {
+        for (SJPlayer sjp : spectators) {
             sjp.showPlayer(sp.getPlayer());
             sp.showPlayer(sjp.getPlayer());
         }
         spectators.add(sp);
         hidePlayers(sp);
     }
-    
+
     public boolean isSpectating(SJPlayer sjp) {
         return spectators.contains(sjp);
     }
-    
+
     public void removeSpectator(SJPlayer sp) {
         List<Player> ingamePlayers = new ArrayList<>();
-        for(SJPlayer p : getActivePlayers()) {
+        for (SJPlayer p : getActivePlayers()) {
             sp.getPlayer().hidePlayer(p.getPlayer());
             p.getPlayer().hidePlayer(sp.getPlayer());
             ingamePlayers.add(p.getPlayer());
@@ -140,16 +139,16 @@ public class Battle implements com.spleefleague.core.queue.Battle<Arena, SJPlaye
             list.clear();
             ingamePlayers.forEach((Player p) -> {
                 SLPlayer generalPlayer = SpleefLeague.getInstance().getPlayerManager().get(p);
-                list.add(new PlayerInfoData(WrappedGameProfile.fromPlayer(p), ((CraftPlayer)p).getHandle().ping, EnumWrappers.NativeGameMode.SURVIVAL, WrappedChatComponent.fromText(generalPlayer.getRank().getColor() + generalPlayer.getName())));
+                list.add(new PlayerInfoData(WrappedGameProfile.fromPlayer(p), ((CraftPlayer) p).getHandle().ping, EnumWrappers.NativeGameMode.SURVIVAL, WrappedChatComponent.fromText(generalPlayer.getRank().getColor() + generalPlayer.getName())));
             });
             packet.setData(list);
             packet.sendPacket(sp.getPlayer());
-        },10);
+        }, 10);
         resetPlayer(sp);
     }
-    
+
     public void removePlayer(SJPlayer sp, boolean surrender) {
-        if(!surrender) {
+        if (!surrender) {
             for (SJPlayer pl : getActivePlayers()) {
                 pl.sendMessage(SuperJump.getInstance().getChatPrefix() + " " + Theme.ERROR.buildTheme(false) + sp.getName() + " has left the game!");
             }
@@ -163,32 +162,32 @@ public class Battle implements com.spleefleague.core.queue.Battle<Arena, SJPlaye
             end(activePlayers.get(0), surrender ? EndReason.SURRENDER : EndReason.QUIT);
         }
     }
-    
+
     @Override
     public ArrayList<SJPlayer> getActivePlayers() {
         ArrayList<SJPlayer> active = new ArrayList<>();
-        for(SJPlayer sjp : players) {
-            if(sjp.isIngame()) {
+        for (SJPlayer sjp : players) {
+            if (sjp.isIngame()) {
                 active.add(sjp);
             }
         }
         return active;
     }
-    
+
     public boolean isOver() {
         return isOver;
     }
-    
+
     public void start(StartReason reason) {
-        for(SJPlayer player : players) {
+        for (SJPlayer player : players) {
             GamePlugin.unspectateGlobal(player);
-            GamePlugin.dequeueGlobal(player);    
+            GamePlugin.dequeueGlobal(player);
         }
         BattleStartEvent event = new BattleStartEvent(this, reason);
         Bukkit.getPluginManager().callEvent(event);
-        if(!event.isCancelled()) {
-            if(arena.getStartDebugger() != null) {
-                RuntimeCompiler.debugFromHastebin(arena.getStartDebugger());
+        if (!event.isCancelled()) {
+            if (arena.getStartDebugger() != null) {
+                RuntimeCompiler.debugFromHastebin(arena.getStartDebugger(), null);
             }
             arena.registerGameStart();
             GameSign.updateGameSigns(arena);
@@ -199,15 +198,13 @@ public class Battle implements com.spleefleague.core.queue.Battle<Arena, SJPlaye
             objective.setDisplaySlot(DisplaySlot.SIDEBAR);
             objective.setDisplayName(ChatColor.GRAY + "0:0:0 | " + ChatColor.RED + "Times Fallen:");
             String playerNames = "";
-            for(int i = 0; i < players.size(); i++) {
+            for (int i = 0; i < players.size(); i++) {
                 SJPlayer sjp = players.get(i);
-                if(i == 0) {
+                if (i == 0) {
                     playerNames = sjp.getName();
-                }
-                else if(i == players.size() - 1) {
+                } else if (i == players.size() - 1) {
                     playerNames += " and " + sjp.getName();
-                }
-                else {
+                } else {
                     playerNames += ", " + sjp.getName();
                 }
                 SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(sjp.getPlayer());
@@ -223,11 +220,11 @@ public class Battle implements com.spleefleague.core.queue.Battle<Arena, SJPlaye
                 p.setGameMode(GameMode.ADVENTURE);
                 p.setFlying(false);
                 p.setAllowFlight(false);
-                for(PotionEffect effect : p.getActivePotionEffects()) {
+                for (PotionEffect effect : p.getActivePotionEffects()) {
                     p.removePotionEffect(effect.getType());
                 }
-                for(SJPlayer sjp1 : players) {
-                    if(sjp != sjp1) {
+                for (SJPlayer sjp1 : players) {
+                    if (sjp != sjp1) {
                         sjp.showPlayer(sjp1.getPlayer());
                     }
                 }
@@ -245,26 +242,26 @@ public class Battle implements com.spleefleague.core.queue.Battle<Arena, SJPlaye
             startCountdown();
         }
     }
-    
+
     private void hidePlayers() {
         List<SJPlayer> battlePlayers = getActivePlayers();
         battlePlayers.addAll(spectators);
-        for(SJPlayer sjp : SuperJump.getInstance().getPlayerManager().getAll()) {
+        for (SJPlayer sjp : SuperJump.getInstance().getPlayerManager().getAll()) {
             hidePlayers(sjp);
         }
     }
-    
+
     private void hidePlayers(SJPlayer target) {
         List<SJPlayer> battlePlayers = getActivePlayers();
         battlePlayers.addAll(spectators);
-        for(SJPlayer active : battlePlayers) {
-            if(!battlePlayers.contains(target)) {
+        for (SJPlayer active : battlePlayers) {
+            if (!battlePlayers.contains(target)) {
                 target.hidePlayer(active.getPlayer());
                 active.hidePlayer(target.getPlayer());
             }
         }
     }
-    
+
     private void updateScoreboardTime() {
         if (scoreboard == null) {
             return;
@@ -275,11 +272,11 @@ public class Battle implements com.spleefleague.core.queue.Battle<Arena, SJPlaye
             objective.setDisplayName(ChatColor.GRAY.toString() + s + " | " + ChatColor.RED + "Score:");
         }
     }
-    
+
     public void startCountdown() {
         inCountdown = true;
         createSpawnCages();
-        for(SJPlayer sjp : getActivePlayers()) {
+        for (SJPlayer sjp : getActivePlayers()) {
             sjp.setFrozen(true);
             sjp.setFireTicks(0);
             sjp.teleport(this.data.get(sjp).getSpawn());
@@ -294,17 +291,17 @@ public class Battle implements com.spleefleague.core.queue.Battle<Arena, SJPlaye
                     secondsLeft--;
                 } else {
                     ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), "GO!", cc);
-                    for(SJPlayer sp : getActivePlayers()) {
+                    for (SJPlayer sp : getActivePlayers()) {
                         sp.setFrozen(false);
                     }
                     onDone();
                     super.cancel();
                 }
             }
-            
+
             public void onDone() {
                 removeSpawnCages();
-                for(SJPlayer sp : getActivePlayers()) {
+                for (SJPlayer sp : getActivePlayers()) {
                     sp.setFrozen(false);
                 }
                 inCountdown = false;
@@ -313,27 +310,27 @@ public class Battle implements com.spleefleague.core.queue.Battle<Arena, SJPlaye
         br.runTaskTimer(SuperJump.getInstance(), 20, 20);
         startClock();
     }
-    
+
     private void createSpawnCages() {
-        for(FakeBlock block : fakeBlocks.getBlocks()) {
+        for (FakeBlock block : fakeBlocks.getBlocks()) {
             block.setType(Material.GLASS);
         }
         FakeBlockHandler.update(fakeBlocks);
-    }    
+    }
 
     private void removeSpawnCages() {
-        for(FakeBlock block : fakeBlocks.getBlocks()) {
+        for (FakeBlock block : fakeBlocks.getBlocks()) {
             block.setType(Material.AIR);
         }
         FakeBlockHandler.update(fakeBlocks);
     }
-    
+
     private void getSpawnCageBlocks() {
-        for(Location spawn : arena.getSpawns()) {
+        for (Location spawn : arena.getSpawns()) {
             fakeBlocks.add(getCageBlocks(spawn, Material.AIR));
         }
     }
-    
+
     private FakeArea getCageBlocks(Location loc, Material m) {
         loc = loc.getBlock().getLocation();
         FakeArea area = new FakeArea();
@@ -350,12 +347,12 @@ public class Battle implements com.spleefleague.core.queue.Battle<Arena, SJPlaye
         }
         return area;
     }
-    
+
     private void startClock() {
         clock = new BukkitRunnable() {
             @Override
             public void run() {
-                if(!inCountdown) {
+                if (!inCountdown) {
                     ticksPassed++;
                 }
                 updateScoreboardTime();
@@ -363,20 +360,19 @@ public class Battle implements com.spleefleague.core.queue.Battle<Arena, SJPlaye
         };
         clock.runTaskTimer(SuperJump.getInstance(), 0, 1);
     }
-    
+
     public void cancel() {
         end(null, EndReason.CANCEL);
     }
-    
+
     public void end(SJPlayer winner, EndReason reason) {
         saveGameHistory(winner);
-        if(reason == BattleEndEvent.EndReason.CANCEL) {
-            if(reason == BattleEndEvent.EndReason.CANCEL) {
+        if (reason == BattleEndEvent.EndReason.CANCEL) {
+            if (reason == BattleEndEvent.EndReason.CANCEL) {
                 ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), Theme.INCOGNITO.buildTheme(false) + "The battle has been cancelled by a moderator.", cc);
             }
-        }
-        else if(reason != BattleEndEvent.EndReason.ENDGAME) {
-            if(arena.isRated()) {
+        } else if (reason != BattleEndEvent.EndReason.ENDGAME) {
+            if (arena.isRated()) {
                 applyRatingChange(winner);
             }
         }
@@ -389,7 +385,7 @@ public class Battle implements com.spleefleague.core.queue.Battle<Arena, SJPlaye
         Bukkit.getPluginManager().callEvent(new BattleEndEvent(this, reason));
         cleanup();
     }
-    
+
     private void cleanup() {
         isOver = true;
         clock.cancel();
@@ -397,43 +393,42 @@ public class Battle implements com.spleefleague.core.queue.Battle<Arena, SJPlaye
         SuperJump.getInstance().getBattleManager().remove(this);
         ChatManager.unregisterChannel(cc);
         GameSign.updateGameSigns();
-        if(arena.getEndDebugger() != null) {
-            RuntimeCompiler.debugFromHastebin(arena.getEndDebugger());
+        if (arena.getEndDebugger() != null) {
+            RuntimeCompiler.debugFromHastebin(arena.getEndDebugger(), null);
         }
     }
-    
+
     private void saveGameHistory(SJPlayer winner) {
         GameHistory gh = new GameHistory(this, winner);
         EntityBuilder.save(gh, SuperJump.getInstance().getPluginDB().getCollection("GameHistory"));
     }
-    
+
     private void resetPlayer(SJPlayer sp) {
         SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(sp.getPlayer());
         FakeBlockHandler.removeArea(fakeBlocks, slp.getPlayer());
-        if(spectators.contains(sp)) {
+        if (spectators.contains(sp)) {
             spectators.remove(sp);
-        }
-        else {
+        } else {
             sp.setIngame(false);
             sp.setFrozen(false);
             sp.setRequestingEndgame(false);
             sp.closeInventory();
             data.get(sp).restoreOldData();
         }
-        sp.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());    
+        sp.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
         sp.teleport(SpleefLeague.getInstance().getSpawnManager().getNext().getLocation());
         hidePlayers(sp);
         slp.removeChatChannel(cc);
         slp.setState(PlayerState.IDLE);
         slp.resetVisibility();
     }
-    
+
     private void applyRatingChange(SJPlayer winner) {
         int winnerPoints = 0;
         final int MIN_RATING = 1, MAX_RATING = 40;
         String playerList = "";
-        for(SJPlayer sjp : players) {
-            if(sjp != winner) {
+        for (SJPlayer sjp : players) {
+            if (sjp != winner) {
                 float elo = (float) (1f / (1f + Math.pow(2f, ((sjp.getRating() - winner.getRating()) / 250f))));
                 int rating = (int) Math.round(MAX_RATING * (1f - elo));
                 if (rating < MIN_RATING) {
@@ -450,31 +445,31 @@ public class Battle implements com.spleefleague.core.queue.Battle<Arena, SJPlaye
     }
 
     public void onArenaLeave(SJPlayer sjp) {
-        if(inCountdown) {
+        if (inCountdown) {
             sjp.teleport(data.get(sjp).getSpawn());
         }
         data.get(sjp).increaseFalls();
         sjp.teleport(data.get(sjp).getSpawn());
-        scoreboard.getObjective("rounds").getScore(sjp.getName()).setScore(data.get(sjp).getFalls()); 
+        scoreboard.getObjective("rounds").getScore(sjp.getName()).setScore(data.get(sjp).getFalls());
     }
-    
+
     public PlayerData getData(SJPlayer sjp) {
         return this.data.get(sjp);
     }
-    
+
     protected int getDuration() {
         return ticksPassed;
     }
-    
+
     public static class PlayerData {
-        
+
         private int falls;
         private final Location spawn;
         private final SJPlayer sjp;
         private final Area goal;
         private final GameMode oldGamemode;
         private final ItemStack[] oldInventory;
-        
+
         public PlayerData(SJPlayer sjp, Location spawn, Area goal) {
             this.sjp = sjp;
             this.spawn = spawn;
@@ -484,27 +479,27 @@ public class Battle implements com.spleefleague.core.queue.Battle<Arena, SJPlaye
             oldGamemode = p.getGameMode();
             oldInventory = p.getInventory().getContents();
         }
-        
+
         public Location getSpawn() {
             return spawn;
         }
-        
+
         public Area getGoal() {
             return goal;
         }
-        
+
         public int getFalls() {
             return falls;
         }
-        
+
         public void increaseFalls() {
             this.falls++;
         }
-        
+
         public SJPlayer getPlayer() {
             return sjp;
         }
-        
+
         public void restoreOldData() {
             Player p = sjp.getPlayer();
             p.setGameMode(oldGamemode);

@@ -29,13 +29,12 @@ import org.bson.Document;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 
-
 /**
  *
  * @author Jonas
  */
-public class Arena extends DBEntity implements DBLoadable, DBSaveable, QueueableArena<SJPlayer>{
-    
+public class Arena extends DBEntity implements DBLoadable, DBSaveable, QueueableArena<SJPlayer> {
+
     @DBLoad(fieldName = "border")
     private Area[] borders;
     @DBLoad(fieldName = "spawns", typeConverter = TypeConverter.LocationConverter.class)
@@ -66,89 +65,89 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
     @DBLoad(fieldName = "debuggerEnd")
     private String debuggerEnd;
     private int runningGames = 0;
-    
+
     public Location[] getSpawns() {
         return spawns;
     }
-    
+
     public Area[] getGoals() {
         return goals;
     }
-    
+
     public Area getArea() {
         return area;
     }
-    
+
     public Area[] getBorders() {
         return borders;
     }
-    
+
     public Location getSpectatorSpawn() {
         return spectatorSpawn;
     }
-    
+
     public String getCreator() {
         return creator;
     }
-    
+
     public String getStartDebugger() {
         return debuggerStart;
     }
-    
+
     public String getEndDebugger() {
         return debuggerEnd;
     }
-    
+
     @Override
     public String getName() {
         return name;
     }
-    
+
     @Override
     public boolean isOccupied() {
         return false;
     }
-    
+
     public int getRunningGamesCount() {
         return runningGames;
     }
-    
+
     public void registerGameStart() {
         runningGames++;
     }
-    
+
     public void registerGameEnd() {
         runningGames--;
     }
-    
+
     public boolean isRated() {
         return rated;
     }
-    
+
     public boolean isTpBackSpectators() {
         return tpBackSpectators;
     }
-    
+
     @Override
     public boolean isPaused() {
         return paused;
     }
-    
+
     public void setPaused(boolean paused) {
         this.paused = paused;
     }
-    
+
     public boolean isLiquidLose() {
         return liquidLose;
     }
-    
+
     @Override
     public int getSize() {
         return getSpawns().length;
     }
-    
+
     public Battle startBattle(List<SJPlayer> players, StartReason reason) {
-        if(!isOccupied()) {
+        if (!isOccupied()) {
             Battle battle = new Battle(this, players);
             battle.start(reason);
             return battle;
@@ -165,55 +164,53 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
     public boolean isAvailable(SJPlayer sjp) {
         return sjp.getVisitedArenas().contains(this);
     }
-    
+
     public Dynamic<List<String>> getDynamicDescription() {
         return (SLPlayer slp) -> {
             List<String> description = new ArrayList<>();
             SJPlayer sjp = SuperJump.getInstance().getPlayerManager().get(slp.getUniqueId());
-            if(Arena.this.isAvailable(sjp)) {
-                if(Arena.this.isPaused()) {
+            if (Arena.this.isAvailable(sjp)) {
+                if (Arena.this.isPaused()) {
                     description.add(ChatColor.RED + "This arena is");
                     description.add(ChatColor.RED + "currently paused.");
-                }
-                else if(getRunningGamesCount() == 0) {
+                } else if (getRunningGamesCount() == 0) {
                     description.add(ChatColor.DARK_GRAY + "" + ChatColor.ITALIC + "Click to join the queue");
                 }
-            }
-            else {
+            } else {
                 description.add(ChatColor.RED + "You have not discovered");
                 description.add(ChatColor.RED + "this arena yet.");
             }
             return description;
         };
     }
-    
+
     private static Map<String, Arena> arenas;
-    
+
     public static Arena byName(String name) {
         Arena arena = arenas.get(name);
-        if(arena == null) {
-            for(Arena a : arenas.values()) {
-                if(a.getName().equalsIgnoreCase(name)) {
+        if (arena == null) {
+            for (Arena a : arenas.values()) {
+                if (a.getName().equalsIgnoreCase(name)) {
                     arena = a;
                 }
             }
         }
         return arena;
     }
-    
+
     public static Collection<Arena> getAll() {
         return arenas.values();
     }
-    
-    public static void init(){
+
+    public static void init() {
         arenas = new HashMap<>();
         MongoCursor<Document> dbc = SuperJump.getInstance().getPluginDB().getCollection("Arenas").find().iterator();
-        while(dbc.hasNext()) {
+        while (dbc.hasNext()) {
             Document d = dbc.next();
             Arena arena;
-            if(!d.containsKey("isRandom") || !d.getBoolean("isRandom")) {
+            if (!d.containsKey("isRandom") || !d.getBoolean("isRandom")) {
                 arena = EntityBuilder.load(d, Arena.class);
-                if(arena.getSize() == 2) {
+                if (arena.getSize() == 2) {
                     arenas.put(arena.getName(), arena);
                     SuperJump.getInstance().getBattleManager().registerArena(arena);
                 }

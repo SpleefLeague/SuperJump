@@ -14,7 +14,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.UUID;
 
-
 /**
  *
  * @author Jonas
@@ -35,7 +34,7 @@ public class GameHistory extends DBEntity implements DBSaveable {
         players = new PlayerData[battle.getPlayers().size()];
         Collection<SJPlayer> activePlayers = battle.getActivePlayers();
         int i = 0;
-        for(SJPlayer sjp : battle.getPlayers()) {
+        for (SJPlayer sjp : battle.getPlayers()) {
             players[i++] = new PlayerData(sjp.getUniqueId(), battle.getData(sjp).getFalls(), sjp == winner, !activePlayers.contains(sjp));
         }
         this.duration = battle.getDuration();

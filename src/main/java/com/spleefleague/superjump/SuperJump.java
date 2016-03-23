@@ -2,9 +2,9 @@
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
- */ 
+ */
 package com.spleefleague.superjump;
-    
+
 import com.mongodb.client.MongoDatabase;
 import com.spleefleague.core.SpleefLeague;
 import com.spleefleague.core.chat.ChatChannel;
@@ -35,24 +35,23 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
-    
-/** 
- *   
+/**
+ *
  * @author Jonas
- */ 
+ */
 public class SuperJump extends GamePlugin {
-    
+
     private static SuperJump instance;
-    
+
     private PlayerManager<SJPlayer> playerManager;
     private RatedBattleManager<Arena, SJPlayer, Battle> battleManager;
     private boolean queuesOpen = true;
     private ChatChannel start, end;
-    
+
     public SuperJump() {
         super("[SuperJump]", ChatColor.GRAY + "[" + ChatColor.GOLD + "SuperJump" + ChatColor.GRAY + "]" + ChatColor.RESET);
     }
-    
+
     @Override
     public void start() {
         instance = this;
@@ -74,28 +73,28 @@ public class SuperJump extends GamePlugin {
         GameSign.initialize();
         CommandLoader.loadCommands(this, "com.spleefleague.superjump.commands");
     }
-    
+
     @Override
     public void stop() {
-        for(Battle battle : battleManager.getAll()) {
+        for (Battle battle : battleManager.getAll()) {
             battle.cancel();
         }
         playerManager.saveAll();
     }
-    
+
     @Override
     public MongoDatabase getPluginDB() {
         return SpleefLeague.getInstance().getMongo().getDatabase("SuperJump");
     }
-    
+
     public PlayerManager<SJPlayer> getPlayerManager() {
         return playerManager;
     }
-    
+
     public BattleManager<Arena, SJPlayer, Battle> getBattleManager() {
         return battleManager;
     }
-    
+
     public static SuperJump getInstance() {
         return instance;
     }
@@ -104,31 +103,30 @@ public class SuperJump extends GamePlugin {
     public boolean spectate(Player target, Player p) {
         SJPlayer tsjp = getPlayerManager().get(target);
         SJPlayer sjp = getPlayerManager().get(p);
-        if(sjp.getVisitedArenas().contains(tsjp.getCurrentBattle().getArena())) {
+        if (sjp.getVisitedArenas().contains(tsjp.getCurrentBattle().getArena())) {
             tsjp.getCurrentBattle().addSpectator(sjp);
             return true;
-        }
-        else {
+        } else {
             p.sendMessage(SuperJump.getInstance().getChatPrefix() + Theme.ERROR.buildTheme(false) + " You can only spectate arenas you have already visited!");
             return false;
         }
     }
-    
+
     @Override
     public void unspectate(Player p) {
         SJPlayer sjp = getPlayerManager().get(p);
-        for(Battle battle : getBattleManager().getAll()) {
-            if(battle.isSpectating(sjp)) {
+        for (Battle battle : getBattleManager().getAll()) {
+            if (battle.isSpectating(sjp)) {
                 battle.removeSpectator(sjp);
             }
         }
     }
-    
+
     @Override
     public boolean isSpectating(Player p) {
         SJPlayer sjp = getPlayerManager().get(p);
-        for(Battle battle : getBattleManager().getAll()) {
-            if(battle.isSpectating(sjp)) {
+        for (Battle battle : getBattleManager().getAll()) {
+            if (battle.isSpectating(sjp)) {
                 return true;
             }
         }
@@ -145,8 +143,8 @@ public class SuperJump extends GamePlugin {
     public void cancel(Player p) {
         SJPlayer sjp = getPlayerManager().get(p);
         Battle battle = getBattleManager().getBattle(sjp);
-        if(battle != null) {
-            battle.cancel();    
+        if (battle != null) {
+            battle.cancel();
             ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix() + Theme.SUPER_SECRET.buildTheme(false) + " The battle on " + battle.getArena().getName() + " has been cancelled.", ChatChannel.STAFF_NOTIFICATIONS);
         }
     }
@@ -155,8 +153,8 @@ public class SuperJump extends GamePlugin {
     public void surrender(Player p) {
         SJPlayer sjp = getPlayerManager().get(p);
         Battle battle = getBattleManager().getBattle(sjp);
-        if(battle != null) {
-            for(SJPlayer active : battle.getActivePlayers()) {
+        if (battle != null) {
+            for (SJPlayer active : battle.getActivePlayers()) {
                 active.sendMessage(SuperJump.getInstance().getChatPrefix() + Theme.SUPER_SECRET.buildTheme(false) + " " + p.getName() + " has surrendered!");
             }
             battle.removePlayer(sjp, true);
@@ -173,11 +171,11 @@ public class SuperJump extends GamePlugin {
     public boolean isIngame(Player p) {
         SJPlayer sjp = getPlayerManager().get(p);
         return getBattleManager().isIngame(sjp);
-     }
-   
+    }
+
     @Override
     public void cancelAll() {
-        for(Battle battle : new ArrayList<>(battleManager.getAll())) {
+        for (Battle battle : new ArrayList<>(battleManager.getAll())) {
             battle.cancel();
         }
     }
@@ -189,26 +187,25 @@ public class SuperJump extends GamePlugin {
         p.sendMessage(Theme.INCOGNITO + "Rating: " + ChatColor.YELLOW + sjp.getRating());
         p.sendMessage(Theme.INCOGNITO + "Rank: " + ChatColor.YELLOW + sjp.getRank());
     }
-    
+
     @Override
     public void requestEndgame(Player p) {
         SJPlayer sp = SuperJump.getInstance().getPlayerManager().get(p);
         Battle battle = sp.getCurrentBattle();
-        if(battle != null) {
+        if (battle != null) {
             sp.setRequestingEndgame(true);
             boolean shouldEnd = true;
-            for(SJPlayer spleefplayer : battle.getActivePlayers()) {
-                if(!spleefplayer.isRequestingEndgame()) {
+            for (SJPlayer spleefplayer : battle.getActivePlayers()) {
+                if (!spleefplayer.isRequestingEndgame()) {
                     shouldEnd = false;
                     break;
                 }
             }
-            if(shouldEnd) {
+            if (shouldEnd) {
                 battle.end(null, EndReason.ENDGAME);
-            }
-            else {
-                for(SJPlayer spleefplayer : battle.getActivePlayers()) {
-                    if(!spleefplayer.isRequestingEndgame()) {
+            } else {
+                for (SJPlayer spleefplayer : battle.getActivePlayers()) {
+                    if (!spleefplayer.isRequestingEndgame()) {
                         spleefplayer.sendMessage(SuperJump.getInstance().getChatPrefix() + " " + Theme.WARNING.buildTheme(false) + "Your opponent wants to end this game. To agree enter " + ChatColor.YELLOW + "/endgame.");
                     }
                 }
@@ -221,27 +218,27 @@ public class SuperJump extends GamePlugin {
     public void setQueueStatus(boolean open) {
         queuesOpen = open;
     }
-    
+
     @Override
     public void syncSave(Player p) {
         SJPlayer slp = playerManager.get(p);
-        if(slp != null) {
+        if (slp != null) {
             EntityBuilder.save(slp, getPluginDB().getCollection("Players"));
         }
     }
-    
+
     public boolean queuesOpen() {
         return queuesOpen;
     }
-    
+
     public ChatChannel getStartMessageChannel() {
         return start;
     }
-    
+
     public ChatChannel getEndMessageChannel() {
         return end;
     }
-    
+
     private void createGameMenu() {
         InventoryMenuTemplateBuilder menu = SLMenu.getNewGamemodeMenu()
                 .displayName("SuperJump")
@@ -258,16 +255,13 @@ public class SuperJump extends GamePlugin {
                         if (arena.isAvailable(sp)) {
                             if (arena.isOccupied()) {
                                 battleManager.getBattle(arena).addSpectator(sp);
-                            }
-                            else {
-                                if (!arena.isPaused()) {
-                                    battleManager.queue(sp, arena);
-                                    event.getItem().getParent().update();
-                                }
+                            } else if (!arena.isPaused()) {
+                                battleManager.queue(sp, arena);
+                                event.getItem().getParent().update();
                             }
                         }
                     })
             );
         });
     }
-}   
+}
