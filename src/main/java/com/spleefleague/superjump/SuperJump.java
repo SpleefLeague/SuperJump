@@ -17,23 +17,25 @@ import com.spleefleague.core.io.EntityBuilder;
 import com.spleefleague.core.menus.SLMenu;
 import com.spleefleague.core.player.PlayerManager;
 import com.spleefleague.core.plugin.GamePlugin;
-import static com.spleefleague.core.utils.inventorymenu.InventoryMenuAPI.item;
+import com.spleefleague.core.queue.BattleManager;
+import com.spleefleague.core.queue.RatedBattleManager;
 import com.spleefleague.core.utils.inventorymenu.InventoryMenuTemplateBuilder;
 import com.spleefleague.superjump.game.Arena;
 import com.spleefleague.superjump.game.Battle;
-import com.spleefleague.core.queue.BattleManager;
-import com.spleefleague.core.queue.RatedBattleManager;
 import com.spleefleague.superjump.game.signs.GameSign;
 import com.spleefleague.superjump.listener.ConnectionListener;
 import com.spleefleague.superjump.listener.EnvironmentListener;
 import com.spleefleague.superjump.listener.GameListener;
 import com.spleefleague.superjump.listener.SignListener;
 import com.spleefleague.superjump.player.SJPlayer;
-import java.util.ArrayList;
-import java.util.List;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.spleefleague.core.utils.inventorymenu.InventoryMenuAPI.item;
 
 /**
  *
@@ -91,6 +93,7 @@ public class SuperJump extends GamePlugin {
         return playerManager;
     }
 
+    @Override
     public BattleManager<Arena, SJPlayer, Battle> getBattleManager() {
         return battleManager;
     }
