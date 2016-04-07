@@ -15,20 +15,21 @@ import com.spleefleague.core.player.Rank;
 import com.spleefleague.core.player.SLPlayer;
 import com.spleefleague.core.plugin.CorePlugin;
 import com.spleefleague.core.plugin.GamePlugin;
-import com.spleefleague.superjump.SuperJump;
-import com.spleefleague.superjump.game.Arena;
 import com.spleefleague.core.queue.BattleManager;
 import com.spleefleague.core.queue.Challenge;
+import com.spleefleague.superjump.SuperJump;
+import com.spleefleague.superjump.game.Arena;
 import com.spleefleague.superjump.game.signs.GameSign;
 import com.spleefleague.superjump.player.SJPlayer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  *
@@ -125,7 +126,8 @@ public class superjump extends BasicCommand {
                     Arena arena = Arena.byName(args[1]);
                     if (arena != null) {
                         if (args.length - 1 == arena.getSize()) {
-                            Collection<SLPlayer> players = new ArrayList<>();
+                            SLPlayer[] players = new SLPlayer[arena.getSize()-1];
+                            Collection<SLPlayer> challenged = new ArrayList();
                             for (int i = 2; i < args.length; i++) {
                                 Player t = Bukkit.getPlayer(args[i]);
                                 if (t != null) {
@@ -137,16 +139,23 @@ public class superjump extends BasicCommand {
                                     SJPlayer spt = SuperJump.getInstance().getPlayerManager().get(t.getUniqueId());
                                     if (!arena.isAvailable(spt)) {
                                         error(p, spt.getName() + " has not visited this arena yet!");
+                                        return;
                                     }
-                                    players.add(splayer);
+                                    // in case maps get added with > 2 player support
+                                    if (challenged.contains(splayer)) {
+                                        error(p, "You cannot challenge " + splayer.getName() + " twice!");
+                                        return;
+                                    }
+                                    players[i-2] = splayer;
+                                    challenged.add(splayer);
                                 } else {
                                     error(p, "The player " + args[i] + " is not online.");
                                     return;
                                 }
                             }
-                            Challenge challenge = new Challenge(slp, arena.getSize()) {
+                            Challenge challenge = new Challenge(slp, players) {
                                 @Override
-                                public void start(Collection<SLPlayer> accepted) {
+                                public void start(SLPlayer[] accepted) {
                                     List<SJPlayer> players = new ArrayList<>();
                                     for (SLPlayer slpt : accepted) {
                                         players.add(SuperJump.getInstance().getPlayerManager().get(slpt));
