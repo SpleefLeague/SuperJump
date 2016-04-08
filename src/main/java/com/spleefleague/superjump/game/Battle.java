@@ -10,6 +10,7 @@ import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.comphenix.protocol.wrappers.PlayerInfoData;
 import com.comphenix.protocol.wrappers.WrappedChatComponent;
 import com.comphenix.protocol.wrappers.WrappedGameProfile;
+import com.google.common.collect.Lists;
 import com.spleefleague.core.SpleefLeague;
 import com.spleefleague.core.chat.ChatChannel;
 import com.spleefleague.core.chat.ChatManager;
@@ -378,12 +379,8 @@ public class Battle implements com.spleefleague.core.queue.Battle<Arena, SJPlaye
                 applyRatingChange(winner);
             }
         }
-        for (SJPlayer sp : new ArrayList<>(spectators)) {
-            resetPlayer(sp);
-        }
-        for (SJPlayer sp : getActivePlayers()) {
-            resetPlayer(sp);
-        }
+        Lists.newArrayList(getSpectators()).forEach(this::resetPlayer);
+        Lists.newArrayList(getActivePlayers()).forEach(this::resetPlayer);
         Bukkit.getPluginManager().callEvent(new BattleEndEvent(this, reason));
         cleanup();
     }
