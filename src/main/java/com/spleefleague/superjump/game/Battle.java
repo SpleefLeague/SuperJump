@@ -414,6 +414,9 @@ public class Battle implements com.spleefleague.core.queue.Battle<Arena, SJPlaye
             sp.closeInventory();
             data.get(sp).restoreOldData();
         }
+        if (sp.getPlayer().getGameMode() == GameMode.SPECTATOR) {
+            sp.getPlayer().setSpectatorTarget(null);
+        }
         sp.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
         sp.teleport(SpleefLeague.getInstance().getSpawnManager().getNext().getLocation());
         hidePlayers(sp);
