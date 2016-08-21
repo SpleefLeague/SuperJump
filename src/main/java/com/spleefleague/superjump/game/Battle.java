@@ -21,10 +21,7 @@ import com.spleefleague.core.events.BattleStartEvent;
 import com.spleefleague.core.events.BattleStartEvent.StartReason;
 import com.spleefleague.core.io.EntityBuilder;
 import com.spleefleague.core.listeners.FakeBlockHandler;
-import com.spleefleague.core.player.GeneralPlayer;
-import com.spleefleague.core.player.PlayerState;
-import com.spleefleague.core.player.Rank;
-import com.spleefleague.core.player.SLPlayer;
+import com.spleefleague.core.player.*;
 import com.spleefleague.core.plugin.GamePlugin;
 import com.spleefleague.core.utils.Area;
 import com.spleefleague.core.utils.FakeArea;
@@ -444,6 +441,9 @@ public class Battle implements com.spleefleague.core.queue.Battle<Arena, SJPlaye
         winner.setRating(winner.getRating() + winnerPoints);
         playerList += ChatColor.RED + winner.getName() + ChatColor.WHITE + " (" + winner.getRating() + ")" + ChatColor.GREEN + " gets " + ChatColor.GRAY + winnerPoints + ChatColor.WHITE + (winnerPoints == 1 ? " point." : " points. ");
         ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), ChatColor.GREEN + "Game in arena " + ChatColor.WHITE + arena.getName() + ChatColor.GREEN + " is over. " + playerList, SuperJump.getInstance().getEndMessageChannel());
+        this.players.forEach((p) -> {
+            SuperJump.getInstance().getPlayerManager().save(p);
+        });
     }
 
     public void onArenaLeave(SJPlayer sjp) {
