@@ -75,7 +75,7 @@ public class superjump extends BasicCommand {
                                 if ((args.length - 2) == /*arena.getQueueLength()*/ 2) {
                                     ArrayList<SJPlayer> players = new ArrayList<>();
                                     for (int i = 0; i < args.length - 2; i++) {
-                                        Player pl = Bukkit.getPlayerExact(args[i + 2]);
+                                        Player pl = Bukkit.getPlayer(args[i + 2]);
                                         if (pl != null) {
                                             players.add(SuperJump.getInstance().getPlayerManager().get(pl));
                                         } else {
@@ -122,8 +122,11 @@ public class superjump extends BasicCommand {
                     } else {
                         sendUsage(p);
                     }
-                } else if (args.length == 3 && args[0].equalsIgnoreCase("challenge")) {
+                } else if (args.length == 3 && (args[0].equalsIgnoreCase("challenge") || args[0].equalsIgnoreCase("c"))) {
                     Arena arena = Arena.byName(args[1]);
+                    if (arena.isAvailable(sjp)) {
+                        error(p, "You have not discovered this arena");
+                    }
                     if (arena != null) {
                         if (args.length - 1 == arena.getSize()) {
                             SLPlayer[] players = new SLPlayer[arena.getSize()-1];
