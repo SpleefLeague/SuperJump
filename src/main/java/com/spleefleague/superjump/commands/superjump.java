@@ -126,6 +126,7 @@ public class superjump extends BasicCommand {
                     Arena arena = Arena.byName(args[1]);
                     if (arena.isAvailable(sjp)) {
                         error(p, "You have not discovered this arena");
+                        return;
                     }
                     if (arena != null) {
                         if (args.length - 1 == arena.getSize()) {
