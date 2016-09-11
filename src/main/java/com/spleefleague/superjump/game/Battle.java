@@ -78,6 +78,7 @@ public class Battle implements com.spleefleague.core.queue.Battle<Arena, SJPlaye
         return arena;
     }
 
+    @Override
     public Collection<SJPlayer> getPlayers() {
         return players;
     }
