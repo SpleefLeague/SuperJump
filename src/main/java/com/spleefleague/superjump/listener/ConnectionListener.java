@@ -11,13 +11,10 @@ import com.comphenix.protocol.wrappers.PlayerInfoData;
 import com.comphenix.protocol.wrappers.WrappedChatComponent;
 import com.comphenix.protocol.wrappers.WrappedGameProfile;
 import com.spleefleague.core.SpleefLeague;
-import com.spleefleague.core.player.GeneralPlayer;
 import com.spleefleague.core.player.SLPlayer;
 import com.spleefleague.superjump.SuperJump;
 import com.spleefleague.superjump.game.Battle;
 import com.spleefleague.superjump.player.SJPlayer;
-import java.util.ArrayList;
-import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
@@ -25,6 +22,9 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -48,6 +48,9 @@ public class ConnectionListener implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         SJPlayer sjp = SuperJump.getInstance().getPlayerManager().get(event.getPlayer());
+        if (sjp == null) {
+            return;
+        }
         if (sjp.isIngame()) {
             SuperJump.getInstance().getBattleManager().getBattle(sjp).removePlayer(sjp, false);
         } else {
