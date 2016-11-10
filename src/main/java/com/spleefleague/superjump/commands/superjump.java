@@ -124,11 +124,11 @@ public class superjump extends BasicCommand {
                     }
                 } else if (args.length == 3 && (args[0].equalsIgnoreCase("challenge") || args[0].equalsIgnoreCase("c"))) {
                     Arena arena = Arena.byName(args[1]);
-                    if (arena.isAvailable(sjp)) {
-                        error(p, "You have not discovered this arena");
-                        return;
-                    }
                     if (arena != null) {
+                        if (!arena.isAvailable(sjp)) {
+                            error(p, "You have not discovered this arena");
+                            return;
+                        }
                         if (args.length - 1 == arena.getSize()) {
                             SLPlayer[] players = new SLPlayer[arena.getSize()-1];
                             Collection<SLPlayer> challenged = new ArrayList();
