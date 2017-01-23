@@ -12,10 +12,12 @@ import com.spleefleague.core.plugin.GamePlugin;
 import com.spleefleague.core.utils.FakeArea;
 import com.spleefleague.core.utils.FakeBlock;
 import com.spleefleague.core.utils.RuntimeCompiler;
+import com.spleefleague.core.utils.UtilChat;
 import com.spleefleague.superjump.SuperJump;
 import com.spleefleague.superjump.game.signs.GameSign;
 import com.spleefleague.superjump.player.SJPlayer;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -29,14 +31,14 @@ import org.bukkit.scoreboard.Objective;
 
 /**
  *
- * @author Jonas
+ * @author RINES <iam@kostya.sexy>
  */
-public class Battle extends AbstractBattle {
+public class MultiBattle extends AbstractBattle {
 
-    protected Battle(Arena arena, List<SJPlayer> players) {
+    public MultiBattle(Arena arena, List<SJPlayer> players) {
         super(arena, players);
     }
-    
+
     @Override
     public void start(BattleStartEvent.StartReason reason) {
         players.forEach(p -> {
@@ -58,6 +60,7 @@ public class Battle extends AbstractBattle {
             objective.setDisplaySlot(DisplaySlot.SIDEBAR);
             objective.setDisplayName(ChatColor.GRAY + "0:0:0 | " + ChatColor.RED + "Times Fallen:");
             String playerNames = "";
+            Location spawn = arena.getSpawns()[0];
             for (int i = 0; i < players.size(); i++) {
                 SJPlayer sjp = players.get(i);
                 if (i == 0) {
@@ -75,7 +78,7 @@ public class Battle extends AbstractBattle {
                 p.setFoodLevel(20);
                 sjp.setIngame(true);
                 sjp.setFrozen(true);
-                PlayerData pdata = new PlayerData(sjp, arena.getSpawns()[i], arena.getGoals()[i % arena.getGoals().length]);
+                PlayerData pdata = new PlayerData(sjp, spawn, arena.getGoals()[0]);
                 this.data.put(sjp, pdata);
                 p.setGameMode(GameMode.ADVENTURE);
                 p.setFlying(false);
@@ -83,7 +86,7 @@ public class Battle extends AbstractBattle {
                 p.getActivePotionEffects().stream().map(PotionEffect::getType).forEach(p::removePotionEffect);
                 players.stream().filter(sjpt -> sjp != sjpt).forEach(sjpt -> sjp.showPlayer(sjpt.getPlayer()));
                 p.eject();
-                p.teleport(arena.getSpawns()[i]);
+                p.teleport(spawn);
                 p.closeInventory();
                 p.getInventory().clear();
                 p.setScoreboard(scoreboard);
@@ -96,56 +99,23 @@ public class Battle extends AbstractBattle {
             startCountdown();
         }
     }
-    
+
     @Override
     protected void getSpawnCageBlocks() {
-        for (Location spawn : arena.getSpawns()) {
-            fakeBlocks.add(getCageBlocks(spawn, Material.AIR));
-        }
-    }
-    
-    protected FakeArea getCageBlocks(Location loc, Material m) {
-        loc = loc.getBlock().getLocation();
-        FakeArea area = new FakeArea();
-        for (int x = -1; x <= 1; x++) {
-            for (int z = -1; z <= 1; z++) {
-                if (x == 0 && z == 0) {
-                    area.addBlock(new FakeBlock(loc.clone().add(x, 2, z), m));
-                } else {
-                    for (int y = 0; y <= 2; y++) {
-                        area.addBlock(new FakeBlock(loc.clone().add(x, y, z), m));
-                    }
-                }
-            }
-        }
-        return area;
+//        fakeBlocks.add(getCageBlocks(arena.getSpawns()[0], Material.AIR));
     }
     
     @Override
     protected void applyRatingChange(SJPlayer winner) {
-        int winnerPoints = 0;
-        final int MIN_RATING = 1, MAX_RATING = 40;
-        String playerList = "";
-        for (SJPlayer sjp : players) {
-            if (sjp != winner) {
-                float elo = (float) (1f / (1f + Math.pow(2f, ((sjp.getRating() - winner.getRating()) / 250f))));
-                int rating = (int) Math.round(MAX_RATING * (1f - elo));
-                if (rating < MIN_RATING) {
-                    rating = MIN_RATING;
-                }
-                winnerPoints += rating;
-                sjp.setRating(sjp.getRating() - rating);
-                SpleefLeague.getInstance().getPlayerManager().get(sjp).changeCoins(1);
-                playerList += ChatColor.RED + sjp.getName() + ChatColor.WHITE + " (" + sjp.getRating() + ")" + ChatColor.GREEN + " loses " + ChatColor.GRAY + (rating) + ChatColor.WHITE + (-rating == 1 ? " point." : " points.");
-            }
-        }
-        winner.setRating(winner.getRating() + winnerPoints);
+        String players = this.players.stream().filter(sjp -> sjp != winner).map(SJPlayer::getName).collect(Collectors.joining("&a, &c"));
+        ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(),
+                UtilChat.c("&aGame in arena &f%s &ais over &f(%s)&a. &c%s &awins over &c%s&a.",
+                        arena.getName(),
+                        DurationFormatUtils.formatDuration(ticksPassed * 50, "HH:mm:ss", true),
+                        winner.getName(),
+                        players),
+                SuperJump.getInstance().getEndMessageChannel());
         SpleefLeague.getInstance().getPlayerManager().get(winner).changeCoins(2);
-        playerList += ChatColor.RED + winner.getName() + ChatColor.WHITE + " (" + winner.getRating() + ")" + ChatColor.GREEN + " gets " + ChatColor.GRAY + winnerPoints + ChatColor.WHITE + (winnerPoints == 1 ? " point." : " points. ");
-        ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), ChatColor.GREEN + "Game in arena " + ChatColor.WHITE + arena.getName() + ChatColor.GREEN + " is over " + ChatColor.WHITE + "(" + DurationFormatUtils.formatDuration(ticksPassed * 50, "HH:mm:ss", true) + ")" + ChatColor.GREEN + ". " + playerList, SuperJump.getInstance().getEndMessageChannel());
-        this.players.forEach((p) -> {
-            SuperJump.getInstance().getPlayerManager().save(p);
-        });
     }
-    
+
 }

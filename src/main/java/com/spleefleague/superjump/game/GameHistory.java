@@ -29,7 +29,7 @@ public class GameHistory extends DBEntity implements DBSaveable {
     @DBSave(fieldName = "cancelled")
     private final boolean cancelled;
 
-    protected GameHistory(Battle battle, SJPlayer winner) {
+    protected GameHistory(AbstractBattle battle, SJPlayer winner) {
         this.cancelled = winner == null;
         players = new PlayerData[battle.getPlayers().size()];
         Collection<SJPlayer> activePlayers = battle.getActivePlayers();

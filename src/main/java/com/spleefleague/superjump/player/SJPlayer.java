@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import com.spleefleague.superjump.SuperJump;
+import com.spleefleague.superjump.game.AbstractBattle;
 import com.spleefleague.superjump.game.Arena;
 import com.spleefleague.superjump.game.Battle;
 import org.bson.Document;
@@ -90,7 +91,7 @@ public class SJPlayer extends RatedPlayer {
         return frozen;
     }
 
-    public Battle getCurrentBattle() {
+    public AbstractBattle getCurrentBattle() {
         return SuperJump.getInstance().getBattleManager().getBattle(this);
     }
 

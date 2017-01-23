@@ -155,6 +155,15 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
         return null;
     }
 
+    public MultiBattle startMultiBattle(List<SJPlayer> players, StartReason reason) {
+        if (!isOccupied()) {
+            MultiBattle battle = new MultiBattle(this, players);
+            battle.start(reason);
+            return battle;
+        }
+        return null;
+    }
+
     @Override
     public boolean isQueued() {
         return queued;

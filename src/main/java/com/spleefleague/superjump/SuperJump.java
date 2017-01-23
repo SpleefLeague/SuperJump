@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.spleefleague.core.utils.inventorymenu.InventoryMenuAPI.item;
+import com.spleefleague.superjump.game.AbstractBattle;
 
 /**
  *
@@ -46,7 +47,7 @@ public class SuperJump extends GamePlugin {
     private static SuperJump instance;
 
     private PlayerManager<SJPlayer> playerManager;
-    private RatedBattleManager<Arena, SJPlayer, Battle> battleManager;
+    private RatedBattleManager<Arena, SJPlayer, AbstractBattle> battleManager;
     private boolean queuesOpen = true;
     private ChatChannel start, end;
 
@@ -58,7 +59,7 @@ public class SuperJump extends GamePlugin {
     public void start() {
         instance = this;
         playerManager = new PlayerManager<>(this, SJPlayer.class);
-        battleManager = new RatedBattleManager<Arena, SJPlayer, Battle>() {
+        battleManager = new RatedBattleManager<Arena, SJPlayer, AbstractBattle>() {
             @Override
             public void startBattle(Arena queue, List<SJPlayer> players) {
                 queue.startBattle(players, StartReason.QUEUE);
@@ -78,9 +79,7 @@ public class SuperJump extends GamePlugin {
 
     @Override
     public void stop() {
-        for (Battle battle : battleManager.getAll()) {
-            battle.cancel();
-        }
+        battleManager.getAll().forEach(AbstractBattle::cancel);
         playerManager.saveAll();
     }
 
@@ -94,7 +93,7 @@ public class SuperJump extends GamePlugin {
     }
 
     @Override
-    public BattleManager<Arena, SJPlayer, Battle> getBattleManager() {
+    public BattleManager<Arena, SJPlayer, AbstractBattle> getBattleManager() {
         return battleManager;
     }
 
@@ -118,22 +117,13 @@ public class SuperJump extends GamePlugin {
     @Override
     public void unspectate(Player p) {
         SJPlayer sjp = getPlayerManager().get(p);
-        for (Battle battle : getBattleManager().getAll()) {
-            if (battle.isSpectating(sjp)) {
-                battle.removeSpectator(sjp);
-            }
-        }
+        getBattleManager().getAll().stream().filter(b -> b.isSpectating(sjp)).forEach(b -> b.removeSpectator(sjp));
     }
 
     @Override
     public boolean isSpectating(Player p) {
         SJPlayer sjp = getPlayerManager().get(p);
-        for (Battle battle : getBattleManager().getAll()) {
-            if (battle.isSpectating(sjp)) {
-                return true;
-            }
-        }
-        return false;
+        return getBattleManager().getAll().stream().anyMatch(b -> b.isSpectating(sjp));
     }
 
     @Override
@@ -145,7 +135,7 @@ public class SuperJump extends GamePlugin {
     @Override
     public void cancel(Player p) {
         SJPlayer sjp = getPlayerManager().get(p);
-        Battle battle = getBattleManager().getBattle(sjp);
+        AbstractBattle battle = getBattleManager().getBattle(sjp);
         if (battle != null) {
             battle.cancel();
             ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix() + Theme.SUPER_SECRET.buildTheme(false) + " The battle on " + battle.getArena().getName() + " has been cancelled.", ChatChannel.STAFF_NOTIFICATIONS);
@@ -155,7 +145,7 @@ public class SuperJump extends GamePlugin {
     @Override
     public void surrender(Player p) {
         SJPlayer sjp = getPlayerManager().get(p);
-        Battle battle = getBattleManager().getBattle(sjp);
+        AbstractBattle battle = getBattleManager().getBattle(sjp);
         if (battle != null) {
             for (SJPlayer active : battle.getActivePlayers()) {
                 active.sendMessage(SuperJump.getInstance().getChatPrefix() + Theme.SUPER_SECRET.buildTheme(false) + " " + p.getName() + " has surrendered!");
@@ -178,9 +168,7 @@ public class SuperJump extends GamePlugin {
 
     @Override
     public void cancelAll() {
-        for (Battle battle : new ArrayList<>(battleManager.getAll())) {
-            battle.cancel();
-        }
+        new ArrayList<>(battleManager.getAll()).forEach(AbstractBattle::cancel);
     }
 
     @Override
@@ -194,7 +182,7 @@ public class SuperJump extends GamePlugin {
     @Override
     public void requestEndgame(Player p) {
         SJPlayer sp = SuperJump.getInstance().getPlayerManager().get(p);
-        Battle battle = sp.getCurrentBattle();
+        AbstractBattle battle = sp.getCurrentBattle();
         if (battle != null) {
             sp.setRequestingEndgame(true);
             boolean shouldEnd = true;

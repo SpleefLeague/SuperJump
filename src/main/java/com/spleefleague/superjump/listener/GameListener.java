@@ -12,6 +12,7 @@ import com.spleefleague.core.player.SLPlayer;
 import com.spleefleague.core.utils.Area;
 import com.spleefleague.core.utils.PlayerUtil;
 import com.spleefleague.superjump.SuperJump;
+import com.spleefleague.superjump.game.AbstractBattle;
 import com.spleefleague.superjump.game.Arena;
 import com.spleefleague.superjump.game.Battle;
 import com.spleefleague.superjump.player.SJPlayer;
@@ -71,7 +72,7 @@ public class GameListener implements Listener {
                     }
                 }
             } else {
-                Battle battle = SuperJump.getInstance().getBattleManager().getBattle(sjp);
+                AbstractBattle battle = SuperJump.getInstance().getBattleManager().getBattle(sjp);
                 Arena arena = battle.getArena();
                 if (!Area.isInAny(sjp.getLocation(), arena.getBorders())) {
                     battle.onArenaLeave(sjp);

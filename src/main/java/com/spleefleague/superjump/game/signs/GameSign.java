@@ -11,6 +11,7 @@ import com.spleefleague.core.io.DBLoadable;
 import com.spleefleague.core.io.EntityBuilder;
 import com.spleefleague.core.io.TypeConverter;
 import com.spleefleague.superjump.SuperJump;
+import com.spleefleague.superjump.game.AbstractBattle;
 import com.spleefleague.superjump.game.Arena;
 import com.spleefleague.superjump.game.Battle;
 import java.util.HashMap;
@@ -62,7 +63,7 @@ public class GameSign extends DBEntity implements DBLoadable {
         return arena;
     }
 
-    public Battle getBattle() {
+    public AbstractBattle getBattle() {
         return SuperJump.getInstance().getBattleManager().getBattle(arena);
     }
 
