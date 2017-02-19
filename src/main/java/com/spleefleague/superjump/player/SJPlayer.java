@@ -16,7 +16,6 @@ import java.util.Set;
 import com.spleefleague.superjump.SuperJump;
 import com.spleefleague.superjump.game.AbstractBattle;
 import com.spleefleague.superjump.game.Arena;
-import com.spleefleague.superjump.game.Battle;
 import org.bson.Document;
 
 /**
@@ -30,6 +29,7 @@ public class SJPlayer extends RatedPlayer {
     private Set<Arena> visitedArenas;
 
     public SJPlayer() {
+        visitedArenas = new HashSet<>();
         setDefaults();
     }
 
@@ -106,8 +106,8 @@ public class SJPlayer extends RatedPlayer {
         this.frozen = false;
         this.ingame = false;
         visitedArenas = new HashSet<>();
-        for (String name : (List<String>) Settings.getList("default_arenas_jump")) {
-            visitedArenas.add(Arena.byName(name));
-        }
+        Settings.getList("default_arenas_jump")
+            .ifPresent(l -> ((List<String>)l)
+                .forEach(name -> visitedArenas.add(Arena.byName(name))));
     }
 }

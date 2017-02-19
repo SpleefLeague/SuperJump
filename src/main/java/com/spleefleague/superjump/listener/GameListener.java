@@ -14,7 +14,6 @@ import com.spleefleague.core.utils.PlayerUtil;
 import com.spleefleague.superjump.SuperJump;
 import com.spleefleague.superjump.game.AbstractBattle;
 import com.spleefleague.superjump.game.Arena;
-import com.spleefleague.superjump.game.Battle;
 import com.spleefleague.superjump.player.SJPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -59,7 +58,7 @@ public class GameListener implements Listener {
                 event.setTo(from);
             } else if (!sjp.isIngame()) {
                 SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(event.getPlayer());
-                if (!(slp.getRank().hasPermission(Rank.MODERATOR) || slp.getRank() == Rank.ORGANIZER)) {
+                if (slp != null && !(slp.getRank().hasPermission(Rank.MODERATOR) || slp.getRank() == Rank.ORGANIZER)) {
                     for (Arena arena : Arena.getAll()) {
                         if (arena.getBorders() != null && arena.isTpBackSpectators() && Area.isInAny(sjp.getLocation(), arena.getBorders())) {
                             Location loc = arena.getSpectatorSpawn();
