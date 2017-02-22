@@ -26,6 +26,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Team;
 
 /**
  *
@@ -54,6 +55,8 @@ public class Battle extends AbstractBattle {
             ChatManager.registerChannel(cc);
             SuperJump.getInstance().getBattleManager().add(this);
             scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
+            Team team = scoreboard.registerNewTeam("NO_COLLISION");
+            team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
             Objective objective = scoreboard.registerNewObjective("rounds", "dummy");
             objective.setDisplaySlot(DisplaySlot.SIDEBAR);
             objective.setDisplayName(ChatColor.GRAY + "0:0:0 | " + ChatColor.RED + "Times Fallen:");
@@ -67,6 +70,7 @@ public class Battle extends AbstractBattle {
                 } else {
                     playerNames += ", " + sjp.getName();
                 }
+                team.addEntry(sjp.getName());
                 SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(sjp.getPlayer());
                 slp.addChatChannel(cc);
                 slp.setState(PlayerState.INGAME);

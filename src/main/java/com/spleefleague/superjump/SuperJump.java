@@ -21,7 +21,6 @@ import com.spleefleague.core.queue.BattleManager;
 import com.spleefleague.core.queue.RatedBattleManager;
 import com.spleefleague.core.utils.inventorymenu.InventoryMenuTemplateBuilder;
 import com.spleefleague.superjump.game.Arena;
-import com.spleefleague.superjump.game.Battle;
 import com.spleefleague.superjump.game.signs.GameSign;
 import com.spleefleague.superjump.listener.ConnectionListener;
 import com.spleefleague.superjump.listener.EnvironmentListener;
@@ -92,7 +91,6 @@ public class SuperJump extends GamePlugin {
         return playerManager;
     }
 
-    @Override
     public BattleManager<Arena, SJPlayer, AbstractBattle> getBattleManager() {
         return battleManager;
     }
@@ -254,5 +252,10 @@ public class SuperJump extends GamePlugin {
                     })
             );
         });
+    }
+
+    @Override
+    public BattleManager<Arena, SJPlayer, AbstractBattle>[] getBattleManagers() {
+        return new BattleManager[]{battleManager};
     }
 }

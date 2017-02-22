@@ -37,8 +37,9 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
 
     @DBLoad(fieldName = "border")
     private Area[] borders;
-    @DBLoad(fieldName = "spawns", typeConverter = TypeConverter.LocationConverter.class)
     private Location[] spawns;
+    @DBLoad(fieldName = "requiredPlayers", priority = 2)
+    private int requiredPlayers;
     @DBLoad(fieldName = "goals")
     private Area[] goals;
     @DBLoad(fieldName = "creator")
@@ -65,7 +66,13 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
     @DBLoad(fieldName = "debuggerEnd")
     private String debuggerEnd;
     private int runningGames = 0;
-
+    
+    @DBLoad(fieldName = "spawns", typeConverter = TypeConverter.LocationConverter.class, priority = 1)
+    private void setSpawns(Location[] spawns) {
+        this.spawns = spawns;
+        this.requiredPlayers = spawns.length;//Will be overwritten if requiredPlayers value exists
+    }
+    
     public Location[] getSpawns() {
         return spawns;
     }
@@ -146,6 +153,11 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
         return getSpawns().length;
     }
 
+    @Override
+    public int getRequiredPlayers() {
+        return requiredPlayers;
+    }
+    
     public Battle startBattle(List<SJPlayer> players, StartReason reason) {
         if (!isOccupied()) {
             Battle battle = new Battle(this, players);
