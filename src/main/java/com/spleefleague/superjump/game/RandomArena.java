@@ -5,16 +5,22 @@
  */
 package com.spleefleague.superjump.game;
 
-import com.spleefleague.core.SpleefLeague;
 import com.spleefleague.core.events.BattleStartEvent.StartReason;
 import com.spleefleague.core.io.DBLoad;
 import com.spleefleague.core.io.TypeConverter;
+import com.spleefleague.core.listeners.FakeBlockHandler;
 import com.spleefleague.core.utils.Area;
+import com.spleefleague.core.utils.fakeblock.FakeArea;
+import com.spleefleague.core.utils.fakeblock.FakeBlock;
+import com.spleefleague.core.utils.fakeblock.MultiBlockChangeUtil;
+import com.spleefleague.superjump.SuperJump;
 import com.spleefleague.superjump.player.SJPlayer;
 import java.util.List;
 import java.util.Random;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.entity.Player;
 
 /**
  *
@@ -29,6 +35,7 @@ public class RandomArena extends Arena {
     private Location[] spawns;
     private Area[] goals;
     private Area[] borders;
+    private FakeArea fakeBlocks;
     private boolean occupied = false;
 
     public RandomArena() {
@@ -69,30 +76,31 @@ public class RandomArena extends Arena {
     @Override
     public void registerGameEnd() {
         super.registerGameEnd();
-        if (borders != null) {
-            Area border = borders[0];
-            for (int x = border.getLow().getBlockX(); x <= border.getHigh().getBlockX(); x++) {
-                for (int y = border.getLow().getBlockY(); y <= border.getHigh().getBlockY(); y++) {
-                    for (int z = border.getLow().getBlockZ(); z <= border.getHigh().getBlockZ(); z++) {
-                        SpleefLeague.DEFAULT_WORLD.getBlockAt(x, y, z).setType(Material.AIR);
-                    }
-                }
-            }
-        }
+        FakeBlockHandler.removeArea(fakeBlocks);
     }
 
     @Override
     public Battle startBattle(List<SJPlayer> players, StartReason reason) {
         if (!isOccupied()) {
             ArenaData data = generate(spawn1, jumpCount);
+            FakeBlockHandler.addArea(data.fakeBlocks, players.toArray(new SJPlayer[0]));
             spawns = new Location[2];
             goals = new Area[1];
             spawns[0] = data.spawn1;
             spawns[1] = data.spawn2;
             goals[0] = data.goal;
             borders = data.borders;
+            fakeBlocks = data.fakeBlocks;
             Battle battle = new Battle(this, players);
             battle.start(reason);
+            Bukkit.getScheduler().runTaskLater(SuperJump.getInstance(), () -> {
+                MultiBlockChangeUtil.changeBlocks(fakeBlocks.getBlocks().toArray(new FakeBlock[0]), battle.getActivePlayers().toArray(new Player[0]));
+            }, 10);
+            Bukkit.getScheduler().runTaskLater(SuperJump.getInstance(), () -> {
+                for (int i = 0; i < players.size(); i++) {
+                    players.get(i).teleport(spawns[i]);
+                }
+            }, 20);
             return battle;
         }
         return null;
@@ -102,7 +110,8 @@ public class RandomArena extends Arena {
     private static int frequencySum;
 
     private static ArenaData generate(Location spawn1, int jumpCount) {
-        spawn1.getBlock().setType(Material.GOLD_BLOCK);
+        FakeArea fakeBlocks = new FakeArea();
+        fakeBlocks.addBlock(new FakeBlock(spawn1, Material.GOLD_BLOCK));
         Location goal = null, spawn2 = null, lastLoc = spawn1;
         Jump[] jumps = new Jump[jumpCount];
         Location locSmallest = spawn1.clone(), locHighest = spawn1.clone();
@@ -113,10 +122,10 @@ public class RandomArena extends Arena {
             locSmallest = getMin(locSmallest, lastLoc);
             locHighest = getMax(locHighest, lastLoc);
             if (j < jumpCount - 1) {
-                lastLoc.getBlock().setType(Material.IRON_BLOCK);
+                fakeBlocks.addBlock(new FakeBlock(lastLoc.clone(), Material.IRON_BLOCK));
             } else {
                 goal = lastLoc;
-                lastLoc.getBlock().setType(Material.DIAMOND_BLOCK);
+                fakeBlocks.addBlock(new FakeBlock(lastLoc.clone(), Material.DIAMOND_BLOCK));
             }
         }
         for (int j = jumpCount - 1; j >= 0; j--) {
@@ -125,16 +134,16 @@ public class RandomArena extends Arena {
             locSmallest = getMin(locSmallest, lastLoc);
             locHighest = getMax(locHighest, lastLoc);
             if (j > 0) {
-                lastLoc.getBlock().setType(Material.IRON_BLOCK);
+                fakeBlocks.addBlock(new FakeBlock(lastLoc.clone(), Material.IRON_BLOCK));
             } else {
                 spawn2 = lastLoc;
-                lastLoc.getBlock().setType(Material.GOLD_BLOCK);
+                fakeBlocks.addBlock(new FakeBlock(lastLoc.clone(), Material.GOLD_BLOCK));
             }
         }
         Area goalArea = new Area(goal.clone().add(-0.3, 1, -0.3), goal.clone().add(1.3, 3, 1.3));
         Area border = new Area(locSmallest.add(-3, -3, -3), locHighest.add(3, 3, 3));
         spawn2.setYaw((spawn1.getYaw() + 180) % 360);
-        return new ArenaData(spawn1.clone().add(0, 1.2, 0), spawn2.add(0, 1.2, 0), goalArea, new Area[]{border});
+        return new ArenaData(spawn1.clone().add(0, 1.2, 0), spawn2.add(0, 1.2, 0), goalArea, fakeBlocks, new Area[]{border});
     }
 
     private static Location getMin(Location a, Location b) {
@@ -249,22 +258,25 @@ public class RandomArena extends Arena {
 
     private static class ArenaData {
 
+        private final FakeArea fakeBlocks;
         private final Location spawn1, spawn2;
         private final Area goal, borders[];
 
-        public ArenaData(Location spawn1, Location spawn2, Area goal, Area[] borders) {
+        public ArenaData(Location spawn1, Location spawn2, Area goal, FakeArea fakeBlocks, Area[] borders) {
             this.spawn1 = spawn1;
             this.spawn2 = spawn2;
             this.goal = goal;
             this.borders = borders;
+            this.fakeBlocks = fakeBlocks;
         }
     }
 
-//    static {
-//        random = new Random();
-//        frequencySum = 0;
-//        for(Jump jump : possibleJumps) {
-//            frequencySum += jump.getFrequency();
-//        }
-//    }
+    static {
+        random = new Random();
+        int sum = 0;
+        for(Jump jump : possibleJumps) {
+            sum += jump.getFrequency();
+        }
+        frequencySum = sum;
+    }
 }

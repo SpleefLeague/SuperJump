@@ -25,6 +25,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.bson.Document;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -228,17 +230,23 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
         MongoCursor<Document> dbc = SuperJump.getInstance().getPluginDB().getCollection("Arenas").find().iterator();
         while (dbc.hasNext()) {
             Document d = dbc.next();
-            Arena arena;
-            if (!d.containsKey("isRandom") || !d.getBoolean("isRandom")) {
+            Arena arena = null;
+            if (!d.containsKey("arenaClass")) {
                 arena = EntityBuilder.load(d, Arena.class);
-                if (arena.getSize() == 2) {
-                    arenas.put(arena.getName(), arena);
-                    SuperJump.getInstance().getBattleManager().registerArena(arena);
+            }
+            else {
+                try {
+                    Class<? extends Arena> c = (Class<? extends Arena>) Class.forName(d.getString("arenaClass"));
+                    arena = EntityBuilder.load(d, c);
+                } catch (ClassNotFoundException ex) {
+                    Logger.getLogger(Arena.class.getName()).log(Level.SEVERE, null, ex);
+                    continue;
                 }
             }
-//            else {
-//                arena = EntityBuilder.load(d, RandomArena.class);
-//            }
+            if (arena.getSize() == 2) {
+                arenas.put(arena.getName(), arena);
+                SuperJump.getInstance().getBattleManager().registerArena(arena);
+            }
         }
         SuperJump.getInstance().log("Loaded " + arenas.size() + " arenas!");
     }
