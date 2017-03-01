@@ -12,15 +12,11 @@ import com.spleefleague.core.listeners.FakeBlockHandler;
 import com.spleefleague.core.utils.Area;
 import com.spleefleague.core.utils.fakeblock.FakeArea;
 import com.spleefleague.core.utils.fakeblock.FakeBlock;
-import com.spleefleague.core.utils.fakeblock.MultiBlockChangeUtil;
-import com.spleefleague.superjump.SuperJump;
 import com.spleefleague.superjump.player.SJPlayer;
 import java.util.List;
 import java.util.Random;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.entity.Player;
 
 /**
  *
@@ -32,51 +28,19 @@ public class RandomArena extends Arena {
     private Location spawn1;
     @DBLoad(fieldName = "jumpcount")
     private int jumpCount;
-    private Location[] spawns;
-    private Area[] goals;
-    private Area[] borders;
-    private FakeArea fakeBlocks;
-    private boolean occupied = false;
 
     public RandomArena() {
         super();
-        spawns = new Location[2];
-    }
-
-    @Override
-    public Location[] getSpawns() {
-        return spawns;
-    }
-
-    @Override
-    public Area[] getGoals() {
-        return goals;
-    }
-
-    @Override
-    public Area getArea() {
-        return borders[0];
-    }
-
-    @Override
-    public Area[] getBorders() {
-        return borders;
-    }
-
-    @Override
-    public int getSize() {
-        return spawns.length;
     }
 
     @Override
     public boolean isOccupied() {
-        return super.getRunningGamesCount() > 0;
+        return false;
     }
-
+    
     @Override
-    public void registerGameEnd() {
-        super.registerGameEnd();
-        FakeBlockHandler.removeArea(fakeBlocks);
+    public int getSize() {
+        return 2;
     }
 
     @Override
@@ -84,23 +48,48 @@ public class RandomArena extends Arena {
         if (!isOccupied()) {
             ArenaData data = generate(spawn1, jumpCount);
             FakeBlockHandler.addArea(data.fakeBlocks, players.toArray(new SJPlayer[0]));
-            spawns = new Location[2];
-            goals = new Area[1];
+            Location[] spawns = new Location[2];
+            Area[] goals = new Area[1];
             spawns[0] = data.spawn1;
             spawns[1] = data.spawn2;
             goals[0] = data.goal;
-            borders = data.borders;
-            fakeBlocks = data.fakeBlocks;
-            Battle battle = new Battle(this, players);
-            battle.start(reason);
-            Bukkit.getScheduler().runTaskLater(SuperJump.getInstance(), () -> {
-                MultiBlockChangeUtil.changeBlocks(fakeBlocks.getBlocks().toArray(new FakeBlock[0]), battle.getActivePlayers().toArray(new Player[0]));
-            }, 10);
-            Bukkit.getScheduler().runTaskLater(SuperJump.getInstance(), () -> {
-                for (int i = 0; i < players.size(); i++) {
-                    players.get(i).teleport(spawns[i]);
+            Area[] borders = data.borders;
+            FakeArea fakeBlocks = data.fakeBlocks;
+            //Create new arena object since each random arena has different spawns/goals/borders
+            Arena arena = new RandomArena() {
+                @Override
+                public Location[] getSpawns() {
+                    return spawns;
                 }
-            }, 20);
+
+                @Override
+                public Area[] getGoals() {
+                    return goals;
+                }
+
+                @Override
+                public Area getArea() {
+                    return borders[0];
+                }
+
+                @Override
+                public Area[] getBorders() {
+                    return borders;
+                }
+                
+                @Override
+                public void registerGameEnd() {
+                    super.registerGameEnd();
+                    FakeBlockHandler.removeArea(fakeBlocks);
+                }
+
+                @Override
+                public String getName() {
+                    return RandomArena.this.getName();
+                }
+            };
+            Battle battle = new Battle(arena, players);
+            battle.start(reason);
             return battle;
         }
         return null;
