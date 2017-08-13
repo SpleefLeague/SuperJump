@@ -40,9 +40,15 @@
   </repositories>
   <dependencies>
     <dependency>
+      <groupId>com.spleefleague</groupId>
+      <artifactId>SpleefLeagueCore</artifactId>
+      <version>1.1</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>org.spigotmc</groupId>
       <artifactId>spigot-api</artifactId>
-      <version>1.11.2-R0.1-SNAPSHOT</version>
+      <version>1.12-R0.1-SNAPSHOT</version>
       <scope>provided</scope>
       <exclusions>
         <exclusion>
@@ -62,10 +68,6 @@
           <groupId>com.google.code.gson</groupId>
         </exclusion>
         <exclusion>
-          <artifactId>ebean</artifactId>
-          <groupId>org.avaje</groupId>
-        </exclusion>
-        <exclusion>
           <artifactId>snakeyaml</artifactId>
           <groupId>org.yaml</groupId>
         </exclusion>
@@ -78,25 +80,15 @@
     <dependency>
       <groupId>org.spigotmc</groupId>
       <artifactId>spigot</artifactId>
-      <version>1.11.2-R0.1-SNAPSHOT</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.comphenix.packetwrapper</groupId>
-      <artifactId>PacketWrapper</artifactId>
-      <version>1.11-R0.1-SNAPSHOT</version>
+      <version>1.12-R0.1-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.comphenix.protocol</groupId>
-      <artifactId>ProtocolLib</artifactId>
-      <version>4.1.0</version>
+      <artifactId>ProtocolLib-API</artifactId>
+      <version>4.3.0</version>
       <scope>provided</scope>
       <exclusions>
-        <exclusion>
-          <artifactId>ProtocolLib-API</artifactId>
-          <groupId>com.comphenix.protocol</groupId>
-        </exclusion>
         <exclusion>
           <artifactId>cglib-nodep</artifactId>
           <groupId>cglib</groupId>
