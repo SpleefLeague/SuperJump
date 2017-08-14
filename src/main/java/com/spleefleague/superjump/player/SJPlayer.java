@@ -7,7 +7,6 @@ package com.spleefleague.superjump.player;
 
 import com.spleefleague.core.io.DBLoad;
 import com.spleefleague.core.io.DBSave;
-import com.spleefleague.core.io.Settings;
 import com.spleefleague.core.queue.RatedPlayer;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -105,9 +104,5 @@ public class SJPlayer extends RatedPlayer {
         this.rating = 1000;
         this.frozen = false;
         this.ingame = false;
-        visitedArenas = new HashSet<>();
-        Settings.getList("default_arenas_jump")
-            .ifPresent(l -> ((List<String>)l)
-                .forEach(name -> visitedArenas.add(Arena.byName(name))));
     }
 }

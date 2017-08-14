@@ -61,6 +61,8 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
     @DBLoad(fieldName = "paused")
     @DBSave(fieldName = "paused")
     private boolean paused = false;
+    @DBLoad(fieldName = "isDefault")
+    private boolean defaultArena = false;
     @DBLoad(fieldName = "area")
     private Area area;
     @DBLoad(fieldName = "debuggerStart")
@@ -185,7 +187,7 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
 
     @Override
     public boolean isAvailable(SJPlayer sjp) {
-        return sjp.getVisitedArenas().contains(this);
+        return this.isDefaultArena() || sjp.getVisitedArenas().contains(this);
     }
 
     public Dynamic<List<String>> getDynamicDescription() {
@@ -205,6 +207,10 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
             }
             return description;
         };
+    }
+    
+    public boolean isDefaultArena() {
+        return this.defaultArena;
     }
 
     private static Map<String, Arena> arenas;

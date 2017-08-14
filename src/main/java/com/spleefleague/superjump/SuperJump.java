@@ -103,7 +103,7 @@ public class SuperJump extends GamePlugin {
     public boolean spectate(Player target, Player p) {
         SJPlayer tsjp = getPlayerManager().get(target);
         SJPlayer sjp = getPlayerManager().get(p);
-        if (sjp.getVisitedArenas().contains(tsjp.getCurrentBattle().getArena())) {
+        if (tsjp.getCurrentBattle().getArena().isAvailable(sjp)) {
             tsjp.getCurrentBattle().addSpectator(sjp);
             return true;
         } else {

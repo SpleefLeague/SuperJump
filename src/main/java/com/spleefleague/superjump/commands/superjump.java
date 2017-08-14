@@ -55,7 +55,7 @@ public class superjump extends BasicCommand {
                     Arena arena = Arena.byName(args[0]);
                     if (arena != null) {
                         if (!arena.isPaused()) {
-                            if (sjp.getVisitedArenas().contains(arena)) {
+                            if (arena.isAvailable(sjp)) {
                                 bm.queue(sjp, arena);
                                 success(p, "You have been added to the queue for: " + ChatColor.GREEN + arena.getName());
                             } else {
