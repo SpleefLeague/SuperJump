@@ -134,7 +134,8 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
     public boolean isRated() {
         return rated;
     }
-
+    
+    @Deprecated
     public boolean isTpBackSpectators() {
         return tpBackSpectators;
     }
