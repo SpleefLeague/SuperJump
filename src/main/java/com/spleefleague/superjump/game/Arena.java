@@ -5,6 +5,7 @@
  */
 package com.spleefleague.superjump.game;
 
+import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.spleefleague.core.events.BattleStartEvent.StartReason;
 import com.spleefleague.core.io.DBEntity;
@@ -20,6 +21,7 @@ import com.spleefleague.core.utils.Area;
 import com.spleefleague.core.utils.function.Dynamic;
 import com.spleefleague.superjump.SuperJump;
 import com.spleefleague.superjump.player.SJPlayer;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -215,7 +217,8 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
     }
 
     private static Map<String, Arena> arenas;
-
+    private static final MongoCollection<Document> collection;
+    
     public static Arena byName(String name) {
         Arena arena = arenas.get(name);
         if (arena == null) {
@@ -231,30 +234,86 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
     public static Collection<Arena> getAll() {
         return arenas.values();
     }
+    
+    /**
+     * 
+     * @param name Name of the arena to reload
+     * @return true if the arena exists
+     */
+    public static boolean reload(String name) {
+        Document d = collection.find(new Document("name", name)).first();
+        if(d == null) {
+            return false;
+        }
+        else {
+            Arena arena = loadArena(d);
+            if (arena == null) return false;
+            Arena old = Arena.byName(name);
+            if(old != null) {
+                recursiveCopy(arena, old, Arena.class);
+            }
+            else {
+                addArena(arena);
+            }
+            return true;
+        }
+    }
 
     public static void init() {
         arenas = new HashMap<>();
-        MongoCursor<Document> dbc = SuperJump.getInstance().getPluginDB().getCollection("Arenas").find().iterator();
+        MongoCursor<Document> dbc = collection.find().iterator();
         while (dbc.hasNext()) {
             Document d = dbc.next();
-            Arena arena = null;
-            if (!d.containsKey("arenaClass")) {
-                arena = EntityBuilder.load(d, Arena.class);
-            }
-            else {
-                try {
-                    Class<? extends Arena> c = (Class<? extends Arena>) Class.forName(d.getString("arenaClass"));
-                    arena = EntityBuilder.load(d, c);
-                } catch (ClassNotFoundException ex) {
-                    Logger.getLogger(Arena.class.getName()).log(Level.SEVERE, null, ex);
-                    continue;
-                }
-            }
-            if (arena.getSize() == 2) {
-                arenas.put(arena.getName(), arena);
-                SuperJump.getInstance().getBattleManager().registerArena(arena);
-            }
+            Arena arena = loadArena(d);
+            if (arena == null) continue;
+            addArena(arena);
         }
         SuperJump.getInstance().log("Loaded " + arenas.size() + " arenas!");
+    }
+    
+    private static Arena loadArena(Document d) {
+        if (!d.containsKey("arenaClass")) {
+            return EntityBuilder.load(d, Arena.class);
+        } else {
+            try {
+                Class<? extends Arena> c = (Class<? extends Arena>) Class.forName(d.getString("arenaClass"));
+                return EntityBuilder.load(d, c);
+            } catch (ClassNotFoundException ex) {
+                Logger.getLogger(Arena.class.getName()).log(Level.SEVERE, null, ex);
+                return null;
+            }
+        }
+    }
+    
+    private static void addArena(Arena arena) {
+        if (arena.getSize() == 2) {
+            arenas.put(arena.getName(), arena);
+            SuperJump.getInstance().getBattleManager().registerArena(arena);
+        }
+    }
+    
+    private static void recursiveCopy(Object src, Object target, Class targetClass) {
+        Class srcClass = src.getClass();
+        while(true) {
+            for(Field f : srcClass.getDeclaredFields()) {
+                try {
+                    f.setAccessible(true);
+                    f.set(target, f.get(src));
+                } catch (Exception ex) {
+                    Logger.getLogger(Arena.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            if(srcClass == Object.class || srcClass == targetClass) {
+                break;
+            }
+            srcClass = srcClass.getSuperclass();
+            if(srcClass == null) {
+                break;
+            }
+        }
+    }
+
+    static {
+        collection = SuperJump.getInstance().getPluginDB().getCollection("Arenas");
     }
 }

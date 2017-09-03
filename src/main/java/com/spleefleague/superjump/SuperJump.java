@@ -10,13 +10,14 @@ import com.spleefleague.core.SpleefLeague;
 import com.spleefleague.core.chat.ChatChannel;
 import com.spleefleague.core.chat.ChatManager;
 import com.spleefleague.core.chat.Theme;
-import com.spleefleague.core.command.CommandLoader;
+import com.spleefleague.commands.command.CommandLoader;
 import com.spleefleague.core.events.BattleEndEvent.EndReason;
 import com.spleefleague.core.events.BattleStartEvent.StartReason;
 import com.spleefleague.core.io.EntityBuilder;
 import com.spleefleague.core.menus.SLMenu;
 import com.spleefleague.core.player.PlayerManager;
 import com.spleefleague.core.plugin.GamePlugin;
+import com.spleefleague.core.plugin.PlayerHandling;
 import com.spleefleague.core.queue.BattleManager;
 import com.spleefleague.core.queue.RatedBattleManager;
 import com.spleefleague.core.utils.inventorymenu.InventoryMenuTemplateBuilder;
@@ -41,7 +42,7 @@ import com.spleefleague.superjump.game.AbstractBattle;
  *
  * @author Jonas
  */
-public class SuperJump extends GamePlugin {
+public class SuperJump extends GamePlugin implements PlayerHandling {
 
     private static SuperJump instance;
 
@@ -51,7 +52,7 @@ public class SuperJump extends GamePlugin {
     private ChatChannel start, end;
 
     public SuperJump() {
-        super("[SuperJump]", ChatColor.GRAY + "[" + ChatColor.GOLD + "SuperJump" + ChatColor.GRAY + "]" + ChatColor.RESET);
+        super(ChatColor.GRAY + "[" + ChatColor.GOLD + "SuperJump" + ChatColor.GRAY + "]" + ChatColor.RESET);
     }
 
     @Override
@@ -170,9 +171,9 @@ public class SuperJump extends GamePlugin {
     }
 
     @Override
-    public void printStats(Player p) {
-        SJPlayer sjp = playerManager.get(p);
-        p.sendMessage(Theme.INFO + p.getName() + "'s SuperJump stats");
+    public void printStats(Player p, Player target) {
+        SJPlayer sjp = playerManager.get(target);
+        p.sendMessage(Theme.INFO + sjp.getName() + "'s SuperJump stats");
         p.sendMessage(Theme.INCOGNITO + "Rating: " + ChatColor.YELLOW + sjp.getRating());
         p.sendMessage(Theme.INCOGNITO + "Rank: " + ChatColor.YELLOW + sjp.getRank());
     }
