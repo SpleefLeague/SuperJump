@@ -5,9 +5,9 @@
  */
 package com.spleefleague.superjump.player;
 
-import com.spleefleague.core.io.DBLoad;
-import com.spleefleague.core.io.DBSave;
 import com.spleefleague.core.queue.RatedPlayer;
+import com.spleefleague.entitybuilder.DBLoad;
+import com.spleefleague.entitybuilder.DBSave;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;

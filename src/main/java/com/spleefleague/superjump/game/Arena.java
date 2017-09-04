@@ -8,17 +8,17 @@ package com.spleefleague.superjump.game;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.spleefleague.core.events.BattleStartEvent.StartReason;
-import com.spleefleague.core.io.DBEntity;
-import com.spleefleague.core.io.DBLoad;
-import com.spleefleague.core.io.DBLoadable;
-import com.spleefleague.core.io.DBSave;
-import com.spleefleague.core.io.DBSaveable;
-import com.spleefleague.core.io.EntityBuilder;
-import com.spleefleague.core.io.TypeConverter;
+import com.spleefleague.core.io.typeconverters.LocationConverter;
 import com.spleefleague.core.player.SLPlayer;
 import com.spleefleague.core.queue.QueueableArena;
 import com.spleefleague.core.utils.Area;
 import com.spleefleague.core.utils.function.Dynamic;
+import com.spleefleague.entitybuilder.DBEntity;
+import com.spleefleague.entitybuilder.DBLoad;
+import com.spleefleague.entitybuilder.DBLoadable;
+import com.spleefleague.entitybuilder.DBSave;
+import com.spleefleague.entitybuilder.DBSaveable;
+import com.spleefleague.entitybuilder.EntityBuilder;
 import com.spleefleague.superjump.SuperJump;
 import com.spleefleague.superjump.player.SJPlayer;
 import java.lang.reflect.Field;
@@ -58,7 +58,7 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
     private boolean queued;
     @DBLoad(fieldName = "liquidLose")
     private boolean liquidLose = true;
-    @DBLoad(fieldName = "spectatorSpawn", typeConverter = TypeConverter.LocationConverter.class)
+    @DBLoad(fieldName = "spectatorSpawn", typeConverter = LocationConverter.class)
     private Location spectatorSpawn;
     @DBLoad(fieldName = "paused")
     @DBSave(fieldName = "paused")
@@ -73,7 +73,7 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
     private String debuggerEnd;
     private int runningGames = 0;
     
-    @DBLoad(fieldName = "spawns", typeConverter = TypeConverter.LocationConverter.class, priority = 1)
+    @DBLoad(fieldName = "spawns", typeConverter = LocationConverter.class, priority = 1)
     private void setSpawns(Location[] spawns) {
         this.spawns = spawns;
         this.requiredPlayers = spawns.length;//Will be overwritten if requiredPlayers value exists

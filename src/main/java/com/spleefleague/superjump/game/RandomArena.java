@@ -7,10 +7,9 @@ package com.spleefleague.superjump.game;
 
 import com.spleefleague.core.SpleefLeague;
 import com.spleefleague.core.events.BattleStartEvent.StartReason;
-import com.spleefleague.core.io.DBLoad;
-import com.spleefleague.core.io.TypeConverter;
+import com.spleefleague.core.io.typeconverters.LocationConverter;
 import com.spleefleague.core.utils.Area;
-import com.spleefleague.fakeblocks.packet.FakeBlockHandler;
+import com.spleefleague.entitybuilder.DBLoad;
 import com.spleefleague.fakeblocks.representations.FakeArea;
 import com.spleefleague.fakeblocks.representations.FakeBlock;
 import com.spleefleague.superjump.player.SJPlayer;
@@ -25,7 +24,7 @@ import org.bukkit.Material;
  */
 public class RandomArena extends Arena {
 
-    @DBLoad(fieldName = "spawn", typeConverter = TypeConverter.LocationConverter.class)
+    @DBLoad(fieldName = "spawn", typeConverter = LocationConverter.class)
     private Location spawn1;
     @DBLoad(fieldName = "jumpcount")
     private int jumpCount;
