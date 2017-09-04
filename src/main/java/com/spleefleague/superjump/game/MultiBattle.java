@@ -4,13 +4,12 @@ import com.spleefleague.core.SpleefLeague;
 import com.spleefleague.core.chat.ChatManager;
 import com.spleefleague.core.chat.Theme;
 import com.spleefleague.core.events.BattleStartEvent;
-import com.spleefleague.core.listeners.FakeBlockHandler;
 import com.spleefleague.core.player.GeneralPlayer;
 import com.spleefleague.core.player.PlayerState;
 import com.spleefleague.core.player.SLPlayer;
 import com.spleefleague.core.plugin.GamePlugin;
-import com.spleefleague.core.utils.RuntimeCompiler;
 import com.spleefleague.core.utils.UtilChat;
+import com.spleefleague.core.utils.debugger.RuntimeCompiler;
 import com.spleefleague.superjump.SuperJump;
 import com.spleefleague.superjump.game.signs.GameSign;
 import com.spleefleague.superjump.player.SJPlayer;
@@ -95,7 +94,7 @@ public class MultiBattle extends AbstractBattle {
             }
             hidePlayers();
             getSpawnCageBlocks();
-            FakeBlockHandler.addArea(fakeBlocks, false, GeneralPlayer.toBukkitPlayer(players.toArray(new SJPlayer[players.size()])));
+            handler.addArea(fakeBlocks, false, GeneralPlayer.toBukkitPlayer(players.toArray(new SJPlayer[players.size()])));
             ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), Theme.SUCCESS.buildTheme(false) + "Beginning match on " + ChatColor.WHITE + arena.getName() + ChatColor.GREEN + " between " + ChatColor.RED + playerNames + "!", SuperJump.getInstance().getStartMessageChannel());
             startCountdown();
         }

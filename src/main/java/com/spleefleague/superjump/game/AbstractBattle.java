@@ -19,12 +19,12 @@ import com.spleefleague.core.events.BattleEndEvent;
 import com.spleefleague.core.events.BattleEndEvent.EndReason;
 import com.spleefleague.core.events.BattleStartEvent;
 import com.spleefleague.core.io.EntityBuilder;
-import com.spleefleague.core.listeners.FakeBlockHandler;
 import com.spleefleague.core.player.*;
 import com.spleefleague.core.utils.Area;
-import com.spleefleague.core.utils.fakeblock.FakeArea;
-import com.spleefleague.core.utils.fakeblock.FakeBlock;
-import com.spleefleague.core.utils.RuntimeCompiler;
+import com.spleefleague.core.utils.debugger.RuntimeCompiler;
+import com.spleefleague.fakeblocks.packet.FakeBlockHandler;
+import com.spleefleague.fakeblocks.representations.FakeArea;
+import com.spleefleague.fakeblocks.representations.FakeBlock;
 import com.spleefleague.superjump.SuperJump;
 import com.spleefleague.superjump.game.signs.GameSign;
 import com.spleefleague.superjump.player.SJPlayer;
@@ -59,8 +59,10 @@ public abstract class AbstractBattle implements com.spleefleague.core.queue.Batt
     protected Scoreboard scoreboard;
     protected boolean inCountdown;
     protected boolean isOver;
+    protected FakeBlockHandler handler;
 
     protected AbstractBattle(Arena arena, List<SJPlayer> players) {
+        this.handler = SpleefLeague.getInstance().getFakeBlockHandler();
         this.arena = arena;
         this.players = players;
         this.spectators = new ArrayList<>();
@@ -105,7 +107,7 @@ public abstract class AbstractBattle implements com.spleefleague.core.queue.Batt
         }
         sp.setScoreboard(scoreboard);
         SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(sp.getPlayer());
-        FakeBlockHandler.addArea(fakeBlocks, sp.getPlayer());
+        handler.addArea(fakeBlocks, sp.getPlayer());
         slp.setState(PlayerState.SPECTATING);
         slp.addChatChannel(cc);
         for (SJPlayer sjp : getActivePlayers()) {
@@ -253,14 +255,14 @@ public abstract class AbstractBattle implements com.spleefleague.core.queue.Batt
         for (FakeBlock block : fakeBlocks.getBlocks()) {
             block.setType(Material.GLASS);
         }
-        FakeBlockHandler.update(fakeBlocks);
+        handler.update(fakeBlocks);
     }
 
     protected void removeSpawnCages() {
         for (FakeBlock block : fakeBlocks.getBlocks()) {
             block.setType(Material.AIR);
         }
-        FakeBlockHandler.update(fakeBlocks);
+        handler.update(fakeBlocks);
     }
 
     protected void startClock() {
@@ -316,7 +318,7 @@ public abstract class AbstractBattle implements com.spleefleague.core.queue.Batt
 
     private void resetPlayer(SJPlayer sp) {
         SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(sp.getPlayer());
-        FakeBlockHandler.removeArea(fakeBlocks, slp.getPlayer());
+        handler.removeArea(fakeBlocks, slp.getPlayer());
         if (spectators.contains(sp)) {
             spectators.remove(sp);
         } else {

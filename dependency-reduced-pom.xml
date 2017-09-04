@@ -63,6 +63,11 @@
   </build>
   <repositories>
     <repository>
+      <id>spleefleague-maven</id>
+      <name>spleefleague-maven</name>
+      <url>https://maven.spleefleague.com</url>
+    </repository>
+    <repository>
       <id>spigot-repo</id>
       <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
     </repository>

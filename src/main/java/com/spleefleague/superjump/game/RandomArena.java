@@ -5,13 +5,14 @@
  */
 package com.spleefleague.superjump.game;
 
+import com.spleefleague.core.SpleefLeague;
 import com.spleefleague.core.events.BattleStartEvent.StartReason;
 import com.spleefleague.core.io.DBLoad;
 import com.spleefleague.core.io.TypeConverter;
-import com.spleefleague.core.listeners.FakeBlockHandler;
 import com.spleefleague.core.utils.Area;
-import com.spleefleague.core.utils.fakeblock.FakeArea;
-import com.spleefleague.core.utils.fakeblock.FakeBlock;
+import com.spleefleague.fakeblocks.packet.FakeBlockHandler;
+import com.spleefleague.fakeblocks.representations.FakeArea;
+import com.spleefleague.fakeblocks.representations.FakeBlock;
 import com.spleefleague.superjump.player.SJPlayer;
 import java.util.List;
 import java.util.Random;
@@ -47,7 +48,7 @@ public class RandomArena extends Arena {
     public Battle startBattle(List<SJPlayer> players, StartReason reason) {
         if (!isOccupied()) {
             ArenaData data = generate(spawn1, jumpCount);
-            FakeBlockHandler.addArea(data.fakeBlocks, players.toArray(new SJPlayer[0]));
+            SpleefLeague.getInstance().getFakeBlockHandler().addArea(data.fakeBlocks, players.toArray(new SJPlayer[0]));
             Location[] spawns = new Location[2];
             Area[] goals = new Area[1];
             spawns[0] = data.spawn1;
@@ -80,7 +81,7 @@ public class RandomArena extends Arena {
                 @Override
                 public void registerGameEnd() {
                     super.registerGameEnd();
-                    FakeBlockHandler.removeArea(fakeBlocks);
+                    SpleefLeague.getInstance().getFakeBlockHandler().removeArea(fakeBlocks);
                 }
 
                 @Override
