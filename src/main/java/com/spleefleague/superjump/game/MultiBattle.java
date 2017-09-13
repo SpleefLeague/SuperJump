@@ -4,7 +4,6 @@ import com.spleefleague.core.SpleefLeague;
 import com.spleefleague.core.chat.ChatManager;
 import com.spleefleague.core.chat.Theme;
 import com.spleefleague.core.events.BattleStartEvent;
-import com.spleefleague.core.player.GeneralPlayer;
 import com.spleefleague.core.player.PlayerState;
 import com.spleefleague.core.player.SLPlayer;
 import com.spleefleague.core.plugin.GamePlugin;
@@ -38,6 +37,7 @@ public class MultiBattle extends AbstractBattle {
 
     @Override
     public void start(BattleStartEvent.StartReason reason) {
+        super.start(reason);
         players.forEach(p -> {
             GamePlugin.unspectateGlobal(p);
             GamePlugin.dequeueGlobal(p);
@@ -93,16 +93,9 @@ public class MultiBattle extends AbstractBattle {
                 scoreboard.getObjective("rounds").getScore(sjp.getName()).setScore(pdata.getFalls());
             }
             hidePlayers();
-            getSpawnCageBlocks();
-            handler.addArea(fakeBlocks, false, GeneralPlayer.toBukkitPlayer(players.toArray(new SJPlayer[players.size()])));
             ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), Theme.SUCCESS.buildTheme(false) + "Beginning match on " + ChatColor.WHITE + arena.getName() + ChatColor.GREEN + " between " + ChatColor.RED + playerNames + "!", SuperJump.getInstance().getStartMessageChannel());
             startCountdown();
         }
-    }
-
-    @Override
-    protected void getSpawnCageBlocks() {
-//        fakeBlocks.add(getCageBlocks(arena.getSpawns()[0], Material.AIR));
     }
     
     @Override
