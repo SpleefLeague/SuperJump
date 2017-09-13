@@ -9,11 +9,10 @@ import com.spleefleague.core.player.PlayerState;
 import com.spleefleague.core.player.SLPlayer;
 import com.spleefleague.core.plugin.GamePlugin;
 import com.spleefleague.core.utils.debugger.RuntimeCompiler;
-import com.spleefleague.fakeblocks.representations.FakeArea;
-import com.spleefleague.fakeblocks.representations.FakeBlock;
 import com.spleefleague.superjump.SuperJump;
 import com.spleefleague.superjump.game.signs.GameSign;
 import com.spleefleague.superjump.player.SJPlayer;
+import com.spleefleague.virtualworld.VirtualWorld;
 import java.util.List;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.bukkit.Bukkit;
@@ -39,6 +38,7 @@ public class Battle extends AbstractBattle {
     
     @Override
     public void start(BattleStartEvent.StartReason reason) {
+        super.start(reason);
         players.forEach(p -> {
             GamePlugin.unspectateGlobal(p);
             GamePlugin.dequeueGlobal(p);
@@ -60,7 +60,7 @@ public class Battle extends AbstractBattle {
             objective.setDisplaySlot(DisplaySlot.SIDEBAR);
             objective.setDisplayName(ChatColor.GRAY + "0:0:0 | " + ChatColor.RED + "Times Fallen:");
             String playerNames = "";
-            for (int i = 0; i < players.size(); i++) {
+            for (int i = 0; i < players.size(); i++) {    
                 SJPlayer sjp = players.get(i);
                 if (i == 0) {
                     playerNames = sjp.getName();
@@ -93,35 +93,9 @@ public class Battle extends AbstractBattle {
                 scoreboard.getObjective("rounds").getScore(sjp.getName()).setScore(pdata.getFalls());
             }
             hidePlayers();
-            getSpawnCageBlocks();
-            handler.addArea(fakeBlocks, false, GeneralPlayer.toBukkitPlayer(players.toArray(new SJPlayer[players.size()])));
             ChatManager.sendMessage(SuperJump.getInstance().getChatPrefix(), Theme.SUCCESS.buildTheme(false) + "Beginning match on " + ChatColor.WHITE + arena.getName() + ChatColor.GREEN + " between " + ChatColor.RED + playerNames + "!", SuperJump.getInstance().getStartMessageChannel());
             startCountdown();
         }
-    }
-    
-    @Override
-    protected void getSpawnCageBlocks() {
-        for (Location spawn : arena.getSpawns()) {
-            fakeBlocks.add(getCageBlocks(spawn, Material.AIR));
-        }
-    }
-    
-    protected FakeArea getCageBlocks(Location loc, Material m) {
-        loc = loc.getBlock().getLocation();
-        FakeArea area = new FakeArea();
-        for (int x = -1; x <= 1; x++) {
-            for (int z = -1; z <= 1; z++) {
-                if (x == 0 && z == 0) {
-                    area.addBlock(new FakeBlock(loc.clone().add(x, 2, z), m));
-                } else {
-                    for (int y = 0; y <= 2; y++) {
-                        area.addBlock(new FakeBlock(loc.clone().add(x, y, z), m));
-                    }
-                }
-            }
-        }
-        return area;
     }
     
     @Override

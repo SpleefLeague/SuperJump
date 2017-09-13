@@ -5,18 +5,18 @@
  */
 package com.spleefleague.superjump.game;
 
-import com.spleefleague.core.SpleefLeague;
 import com.spleefleague.core.events.BattleStartEvent.StartReason;
 import com.spleefleague.core.io.typeconverters.LocationConverter;
 import com.spleefleague.core.utils.Area;
 import com.spleefleague.entitybuilder.DBLoad;
-import com.spleefleague.fakeblocks.representations.FakeArea;
-import com.spleefleague.fakeblocks.representations.FakeBlock;
 import com.spleefleague.superjump.player.SJPlayer;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.util.Vector;
 
 /**
  *
@@ -47,14 +47,12 @@ public class RandomArena extends Arena {
     public Battle startBattle(List<SJPlayer> players, StartReason reason) {
         if (!isOccupied()) {
             ArenaData data = generate(spawn1, jumpCount);
-            SpleefLeague.getInstance().getFakeBlockHandler().addArea(data.fakeBlocks, players.toArray(new SJPlayer[0]));
             Location[] spawns = new Location[2];
             Area[] goals = new Area[1];
             spawns[0] = data.spawn1;
             spawns[1] = data.spawn2;
             goals[0] = data.goal;
             Area[] borders = data.borders;
-            FakeArea fakeBlocks = data.fakeBlocks;
             //Create new arena object since each random arena has different spawns/goals/borders
             Arena arena = new RandomArena() {
                 @Override
@@ -80,7 +78,6 @@ public class RandomArena extends Arena {
                 @Override
                 public void registerGameEnd() {
                     super.registerGameEnd();
-                    SpleefLeague.getInstance().getFakeBlockHandler().removeArea(fakeBlocks);
                 }
 
                 @Override
@@ -89,6 +86,9 @@ public class RandomArena extends Arena {
                 }
             };
             Battle battle = new Battle(arena, players);
+            for(BlockPrototype bp : data.fakeBlocks) {
+                battle.getFakeWorld().getBlockAt(bp.location).setType(bp.type);
+            }
             battle.start(reason);
             return battle;
         }
@@ -99,8 +99,8 @@ public class RandomArena extends Arena {
     private static int frequencySum;
 
     private static ArenaData generate(Location spawn1, int jumpCount) {
-        FakeArea fakeBlocks = new FakeArea();
-        fakeBlocks.addBlock(new FakeBlock(spawn1, Material.GOLD_BLOCK));
+        Collection<BlockPrototype> fakeBlocks = new ArrayList<>();
+        fakeBlocks.add(new BlockPrototype(spawn1, Material.GOLD_BLOCK));
         Location goal = null, spawn2 = null, lastLoc = spawn1;
         Jump[] jumps = new Jump[jumpCount];
         Location locSmallest = spawn1.clone(), locHighest = spawn1.clone();
@@ -111,10 +111,10 @@ public class RandomArena extends Arena {
             locSmallest = getMin(locSmallest, lastLoc);
             locHighest = getMax(locHighest, lastLoc);
             if (j < jumpCount - 1) {
-                fakeBlocks.addBlock(new FakeBlock(lastLoc.clone(), Material.IRON_BLOCK));
+                fakeBlocks.add(new BlockPrototype(lastLoc.clone(), Material.IRON_BLOCK));
             } else {
                 goal = lastLoc;
-                fakeBlocks.addBlock(new FakeBlock(lastLoc.clone(), Material.DIAMOND_BLOCK));
+                fakeBlocks.add(new BlockPrototype(lastLoc.clone(), Material.DIAMOND_BLOCK));
             }
         }
         for (int j = jumpCount - 1; j >= 0; j--) {
@@ -123,10 +123,10 @@ public class RandomArena extends Arena {
             locSmallest = getMin(locSmallest, lastLoc);
             locHighest = getMax(locHighest, lastLoc);
             if (j > 0) {
-                fakeBlocks.addBlock(new FakeBlock(lastLoc.clone(), Material.IRON_BLOCK));
+                fakeBlocks.add(new BlockPrototype(lastLoc.clone(), Material.IRON_BLOCK));
             } else {
                 spawn2 = lastLoc;
-                fakeBlocks.addBlock(new FakeBlock(lastLoc.clone(), Material.GOLD_BLOCK));
+                fakeBlocks.add(new BlockPrototype(lastLoc.clone(), Material.GOLD_BLOCK));
             }
         }
         Area goalArea = new Area(goal.clone().add(-0.3, 1, -0.3), goal.clone().add(1.3, 3, 1.3));
@@ -247,11 +247,11 @@ public class RandomArena extends Arena {
 
     private static class ArenaData {
 
-        private final FakeArea fakeBlocks;
+        private final Collection<BlockPrototype> fakeBlocks;
         private final Location spawn1, spawn2;
         private final Area goal, borders[];
 
-        public ArenaData(Location spawn1, Location spawn2, Area goal, FakeArea fakeBlocks, Area[] borders) {
+        public ArenaData(Location spawn1, Location spawn2, Area goal, Collection<BlockPrototype> fakeBlocks, Area[] borders) {
             this.spawn1 = spawn1;
             this.spawn2 = spawn2;
             this.goal = goal;
@@ -260,6 +260,20 @@ public class RandomArena extends Arena {
         }
     }
 
+    private static class BlockPrototype {    
+        private final Material type;
+        private final Vector location;
+
+        public BlockPrototype(Location location, Material type) {
+            this(location.toVector(), type);
+        }
+        
+        public BlockPrototype(Vector location, Material type) {
+            this.type = type;
+            this.location = location;
+        }        
+    }
+    
     static {
         random = new Random();
         int sum = 0;
