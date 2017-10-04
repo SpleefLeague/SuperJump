@@ -5,6 +5,8 @@
  */
 package com.spleefleague.superjump.commands;
 
+import static com.spleefleague.annotations.CommandSource.COMMAND_BLOCK;
+import static com.spleefleague.annotations.CommandSource.CONSOLE;
 import static com.spleefleague.annotations.CommandSource.PLAYER;
 import com.spleefleague.annotations.Endpoint;
 import com.spleefleague.annotations.LiteralArg;
