@@ -16,6 +16,7 @@ import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
+import org.bukkit.entity.Boat;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.scoreboard.DisplaySlot;
@@ -61,9 +62,9 @@ public class Battle extends AbstractBattle {
                 if (i == 0) {
                     playerNames = sjp.getName();
                 } else if (i == players.size() - 1) {
-                    playerNames += " and " + sjp.getName();
+                    playerNames += ChatColor.GREEN + " and " + ChatColor.RED + sjp.getName();
                 } else {
-                    playerNames += ", " + sjp.getName();
+                    playerNames += ChatColor.GREEN + ", " + ChatColor.RED + sjp.getName();
                 }
                 team.addEntry(sjp.getName());
                 SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(sjp.getPlayer());
@@ -75,7 +76,7 @@ public class Battle extends AbstractBattle {
                 sjp.setIngame(true);
                 sjp.setFrozen(true);
                 PlayerData pdata = new PlayerData(sjp, arena.getSpawns()[i], arena.getGoals()[i % arena.getGoals().length]);
-                this.data.put(sjp, pdata);
+                this.data.putIfAbsent(sjp, pdata);
                 p.setGameMode(GameMode.ADVENTURE);
                 p.setFlying(false);
                 p.setAllowFlight(false);

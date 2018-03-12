@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.spleefleague.core.utils.inventorymenu.InventoryMenuAPI.item;
+import com.spleefleague.core.utils.inventorymenu.InventoryMenuFlag;
 import com.spleefleague.entitybuilder.EntityBuilder;
 import com.spleefleague.superjump.game.AbstractBattle;
 
@@ -233,7 +234,7 @@ public class SuperJump extends GamePlugin implements PlayerHandling {
         InventoryMenuTemplateBuilder menu = SLMenu.getNewGamemodeMenu()
                 .displayName("SuperJump")
                 .displayIcon(Material.LEATHER_BOOTS)
-                .exitOnClickOutside(true)
+                .flags(InventoryMenuFlag.EXIT_ON_CLICK_OUTSIDE)
                 .visibilityController((slp) -> (queuesOpen));
         Arena.getAll().stream().forEach((arena) -> {
             menu.component(item()

@@ -12,7 +12,6 @@ import com.spleefleague.core.io.typeconverters.LocationConverter;
 import com.spleefleague.core.player.SLPlayer;
 import com.spleefleague.core.queue.QueueableArena;
 import com.spleefleague.core.utils.Area;
-import com.spleefleague.core.utils.function.Dynamic;
 import com.spleefleague.entitybuilder.DBEntity;
 import com.spleefleague.entitybuilder.DBLoad;
 import com.spleefleague.entitybuilder.DBLoadable;
@@ -27,6 +26,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bson.Document;
@@ -193,7 +193,7 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
         return this.isDefaultArena() || sjp.getVisitedArenas().contains(this);
     }
 
-    public Dynamic<List<String>> getDynamicDescription() {
+    public Function<SLPlayer, List<String>> getDynamicDescription() {
         return (SLPlayer slp) -> {
             List<String> description = new ArrayList<>();
             SJPlayer sjp = SuperJump.getInstance().getPlayerManager().get(slp.getUniqueId());
