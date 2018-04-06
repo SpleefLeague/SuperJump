@@ -3,18 +3,18 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.spleefleague.superjump.listener;
+package com.spleefleague.parkour.listener;
 
 import com.spleefleague.core.SpleefLeague;
-import com.spleefleague.core.events.BattleEndEvent.EndReason;
+import com.spleefleague.gameapi.events.BattleEndEvent.EndReason;
 import com.spleefleague.core.player.Rank;
 import com.spleefleague.core.player.SLPlayer;
 import com.spleefleague.core.utils.Area;
 import com.spleefleague.core.utils.PlayerUtil;
-import com.spleefleague.superjump.SuperJump;
-import com.spleefleague.superjump.game.AbstractBattle;
-import com.spleefleague.superjump.game.Arena;
-import com.spleefleague.superjump.player.SJPlayer;
+import com.spleefleague.parkour.Parkour;
+import com.spleefleague.parkour.game.ParkourBattle;
+import com.spleefleague.parkour.game.Arena;
+import com.spleefleague.parkour.player.ParkourPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.event.EventHandler;
@@ -37,7 +37,7 @@ public class GameListener implements Listener {
     public static void init() {
         if (instance == null) {
             instance = new GameListener();
-            Bukkit.getPluginManager().registerEvents(instance, SuperJump.getInstance());
+            Bukkit.getPluginManager().registerEvents(instance, Parkour.getInstance());
         }
     }
 
@@ -47,7 +47,7 @@ public class GameListener implements Listener {
 
     @EventHandler
     public void onMove(PlayerMoveEvent event) {
-        SJPlayer sjp = SuperJump.getInstance().getPlayerManager().get(event.getPlayer());
+        ParkourPlayer sjp = Parkour.getInstance().getPlayerManager().get(event.getPlayer());
         if (sjp != null) {
             if (sjp.isFrozen()) {
                 Location from = event.getFrom();
@@ -71,7 +71,7 @@ public class GameListener implements Listener {
                     }
                 }
             } else {
-                AbstractBattle battle = SuperJump.getInstance().getBattleManager().getBattle(sjp);
+                ParkourBattle battle = Parkour.getInstance().getClassicBattleManager().getBattle(sjp);
                 Arena arena = battle.getArena();
                 if (!Area.isInAny(sjp.getLocation(), arena.getBorders())) {
                     battle.onArenaLeave(sjp);
@@ -86,7 +86,7 @@ public class GameListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onInteract(PlayerInteractEvent event) {
-        SJPlayer sjp = SuperJump.getInstance().getPlayerManager().get(event.getPlayer());
+        ParkourPlayer sjp = Parkour.getInstance().getPlayerManager().get(event.getPlayer());
         if (sjp.isIngame()) {
             event.setCancelled(true);
         }
@@ -94,7 +94,7 @@ public class GameListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onBlockBreak(BlockBreakEvent event) {
-        SJPlayer sjp = SuperJump.getInstance().getPlayerManager().get(event.getPlayer());
+        ParkourPlayer sjp = Parkour.getInstance().getPlayerManager().get(event.getPlayer());
         if (sjp.isIngame()) {
             event.setCancelled(true);
         }
@@ -102,7 +102,7 @@ public class GameListener implements Listener {
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
-        SJPlayer sjp = SuperJump.getInstance().getPlayerManager().get(event.getPlayer());
+        ParkourPlayer sjp = Parkour.getInstance().getPlayerManager().get(event.getPlayer());
         if (sjp.isIngame()) {
             event.setCancelled(true);
         }

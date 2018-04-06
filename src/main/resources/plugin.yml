@@ -1,12 +1,12 @@
-name: SuperJump
+name: Parkour
 author: SpleefLeague
 authors: [Joba, Akaiyo, Manuman]
-main: com.spleefleague.superjump.SuperJump
+main: com.spleefleague.parkour.Parkour
 version: 1.0
-depend: [SpleefLeagueCore]
+depend: [SpleefLeagueCore, Commands, GameAPI]
 commands:    
-    superjump:
-        description: SuperJump queue command
-        aliases: [sj]
+    parkour:
+        description: Parkour queue command
+        aliases: [superjump, sj, p]
         usage: |
           /<command> [arena]

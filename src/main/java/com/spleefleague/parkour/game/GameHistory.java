@@ -3,13 +3,14 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.spleefleague.superjump.game;
+package com.spleefleague.parkour.game;
 
+import com.spleefleague.gameapi.events.BattleEndEvent.EndReason;
 import com.spleefleague.entitybuilder.DBEntity;
 import com.spleefleague.entitybuilder.DBSave;
 import com.spleefleague.entitybuilder.DBSaveable;
 import com.spleefleague.entitybuilder.TypeConverter;
-import com.spleefleague.superjump.player.SJPlayer;
+import com.spleefleague.parkour.player.ParkourPlayer;
 import java.util.Collection;
 import java.util.Date;
 import java.util.UUID;
@@ -26,19 +27,25 @@ public class GameHistory extends DBEntity implements DBSaveable {
     private final Date startDate;
     @DBSave(fieldName = "duration")
     private final int duration; //In ticks
-    @DBSave(fieldName = "cancelled")
-    private final boolean cancelled;
+    @DBSave(fieldName = "endReason")
+    private final EndReason endReason;
+    @DBSave(fieldName = "superjumpMode")
+    private final ParkourMode superjumpMode;
+    @DBSave(fieldName = "arena")
+    private final String arena;
 
-    protected GameHistory(AbstractBattle battle, SJPlayer winner) {
-        this.cancelled = winner == null;
+    protected GameHistory(ParkourBattle<?> battle, ParkourPlayer winner, EndReason endReason) {
+        this.endReason = endReason;
         players = new PlayerData[battle.getPlayers().size()];
-        Collection<SJPlayer> activePlayers = battle.getActivePlayers();
+        Collection<ParkourPlayer> activePlayers = battle.getActivePlayers();
         int i = 0;
-        for (SJPlayer sjp : battle.getPlayers()) {
+        for (ParkourPlayer sjp : battle.getPlayers()) {
             players[i++] = new PlayerData(sjp.getUniqueId(), battle.getData(sjp).getFalls(), sjp == winner, !activePlayers.contains(sjp));
         }
         this.duration = battle.getDuration();
         startDate = new Date(System.currentTimeMillis() - this.duration * 50);
+        this.arena = battle.getArena().getName();
+        this.superjumpMode = battle.getArena().getParkourMode();
     }
 
     public static class PlayerData extends DBEntity implements DBSaveable {

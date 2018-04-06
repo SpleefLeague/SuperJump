@@ -3,32 +3,34 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.spleefleague.superjump.game;
+package com.spleefleague.parkour.game;
 
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoCursor;
-import com.spleefleague.core.events.BattleStartEvent.StartReason;
+import com.spleefleague.gameapi.events.BattleStartEvent.StartReason;
 import com.spleefleague.core.io.typeconverters.LocationConverter;
 import com.spleefleague.core.player.SLPlayer;
-import com.spleefleague.core.queue.QueueableArena;
+import com.spleefleague.gameapi.queue.QueueableArena;
 import com.spleefleague.core.utils.Area;
 import com.spleefleague.entitybuilder.DBEntity;
 import com.spleefleague.entitybuilder.DBLoad;
 import com.spleefleague.entitybuilder.DBLoadable;
 import com.spleefleague.entitybuilder.DBSave;
 import com.spleefleague.entitybuilder.DBSaveable;
-import com.spleefleague.entitybuilder.EntityBuilder;
-import com.spleefleague.superjump.SuperJump;
-import com.spleefleague.superjump.player.SJPlayer;
-import java.lang.reflect.Field;
+import com.spleefleague.parkour.Parkour;
+import static com.spleefleague.parkour.game.ParkourMode.CLASSIC;
+import com.spleefleague.parkour.game.classic.ClassicParkourArena;
+import com.spleefleague.parkour.player.ParkourPlayer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.bson.Document;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -37,7 +39,7 @@ import org.bukkit.Location;
  *
  * @author Jonas
  */
-public class Arena extends DBEntity implements DBLoadable, DBSaveable, QueueableArena<SJPlayer> {
+public abstract class Arena<B extends ParkourBattle> extends DBEntity implements DBLoadable, DBSaveable, QueueableArena<ParkourPlayer> {
 
     @DBLoad(fieldName = "border")
     private Area[] borders;
@@ -71,7 +73,11 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
     private String debuggerStart;
     @DBLoad(fieldName = "debuggerEnd")
     private String debuggerEnd;
+    @DBLoad(fieldName = "parkourMode")
+    private ParkourMode parkourMode;
     private int runningGames = 0;
+    @DBLoad(fieldName = "description")
+    private List<String> description = Collections.emptyList();
     
     @DBLoad(fieldName = "spawns", typeConverter = LocationConverter.class, priority = 1)
     private void setSpawns(Location[] spawns) {
@@ -83,6 +89,10 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
         return spawns;
     }
 
+    public ParkourMode getParkourMode() {
+        return parkourMode;
+    }
+    
     public Area[] getGoals() {
         return goals;
     }
@@ -165,23 +175,7 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
         return requiredPlayers;
     }
     
-    public Battle startBattle(List<SJPlayer> players, StartReason reason) {
-        if (!isOccupied()) {
-            Battle battle = new Battle(this, players);
-            battle.start(reason);
-            return battle;
-        }
-        return null;
-    }
-
-    public MultiBattle startMultiBattle(List<SJPlayer> players, StartReason reason) {
-        if (!isOccupied()) {
-            MultiBattle battle = new MultiBattle(this, players);
-            battle.start(reason);
-            return battle;
-        }
-        return null;
-    }
+    public abstract B startBattle(List<ParkourPlayer> player, StartReason reason);
 
     @Override
     public boolean isQueued() {
@@ -189,14 +183,14 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
     }
 
     @Override
-    public boolean isAvailable(SJPlayer sjp) {
+    public boolean isAvailable(ParkourPlayer sjp) {
         return this.isDefaultArena() || sjp.getVisitedArenas().contains(this);
     }
 
     public Function<SLPlayer, List<String>> getDynamicDescription() {
         return (SLPlayer slp) -> {
             List<String> description = new ArrayList<>();
-            SJPlayer sjp = SuperJump.getInstance().getPlayerManager().get(slp.getUniqueId());
+            ParkourPlayer sjp = Parkour.getInstance().getPlayerManager().get(slp.getUniqueId());
             if (Arena.this.isAvailable(sjp)) {
                 if (Arena.this.isPaused()) {
                     description.add(ChatColor.RED + "This arena is");
@@ -216,86 +210,30 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
         return this.defaultArena;
     }
 
-    private static Map<String, Arena> arenas;
-    private static final MongoCollection<Document> collection;
+    @Override
+    public List<String> getDescription() {
+        return description;
+    }
     
-    public static Arena byName(String name) {
-        Arena arena = arenas.get(name);
-        if (arena == null) {
-            for (Arena a : arenas.values()) {
-                if (a.getName().equalsIgnoreCase(name)) {
-                    arena = a;
-                }
+    public static Arena byName(String name, ParkourMode mode) {
+        switch(mode) {
+            case CLASSIC: {
+                return ClassicParkourArena.byName(name);
             }
         }
-        return arena;
+        return null;
     }
 
-    public static Collection<Arena> getAll() {
-        return arenas.values();
+    public static Collection<? extends Arena<?>> getAll() {
+        return Stream.of(
+                ClassicParkourArena.getAll()
+        ).flatMap(c -> c.stream()).collect(Collectors.toList());  
     }
     
-    /**
-     * 
-     * @param name Name of the arena to reload
-     * @return true if the arena exists
-     */
-    public static boolean reload(String name) {
-        Document d = collection.find(new Document("name", name)).first();
-        if(d == null) {
-            return false;
-        }
-        else {
-            Arena arena = loadArena(d);
-            if (arena == null) return false;
-            Arena old = Arena.byName(name);
-            if(old != null) {
-                recursiveCopy(arena, old, Arena.class);
-            }
-            else {
-                addArena(arena);
-            }
-            return true;
-        }
-    }
-
-    public static void init() {
-        arenas = new HashMap<>();
-        MongoCursor<Document> dbc = collection.find().iterator();
-        while (dbc.hasNext()) {
-            Document d = dbc.next();
-            Arena arena = loadArena(d);
-            if (arena == null) continue;
-            addArena(arena);
-        }
-        SuperJump.getInstance().log("Loaded " + arenas.size() + " arenas!");
-    }
-    
-    private static Arena loadArena(Document d) {
-        if (!d.containsKey("arenaClass")) {
-            return EntityBuilder.load(d, Arena.class);
-        } else {
-            try {
-                Class<? extends Arena> c = (Class<? extends Arena>) Class.forName(d.getString("arenaClass"));
-                return EntityBuilder.load(d, c);
-            } catch (ClassNotFoundException ex) {
-                Logger.getLogger(Arena.class.getName()).log(Level.SEVERE, null, ex);
-                return null;
-            }
-        }
-    }
-    
-    private static void addArena(Arena arena) {
-        if (arena.getSize() == 2) {
-            arenas.put(arena.getName(), arena);
-            SuperJump.getInstance().getBattleManager().registerArena(arena);
-        }
-    }
-    
-    private static void recursiveCopy(Object src, Object target, Class targetClass) {
+    protected static void recursiveCopy(Object src, Object target, Class targetClass) {
         Class srcClass = src.getClass();
         while(true) {
-            for(Field f : srcClass.getDeclaredFields()) {
+            for(java.lang.reflect.Field f : srcClass.getDeclaredFields()) {
                 try {
                     f.setAccessible(true);
                     f.set(target, f.get(src));
@@ -313,7 +251,45 @@ public class Arena extends DBEntity implements DBLoadable, DBSaveable, Queueable
         }
     }
 
-    static {
-        collection = SuperJump.getInstance().getPluginDB().getCollection("Arenas");
+    public static void init() {
+        Iterator<Document> arenaTypes = Parkour.getInstance().getPluginDB().getCollection("Arenas").aggregate(Arrays.asList(
+                new Document("$unwind", new Document("path", "$parkourMode")),
+                new Document("$group", new Document("_id", "$parkourMode").append("arenas", new Document("$addToSet", "$$ROOT")))
+        )).iterator();
+        while(arenaTypes.hasNext()) {
+            Document arenas = arenaTypes.next();
+            List<Document> arenaInstances = arenas.get("arenas", List.class);
+            try {
+                ParkourMode mode = ParkourMode.valueOf(arenas.get("_id", String.class));
+                int amount;
+                switch(mode) {
+                    case CLASSIC: {
+                        amount = loadArenas(arenaInstances, ClassicParkourArena::loadArena);
+                        break;
+                    }
+                    default: {
+                        continue;
+                    }
+                }
+                String modeName = mode.toString().substring(0, 1).toUpperCase().concat(mode.toString().substring(1).toLowerCase());
+                Parkour.getInstance().log("Loaded " + amount + " " + modeName + " Spleef arenas.");
+            } catch(IllegalArgumentException e) {
+                System.err.println(arenas.get("_id") + " is not a valid spleef mode.");
+            }
+        }
+    }
+    
+    private static int loadArenas(List<Document> arenas, Consumer<Document> arenaCreator) {
+        int successCounter = 0;
+        for(Document arena : arenas) {
+            try {
+                arenaCreator.accept(arena);
+                successCounter++;
+            } catch(Exception e) {
+                System.err.println("Error loading arena " + arena.get("name") + " (" + arena.get("type") + ")");
+                e.printStackTrace();
+            }
+        }
+        return successCounter;
     }
 }

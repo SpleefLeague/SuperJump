@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.spleefleague.superjump.listener;
+package com.spleefleague.parkour.listener;
 
 import com.comphenix.packetwrapper.WrapperPlayServerPlayerInfo;
 import com.comphenix.protocol.wrappers.EnumWrappers;
@@ -12,9 +12,10 @@ import com.comphenix.protocol.wrappers.WrappedChatComponent;
 import com.comphenix.protocol.wrappers.WrappedGameProfile;
 import com.spleefleague.core.SpleefLeague;
 import com.spleefleague.core.player.SLPlayer;
-import com.spleefleague.superjump.SuperJump;
-import com.spleefleague.superjump.game.AbstractBattle;
-import com.spleefleague.superjump.player.SJPlayer;
+import com.spleefleague.parkour.Parkour;
+import com.spleefleague.parkour.game.ParkourBattle;
+import com.spleefleague.parkour.game.classic.ClassicParkourBattle;
+import com.spleefleague.parkour.player.ParkourPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.v1_12_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
@@ -37,7 +38,7 @@ public class ConnectionListener implements Listener {
     public static void init() {
         if (instance == null) {
             instance = new ConnectionListener();
-            Bukkit.getPluginManager().registerEvents(instance, SuperJump.getInstance());
+            Bukkit.getPluginManager().registerEvents(instance, Parkour.getInstance());
         }
     }
 
@@ -47,23 +48,23 @@ public class ConnectionListener implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-        SJPlayer sjp = SuperJump.getInstance().getPlayerManager().get(event.getPlayer());
+        ParkourPlayer sjp = Parkour.getInstance().getPlayerManager().get(event.getPlayer());
         if (sjp == null) {
             return;
         }
         if (sjp.isIngame()) {
-            SuperJump.getInstance().getBattleManager().getBattle(sjp).removePlayer(sjp, false);
+            Parkour.getInstance().getClassicBattleManager().getBattle(sjp).removePlayer(sjp, false);
         } else {
-            SuperJump.getInstance().getBattleManager().dequeue(sjp);
+            Parkour.getInstance().getClassicBattleManager().dequeue(sjp);
         }
     }
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         List<Player> ingamePlayers = new ArrayList<>();
-        List<AbstractBattle> toCancel = new ArrayList<>();//Workaround
-        for (AbstractBattle battle : SuperJump.getInstance().getBattleManager().getAll()) {
-            for (SJPlayer p : battle.getActivePlayers()) {
+        List<ParkourBattle<?>> toCancel = new ArrayList<>();//Workaround
+        for (ParkourBattle<?> battle : Parkour.getInstance().getClassicBattleManager().getAll()) {
+            for (ParkourPlayer p : battle.getActivePlayers()) {
                 if (p.getPlayer() != null) {
                     event.getPlayer().hidePlayer(p.getPlayer());
                     p.getPlayer().hidePlayer(event.getPlayer());
@@ -74,15 +75,17 @@ public class ConnectionListener implements Listener {
                 }
             }
         }
-        for (AbstractBattle battle : toCancel) {
-            for (SJPlayer p : battle.getActivePlayers()) {
+        for (ParkourBattle<?> battle : toCancel) {
+            for (ParkourPlayer p : battle.getActivePlayers()) {
                 if (p.getPlayer() != null) {
                     p.kickPlayer("An error has occured. Please reconnect");
                 }
             }
-            SuperJump.getInstance().getBattleManager().remove(battle);
+            if(battle instanceof ClassicParkourBattle) {
+                Parkour.getInstance().getClassicBattleManager().remove((ClassicParkourBattle)battle);
+            }
         }
-        Bukkit.getScheduler().runTaskLater(SuperJump.getInstance(), () -> {
+        Bukkit.getScheduler().runTaskLater(Parkour.getInstance(), () -> {
             List<PlayerInfoData> list = new ArrayList<>();
             SpleefLeague.getInstance().getPlayerManager().getAll().forEach((SLPlayer slPlayer) -> list.add(new PlayerInfoData(WrappedGameProfile.fromPlayer(slPlayer.getPlayer()), ((CraftPlayer) slPlayer.getPlayer()).getHandle().ping, EnumWrappers.NativeGameMode.SURVIVAL, WrappedChatComponent.fromText(slPlayer.getRank().getColor() + slPlayer.getName()))));
             WrapperPlayServerPlayerInfo packet = new WrapperPlayServerPlayerInfo();

@@ -3,15 +3,15 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.spleefleague.superjump.listener;
+package com.spleefleague.parkour.listener;
 
 import com.spleefleague.core.SpleefLeague;
 import com.spleefleague.core.player.PlayerState;
 import com.spleefleague.core.player.SLPlayer;
 import com.spleefleague.core.utils.PlayerUtil;
-import com.spleefleague.superjump.SuperJump;
-import com.spleefleague.superjump.game.Arena;
-import com.spleefleague.superjump.player.SJPlayer;
+import com.spleefleague.parkour.Parkour;
+import com.spleefleague.parkour.game.Arena;
+import com.spleefleague.parkour.player.ParkourPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
@@ -30,7 +30,7 @@ public class EnvironmentListener implements Listener {
     public static void init() {
         if (instance == null) {
             instance = new EnvironmentListener();
-            Bukkit.getPluginManager().registerEvents(instance, SuperJump.getInstance());
+            Bukkit.getPluginManager().registerEvents(instance, Parkour.getInstance());
         }
     }
 
@@ -42,7 +42,7 @@ public class EnvironmentListener implements Listener {
     public void onMove(PlayerMoveEvent event) {
         SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(event.getPlayer());
         if (slp != null && slp.getState() == PlayerState.IDLE) {
-            SJPlayer sp = SuperJump.getInstance().getPlayerManager().get(event.getPlayer());
+            ParkourPlayer sp = Parkour.getInstance().getPlayerManager().get(event.getPlayer());
             if (sp != null) {
                 for (Arena arena : Arena.getAll()) {
                     if (!sp.getVisitedArenas().contains(arena)) {

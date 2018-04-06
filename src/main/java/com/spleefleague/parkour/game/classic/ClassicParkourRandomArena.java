@@ -3,13 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.spleefleague.superjump.game;
+package com.spleefleague.parkour.game.classic;
 
-import com.spleefleague.core.events.BattleStartEvent.StartReason;
 import com.spleefleague.core.io.typeconverters.LocationConverter;
 import com.spleefleague.core.utils.Area;
 import com.spleefleague.entitybuilder.DBLoad;
-import com.spleefleague.superjump.player.SJPlayer;
+import com.spleefleague.gameapi.events.BattleStartEvent;
+import com.spleefleague.parkour.player.ParkourPlayer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -22,14 +22,14 @@ import org.bukkit.util.Vector;
  *
  * @author Jonas
  */
-public class RandomArena extends Arena {
+public class ClassicParkourRandomArena extends ClassicParkourArena {
 
     @DBLoad(fieldName = "spawn", typeConverter = LocationConverter.class)
     private Location spawn1;
     @DBLoad(fieldName = "jumpcount")
     private int jumpCount;
 
-    public RandomArena() {
+    public ClassicParkourRandomArena() {
         super();
     }
 
@@ -43,8 +43,9 @@ public class RandomArena extends Arena {
         return 2;
     }
 
+    
     @Override
-    public Battle startBattle(List<SJPlayer> players, StartReason reason) {
+    public ClassicParkourBattle startBattle(List<ParkourPlayer> players, BattleStartEvent.StartReason reason) {
         if (!isOccupied()) {
             ArenaData data = generate(spawn1, jumpCount);
             Location[] spawns = new Location[2];
@@ -54,7 +55,7 @@ public class RandomArena extends Arena {
             goals[0] = data.goal;
             Area[] borders = data.borders;
             //Create new arena object since each random arena has different spawns/goals/borders
-            Arena arena = new RandomArena() {
+            ClassicParkourArena arena = new ClassicParkourRandomArena() {
                 @Override
                 public Location[] getSpawns() {
                     return spawns;
@@ -82,10 +83,10 @@ public class RandomArena extends Arena {
 
                 @Override
                 public String getName() {
-                    return RandomArena.this.getName();
+                    return ClassicParkourRandomArena.this.getName();
                 }
             };
-            Battle battle = new Battle(arena, players);
+            ClassicParkourBattle battle = new ClassicParkourBattle(arena, players);
             for(BlockPrototype bp : data.fakeBlocks) {
                 battle.getFakeWorld().getBlockAt(bp.location).setType(bp.type);
             }
@@ -224,6 +225,7 @@ public class RandomArena extends Arena {
         new Jump(4, 1, 2, 30),
         new Jump(4, 1, -1, 40),
         new Jump(4, 1, -2, 30),};
+
 
     private static class Jump {
 

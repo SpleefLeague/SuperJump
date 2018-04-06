@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.spleefleague.superjump.commands;
+package com.spleefleague.parkour.commands;
 
 import static com.spleefleague.annotations.CommandSource.COMMAND_BLOCK;
 import static com.spleefleague.annotations.CommandSource.CONSOLE;
@@ -13,18 +13,17 @@ import com.spleefleague.annotations.LiteralArg;
 import com.spleefleague.annotations.PlayerArg;
 import com.spleefleague.annotations.StringArg;
 import com.spleefleague.commands.command.BasicCommand;
-import com.spleefleague.core.SpleefLeague;
-import com.spleefleague.core.events.BattleStartEvent.StartReason;
-import com.spleefleague.core.player.PlayerManager;
+import com.spleefleague.gameapi.events.BattleStartEvent.StartReason;
+import com.spleefleague.core.player.DBPlayerManager;
 import com.spleefleague.core.player.PlayerState;
 import com.spleefleague.core.player.Rank;
 import com.spleefleague.core.player.SLPlayer;
 import com.spleefleague.core.plugin.CorePlugin;
-import com.spleefleague.core.plugin.GamePlugin;
-import com.spleefleague.core.queue.Challenge;
-import com.spleefleague.superjump.SuperJump;
-import com.spleefleague.superjump.game.Arena;
-import com.spleefleague.superjump.player.SJPlayer;
+import com.spleefleague.gameapi.GamePlugin;
+import com.spleefleague.gameapi.queue.Challenge;
+import com.spleefleague.parkour.Parkour;
+import com.spleefleague.parkour.game.classic.ClassicParkourArena;
+import com.spleefleague.parkour.player.ParkourPlayer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -37,14 +36,14 @@ import org.bukkit.entity.Player;
  *
  * @author Jonas
  */
-public class superjump extends BasicCommand {
+public class parkour extends BasicCommand {
 
-    public superjump(CorePlugin plugin, String name, String usage) {
-        super(SuperJump.getInstance(), new superjumpDispatcher(), name, usage);
+    public parkour(CorePlugin plugin, String name, String usage) {
+        super(Parkour.getInstance(), new parkourDispatcher(), name, usage);
     }
 
     private boolean checkQueuesClosed(CommandSender p) {
-        if (!SuperJump.getInstance().queuesOpen()) {
+        if (!Parkour.getInstance().queuesOpen()) {
             error(p, "All queues are currently paused!");
             return true;
         }
@@ -68,8 +67,8 @@ public class superjump extends BasicCommand {
             return;
         }
         GamePlugin.dequeueGlobal(target);
-        SJPlayer sjp = SuperJump.getInstance().getPlayerManager().get(target);
-        SuperJump.getInstance().getBattleManager().queue(sjp);
+        ParkourPlayer sjp = Parkour.getInstance().getPlayerManager().get(target);
+        Parkour.getInstance().getClassicBattleManager().queue(sjp);
         success(target, "You have been added to the queue");
     }
     
@@ -81,7 +80,7 @@ public class superjump extends BasicCommand {
         if (checkIngame(target)) {
             return;
         }
-        Arena arena = Arena.byName(arenaName);
+        ClassicParkourArena arena = ClassicParkourArena.byName(arenaName);
         if (arena == null) {
             error(target, "This arena does not exist.");
             return;
@@ -90,12 +89,12 @@ public class superjump extends BasicCommand {
             error(target, "This arena is currently paused.");
             return;
         }
-        SJPlayer sjp = SuperJump.getInstance().getPlayerManager().get(target);
+        ParkourPlayer sjp = Parkour.getInstance().getPlayerManager().get(target);
         if (!arena.isAvailable(sjp)) {
             error(target, "You have not visited this arena yet!");
             return;
         }
-        SuperJump.getInstance().getBattleManager().queue(sjp, arena);
+        Parkour.getInstance().getClassicBattleManager().queue(sjp, arena);
         success(target, "You have been added to the queue for: " + ChatColor.GREEN + arena.getName());
     }
 
@@ -121,7 +120,7 @@ public class superjump extends BasicCommand {
                 return;
             }
         }
-        Arena arena = Arena.byName(arenaName);
+        ClassicParkourArena arena = ClassicParkourArena.byName(arenaName);
         if (arena == null) {
             error(sender, "This arena does not exist.");
             return;
@@ -138,8 +137,8 @@ public class superjump extends BasicCommand {
             }
             return;
         }
-        PlayerManager<SJPlayer> pm = SuperJump.getInstance().getPlayerManager();
-        List<SJPlayer> sjplayers = Arrays.stream(players)
+        DBPlayerManager<ParkourPlayer> pm = Parkour.getInstance().getPlayerManager();
+        List<ParkourPlayer> sjplayers = Arrays.stream(players)
                 .map(pm::get)
                 .collect(Collectors.toList());
         arena.startBattle(sjplayers, StartReason.FORCE);
@@ -163,7 +162,7 @@ public class superjump extends BasicCommand {
         if (checkIngame(sender)) {
             return;
         }
-        Arena arena = Arena.byName(arenaName);
+        ClassicParkourArena arena = ClassicParkourArena.byName(arenaName);
         if (arena == null) {
             error(sender, "This arena does not exist.");
             return;
@@ -184,8 +183,8 @@ public class superjump extends BasicCommand {
             }
             return;
         }
-        PlayerManager<SJPlayer> pm = SuperJump.getInstance().getPlayerManager();
-        SJPlayer sendersjp = pm.get(sender);
+        DBPlayerManager<ParkourPlayer> pm = Parkour.getInstance().getPlayerManager();
+        ParkourPlayer sendersjp = pm.get(sender);
         if (sender.getState() == PlayerState.INGAME) {
             error(sender, "You are currently ingame.");
             return;
@@ -193,45 +192,33 @@ public class superjump extends BasicCommand {
         if (!arena.isAvailable(sendersjp)) {
             error(sender, "You have not discovered this arena yet.");
         }
-        List<SLPlayer> challenged = new ArrayList<>();
+        List<ParkourPlayer> challenged = new ArrayList<>();
         for (Player player : players) {
-            SJPlayer sjp = pm.get(player);
-            SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(player);
-            if (sjp == sendersjp) {
+            ParkourPlayer pp = pm.get(player);
+            if (pp == sendersjp) {
                 error(sender, "You cannot challenge yourself.");
                 return;
             }
-            if (challenged.contains(slp)) {
-                error(sender, "You cannot challenge " + sjp.getName() + " more than once.");
+            if (challenged.contains(pp)) {
+                error(sender, "You cannot challenge " + pp.getName() + " more than once.");
                 return;
             }
-            if (slp.getState() == PlayerState.INGAME) {
+            if (GamePlugin.isIngameGlobal(pp)) {
                 error(sender, player.getName() + " is currently ingame.");
                 return;
             }
-            if (!arena.isAvailable(sjp)) {
+            if (!arena.isAvailable(pp)) {
                 error(sender, player.getName() + " has not discovered this arena yet.");
             }
-            challenged.add(slp);
+            challenged.add(pp);
         }
-        Challenge challenge = new Challenge(sender, challenged.toArray(new SLPlayer[0])) {
+        Challenge<ParkourPlayer> challenge = new Challenge<ParkourPlayer>(sendersjp, challenged) {
             @Override
-            public void start(SLPlayer[] accepted) {
-                List<SJPlayer> players = new ArrayList<>();
-                for (SLPlayer slpt : accepted) {
-                    players.add(SuperJump.getInstance().getPlayerManager().get(slpt));
-                }
-                if (isMulti) {
-                    arena.startMultiBattle(players, StartReason.CHALLENGE);
-                } else {
-                    arena.startBattle(players, StartReason.CHALLENGE);
-                }
+            public void start(List<ParkourPlayer> accepted) {
+                arena.startBattle(accepted, StartReason.CHALLENGE);
             }
         };
-        challenged.forEach((slpt) -> {
-            slpt.addChallenge(challenge);
-        });
-        challenge.sendMessages(SuperJump.getInstance().getChatPrefix(), arena.getName(), Arrays.asList(players));
+        challenge.sendMessages(Parkour.getInstance().getChatPrefix(), arena.getName(), Arrays.asList(players));
         success(sender, "The players have been challenged.");
     }
 
@@ -253,7 +240,7 @@ public class superjump extends BasicCommand {
                 return;
             }
         }
-        Arena arena = Arena.byName(arenaName);
+        ClassicParkourArena arena = ClassicParkourArena.byName(arenaName);
         if (arena == null) {
             error(sender, "This arena does not exist.");
             return;
