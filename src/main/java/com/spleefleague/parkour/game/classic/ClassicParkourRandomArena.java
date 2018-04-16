@@ -9,6 +9,7 @@ import com.spleefleague.core.io.typeconverters.LocationConverter;
 import com.spleefleague.core.utils.Area;
 import com.spleefleague.entitybuilder.DBLoad;
 import com.spleefleague.gameapi.events.BattleStartEvent;
+import com.spleefleague.parkour.game.ParkourMode;
 import com.spleefleague.parkour.player.ParkourPlayer;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -84,6 +85,16 @@ public class ClassicParkourRandomArena extends ClassicParkourArena {
                 @Override
                 public String getName() {
                     return ClassicParkourRandomArena.this.getName();
+                }
+                
+                @Override
+                public boolean isRated() {
+                    return ClassicParkourRandomArena.this.isRated();
+                }
+                
+                @Override
+                public ParkourMode getParkourMode() {
+                    return ClassicParkourRandomArena.this.getParkourMode();
                 }
             };
             ClassicParkourBattle battle = new ClassicParkourBattle(arena, players);

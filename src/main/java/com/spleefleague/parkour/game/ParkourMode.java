@@ -12,15 +12,19 @@ import org.bukkit.ChatColor;
  * @author jonas
  */
 public enum ParkourMode {
-    CLASSIC("ClassicSJ");
+    CLASSIC("ClassicParkour");
     
-    private final String chatPrefixName;
+    private final String name;
     
     private ParkourMode(String chatPrefixName) {
-        this.chatPrefixName = chatPrefixName;
+        this.name = chatPrefixName;
     }
     
     public String getChatPrefix() {
-        return ChatColor.GRAY + "[" + ChatColor.GOLD + chatPrefixName + ChatColor.GRAY + "]" + ChatColor.RESET;
+        return ChatColor.GRAY + "[" + ChatColor.GOLD + name + ChatColor.GRAY + "]" + ChatColor.RESET;
+    }
+    
+    public String getName() {
+        return name;
     }
 }

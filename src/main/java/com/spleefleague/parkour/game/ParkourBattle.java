@@ -41,6 +41,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Level;
+import org.bson.Document;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Team;
@@ -400,9 +402,18 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
         }
     }
 
-    private void saveGameHistory(ParkourPlayer winner, EndReason endReason) {
-        GameHistory gh = new GameHistory(this, winner, endReason);
-        EntityBuilder.save(gh, Parkour.getInstance().getPluginDB().getCollection("GameHistory"));
+    protected void saveGameHistory(ParkourPlayer winner, EndReason reason) {
+        Bukkit.getScheduler().runTaskAsynchronously(Parkour.getInstance(), () -> {
+            GameHistory gh = new GameHistory(this, winner, reason);
+            try {
+                EntityBuilder.save(gh, Parkour.getInstance().getPluginDB().getCollection("GameHistory"));
+            } catch(Exception e) {
+                Parkour.LOG.log(Level.WARNING, "Could not save GameHistory!");
+                Document doc = EntityBuilder.serialize(gh).get("$set", Document.class);
+                Parkour.LOG.log(Level.WARNING, doc.toJson());
+                e.printStackTrace();
+            }
+        });
     }
 
     private void resetPlayer(ParkourPlayer sp) {
