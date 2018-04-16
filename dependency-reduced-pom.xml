@@ -5,6 +5,13 @@
   <artifactId>Parkour</artifactId>
   <version>1.1</version>
   <build>
+    <extensions>
+      <extension>
+        <groupId>org.apache.maven.wagon</groupId>
+        <artifactId>wagon-ssh-external</artifactId>
+        <version>2.10</version>
+      </extension>
+    </extensions>
     <finalName>${project.artifactId}</finalName>
     <plugins>
       <plugin>
@@ -150,6 +157,13 @@
       <scope>provided</scope>
     </dependency>
   </dependencies>
+  <distributionManagement>
+    <repository>
+      <id>ssh-repository</id>
+      <name>ssh-repository</name>
+      <url>scpexe://maven.spleefleague.com/var/www/maven</url>
+    </repository>
+  </distributionManagement>
   <properties>
     <build.number>unknown</build.number>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
