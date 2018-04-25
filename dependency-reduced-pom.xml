@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.spleefleague</groupId>
   <artifactId>Parkour</artifactId>
-  <version>1.1</version>
+  <version>1.2</version>
   <build>
     <extensions>
       <extension>
@@ -87,29 +87,36 @@
       <url>http://repo.dmulloy2.net/content/groups/public/</url>
     </repository>
   </repositories>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>spleefleague-maven</id>
+      <name>spleefleague-maven</name>
+      <url>https://maven.spleefleague.com</url>
+    </pluginRepository>
+  </pluginRepositories>
   <dependencies>
     <dependency>
       <groupId>com.spleefleague</groupId>
       <artifactId>GameAPI</artifactId>
-      <version>1.0</version>
+      <version>1.2</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.spleefleague</groupId>
       <artifactId>annotations</artifactId>
-      <version>1.1</version>
+      <version>1.2</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.spleefleague</groupId>
       <artifactId>Commands</artifactId>
-      <version>1.1</version>
+      <version>1.2</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.spleefleague</groupId>
       <artifactId>Core</artifactId>
-      <version>1.1</version>
+      <version>1.2</version>
       <scope>provided</scope>
     </dependency>
     <dependency>

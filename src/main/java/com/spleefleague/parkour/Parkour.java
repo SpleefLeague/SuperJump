@@ -182,7 +182,7 @@ public class Parkour extends GamePlugin implements PlayerHandling {
             sj.add(mode.getChatPrefix() + ChatColor.GRAY + " Rating: " + ChatColor.YELLOW + rating + ChatColor.GRAY + " (" + ChatColor.GOLD + "#" + rank + ChatColor.GRAY + ")");
         }
         if(print) {
-            target.sendMessage(sj.toString());
+            p.sendMessage(sj.toString());
         }
     }
 

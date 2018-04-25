@@ -37,7 +37,7 @@ public class ParkourPlayer extends RatedPlayer<ParkourMode> {
     private List<Document> saveVisitedArenas() {
         List<Document> arenaNames = new ArrayList<>();
         for (Arena arena : visitedArenas) {
-            arenaNames.add(new Document("name", arena.getName()).append("type", arena.getParkourMode().name()));
+            arenaNames.add(new Document("name", arena.getName()).append("mode", arena.getParkourMode().name()));
         }
         return arenaNames;
     }
@@ -46,7 +46,7 @@ public class ParkourPlayer extends RatedPlayer<ParkourMode> {
     private void loadVisitedArenas(List<Document> arenas) {
         for (Document arenaDoc : arenas) {
             try {
-                ParkourMode mode = ParkourMode.valueOf(arenaDoc.get("type", String.class));
+                ParkourMode mode = ParkourMode.valueOf(arenaDoc.get("mode", String.class));
                 Arena arena = Arena.byName(arenaDoc.get("name", String.class), mode);
                 if (arena != null) {
                     visitedArenas.add(arena);

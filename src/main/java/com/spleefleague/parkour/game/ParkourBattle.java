@@ -270,7 +270,7 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
         resetPlayer(sp);
         ArrayList<ParkourPlayer> activePlayers = getActivePlayers();
         if (activePlayers.size() == 1) {
-            end(activePlayers.get(0), surrender ? EndReason.SURRENDER : EndReason.QUIT);
+            end(activePlayers.get(0), EndReason.NORMAL);
         }
     }
 
