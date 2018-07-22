@@ -247,7 +247,7 @@ public class Parkour extends GamePlugin implements PlayerHandling {
             menu.component(item()
                     .displayName(arena.getName())
                     .description(arena.getDynamicDescription())
-                    .displayIcon((slp) -> (arena.isAvailable(playerManager.get(slp)) ? Material.MAP : Material.EMPTY_MAP))
+                    .displayIcon((slp) -> (arena.isAvailable(playerManager.get(slp)) ? Material.FILLED_MAP : Material.MAP))
                     .onClick((event) -> {
                         ParkourPlayer sp = getPlayerManager().get(event.getPlayer());
                         if (arena.isAvailable(sp)) {

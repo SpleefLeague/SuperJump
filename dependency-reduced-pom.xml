@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.spleefleague</groupId>
   <artifactId>Parkour</artifactId>
-  <version>1.2</version>
+  <version>1.3</version>
   <build>
     <extensions>
       <extension>
@@ -98,7 +98,7 @@
     <dependency>
       <groupId>com.spleefleague</groupId>
       <artifactId>GameAPI</artifactId>
-      <version>1.2</version>
+      <version>1.3</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -110,19 +110,19 @@
     <dependency>
       <groupId>com.spleefleague</groupId>
       <artifactId>Commands</artifactId>
-      <version>1.2</version>
+      <version>1.3</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.spleefleague</groupId>
       <artifactId>Core</artifactId>
-      <version>1.2</version>
+      <version>1.3</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.spigotmc</groupId>
       <artifactId>spigot-api</artifactId>
-      <version>1.12-R0.1-SNAPSHOT</version>
+      <version>1.13-R0.1-SNAPSHOT</version>
       <scope>provided</scope>
       <exclusions>
         <exclusion>
@@ -154,13 +154,13 @@
     <dependency>
       <groupId>org.spigotmc</groupId>
       <artifactId>spigot</artifactId>
-      <version>1.12-R0.1-SNAPSHOT</version>
+      <version>1.13-R0.1-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.comphenix.packetwrapper</groupId>
       <artifactId>PacketWrapper</artifactId>
-      <version>1.11-R0.1-SNAPSHOT</version>
+      <version>1.12.1-R0.1-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
   </dependencies>
@@ -172,10 +172,10 @@
     </repository>
   </distributionManagement>
   <properties>
-    <build.number>unknown</build.number>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>1.9</maven.compiler.source>
     <maven.compiler.target>1.9</maven.compiler.target>
+    <maven.compiler.source>1.9</maven.compiler.source>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <build.number>unknown</build.number>
   </properties>
 </project>
 
