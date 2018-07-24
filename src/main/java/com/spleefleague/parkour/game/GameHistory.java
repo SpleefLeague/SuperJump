@@ -42,7 +42,7 @@ public class GameHistory extends DBEntity implements DBSaveable {
         for (ParkourPlayer sjp : battle.getPlayers()) {
             players[i++] = new PlayerData(sjp.getUniqueId(), battle.getData(sjp).getFalls(), sjp == winner, !activePlayers.contains(sjp));
         }
-        this.duration = battle.getDuration();
+        this.duration = (int)battle.getDuration();
         startDate = new Date(System.currentTimeMillis() - this.duration * 50);
         this.arena = battle.getArena().getName();
         this.superjumpMode = battle.getArena().getParkourMode();

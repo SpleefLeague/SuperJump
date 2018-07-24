@@ -12,9 +12,17 @@ import com.comphenix.protocol.wrappers.WrappedChatComponent;
 import com.comphenix.protocol.wrappers.WrappedGameProfile;
 import com.spleefleague.core.SpleefLeague;
 import com.spleefleague.core.player.SLPlayer;
+import com.spleefleague.gameapi.queue.RatedBattleManager;
 import com.spleefleague.parkour.Parkour;
 import com.spleefleague.parkour.game.ParkourBattle;
-import com.spleefleague.parkour.game.classic.ClassicParkourBattle;
+import com.spleefleague.parkour.game.ParkourMode;
+import com.spleefleague.parkour.game.versus.classic.VersusClassicParkourBattle;
+import com.spleefleague.parkour.game.conquest.ConquestParkourBattle;
+import com.spleefleague.parkour.game.endless.EndlessParkourBattle;
+import com.spleefleague.parkour.game.party.PartyParkourBattle;
+import com.spleefleague.parkour.game.practice.PracticeParkourBattle;
+import com.spleefleague.parkour.game.pro.ProParkourBattle;
+import com.spleefleague.parkour.game.versus.random.VersusRandomParkourBattle;
 import com.spleefleague.parkour.player.ParkourPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.v1_12_R1.entity.CraftPlayer;
@@ -26,6 +34,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -53,9 +62,10 @@ public class ConnectionListener implements Listener {
             return;
         }
         if (sjp.isIngame()) {
-            Parkour.getInstance().getClassicBattleManager().getBattle(sjp).removePlayer(sjp, false);
+            Parkour.getInstance().getBattle(sjp).removePlayer(sjp, true);
+            //((ParkourBattle<?>) Parkour.getInstance().getBattleManager(sjp.getParkourMode()).getBattle(sjp)).removePlayer(sjp, false);
         } else {
-            Parkour.getInstance().getClassicBattleManager().dequeue(sjp);
+            Parkour.getInstance().dequeue(sjp);
         }
     }
 
@@ -63,15 +73,17 @@ public class ConnectionListener implements Listener {
     public void onJoin(PlayerJoinEvent event) {
         List<Player> ingamePlayers = new ArrayList<>();
         List<ParkourBattle<?>> toCancel = new ArrayList<>();//Workaround
-        for (ParkourBattle<?> battle : Parkour.getInstance().getClassicBattleManager().getAll()) {
-            for (ParkourPlayer p : battle.getActivePlayers()) {
-                if (p.getPlayer() != null) {
-                    event.getPlayer().hidePlayer(p.getPlayer());
-                    p.getPlayer().hidePlayer(event.getPlayer());
-                    ingamePlayers.add(p.getPlayer());
-                } else {
-                    toCancel.add(battle);
-                    break;
+        for (Map.Entry<ParkourMode, ? extends RatedBattleManager> entry : Parkour.getInstance().getParkourBattleManagers().entrySet()) {
+            for (Object battle : Parkour.getInstance().getBattleManager(entry.getKey()).getAll()) {
+                for (ParkourPlayer p : ((ParkourBattle<?>)battle).getActivePlayers()) {
+                    if (p.getPlayer() != null) {
+                        event.getPlayer().hidePlayer(p.getPlayer());
+                        p.getPlayer().hidePlayer(event.getPlayer());
+                        ingamePlayers.add(p.getPlayer());
+                    } else {
+                        toCancel.add(((ParkourBattle<?>)battle));
+                        break;
+                    }
                 }
             }
         }
@@ -81,8 +93,26 @@ public class ConnectionListener implements Listener {
                     p.kickPlayer("An error has occured. Please reconnect");
                 }
             }
-            if(battle instanceof ClassicParkourBattle) {
-                Parkour.getInstance().getClassicBattleManager().remove((ClassicParkourBattle)battle);
+            if(battle instanceof VersusClassicParkourBattle) {
+                Parkour.getInstance().getBattleManager(ParkourMode.CLASSIC).remove((VersusClassicParkourBattle)battle);
+            }
+            if(battle instanceof ConquestParkourBattle) {
+                Parkour.getInstance().getBattleManager(ParkourMode.CONQUEST).remove((ConquestParkourBattle)battle);
+            }
+            if(battle instanceof EndlessParkourBattle) {
+                Parkour.getInstance().getBattleManager(ParkourMode.ENDLESS).remove((EndlessParkourBattle)battle);
+            }
+            if(battle instanceof PartyParkourBattle) {
+                Parkour.getInstance().getBattleManager(ParkourMode.PARTY).remove((PartyParkourBattle)battle);
+            }
+            if(battle instanceof PracticeParkourBattle) {
+                Parkour.getInstance().getBattleManager(ParkourMode.PRACTICE).remove((PracticeParkourBattle)battle);
+            }
+            if(battle instanceof ProParkourBattle) {
+                Parkour.getInstance().getBattleManager(ParkourMode.PRO).remove((ProParkourBattle)battle);
+            }
+            if(battle instanceof VersusRandomParkourBattle) {
+                Parkour.getInstance().getBattleManager(ParkourMode.RANDOM).remove((VersusRandomParkourBattle)battle);
             }
         }
         Bukkit.getScheduler().runTaskLater(Parkour.getInstance(), () -> {

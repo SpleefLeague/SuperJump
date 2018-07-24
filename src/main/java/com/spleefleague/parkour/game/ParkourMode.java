@@ -12,7 +12,14 @@ import org.bukkit.ChatColor;
  * @author jonas
  */
 public enum ParkourMode {
-    CLASSIC("ClassicParkour");
+    NONE     ("NoParkour"),
+    CONQUEST ("ConquestParkour"),
+    ENDLESS  ("EndlessParkour"),
+    PARTY    ("PartyParkour"),
+    PRACTICE ("PracticeParkour"),
+    PRO      ("ProParkour"),
+    CLASSIC  ("ClassicParkour"),
+    RANDOM   ("RandomParkour");
     
     private final String name;
     

@@ -1,6 +1,6 @@
 name: Parkour
 author: SpleefLeague
-authors: [Joba, Akaiyo, Manuman]
+authors: [Joba, Akaiyo, Manuman, NickM13]
 main: com.spleefleague.parkour.Parkour
 version: 1.0
 depend: [SpleefLeagueCore, Commands, GameAPI]
@@ -9,4 +9,5 @@ commands:
         description: Parkour queue command
         aliases: [superjump, sj, p]
         usage: |
-          /<command> [arena]
+          /<command> [mode] [arena]
+          /<command> modes

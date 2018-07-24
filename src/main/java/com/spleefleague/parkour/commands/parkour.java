@@ -9,10 +9,13 @@ import static com.spleefleague.annotations.CommandSource.COMMAND_BLOCK;
 import static com.spleefleague.annotations.CommandSource.CONSOLE;
 import static com.spleefleague.annotations.CommandSource.PLAYER;
 import com.spleefleague.annotations.Endpoint;
+import com.spleefleague.annotations.IntArg;
 import com.spleefleague.annotations.LiteralArg;
 import com.spleefleague.annotations.PlayerArg;
 import com.spleefleague.annotations.StringArg;
 import com.spleefleague.commands.command.BasicCommand;
+import com.spleefleague.core.SpleefLeague;
+import com.spleefleague.core.chat.ChatManager;
 import com.spleefleague.gameapi.events.BattleStartEvent.StartReason;
 import com.spleefleague.core.player.DBPlayerManager;
 import com.spleefleague.core.player.PlayerState;
@@ -22,7 +25,9 @@ import com.spleefleague.core.plugin.CorePlugin;
 import com.spleefleague.gameapi.GamePlugin;
 import com.spleefleague.gameapi.queue.Challenge;
 import com.spleefleague.parkour.Parkour;
-import com.spleefleague.parkour.game.classic.ClassicParkourArena;
+import com.spleefleague.parkour.game.ParkourMode;
+import com.spleefleague.parkour.game.versus.classic.VersusClassicParkourArena;
+import com.spleefleague.parkour.game.endless.EndlessParkourArena;
 import com.spleefleague.parkour.player.ParkourPlayer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -59,7 +64,7 @@ public class parkour extends BasicCommand {
     }
     
     @Endpoint(target = {COMMAND_BLOCK})
-    public void forceQueueGlobally(CommandSender sender, @LiteralArg("queue") String l, @PlayerArg Player target) {
+    public void forceQueueVersus(CommandSender sender, @LiteralArg("queue") String l, @PlayerArg Player target) {
         if (checkQueuesClosed(sender)) {
             return;
         }
@@ -68,19 +73,19 @@ public class parkour extends BasicCommand {
         }
         GamePlugin.dequeueGlobal(target);
         ParkourPlayer sjp = Parkour.getInstance().getPlayerManager().get(target);
-        Parkour.getInstance().getClassicBattleManager().queue(sjp);
-        success(target, "You have been added to the queue");
+        Parkour.getInstance().getBattleManager(ParkourMode.CLASSIC).queue(sjp);
+        success(target, "You have been added to the queue for Versus");
     }
     
     @Endpoint(target = {COMMAND_BLOCK})
-    public void forceQueueArena(CommandSender sender, @LiteralArg("queue") String l, @PlayerArg Player target, @StringArg String arenaName) {
+    public void forceQueueVersusArena(CommandSender sender, @LiteralArg("queue") String l, @PlayerArg Player target, @StringArg String arenaName) {
         if (checkQueuesClosed(sender)) {
             return;
         }
         if (checkIngame(target)) {
             return;
         }
-        ClassicParkourArena arena = ClassicParkourArena.byName(arenaName);
+        VersusClassicParkourArena arena = VersusClassicParkourArena.byName(arenaName);
         if (arena == null) {
             error(target, "This arena does not exist.");
             return;
@@ -94,18 +99,101 @@ public class parkour extends BasicCommand {
             error(target, "You have not visited this arena yet!");
             return;
         }
-        Parkour.getInstance().getClassicBattleManager().queue(sjp, arena);
-        success(target, "You have been added to the queue for: " + ChatColor.GREEN + arena.getName());
+        Parkour.getInstance().getBattleManager(ParkourMode.CLASSIC).queue(sjp, arena);
+        success(target, "You have been added to the queue for Versus, " + ChatColor.GREEN + arena.getName());
+    }
+    
+    @Endpoint(target = {COMMAND_BLOCK})
+    public void forceQueueEndless(CommandSender sender, @LiteralArg("queue") String l, @PlayerArg Player target) {
+        if(checkQueuesClosed(sender)) {
+            return;
+        }
+        if(checkIngame(target)) {
+            return;
+        }
+        if(EndlessParkourArena.isDisabled()) {
+            error(target, "Endless is currently disabled for scheduled maintenance (11:55pm - 12:00am PST)");
+            return;
+        }
+        GamePlugin.dequeueGlobal(target);
+        ParkourPlayer sjp = Parkour.getInstance().getPlayerManager().get(target);
+        Parkour.getInstance().getBattleManager(ParkourMode.ENDLESS).queue(sjp);
+        success(target, "You have been added to the queue for Endless");
     }
 
     @Endpoint(target = {PLAYER})
-    public void queueGlobally(Player sender) {
-        forceQueueGlobally(sender, "queue", sender);
+    public void queueClassic(Player sender, @LiteralArg("versus") String l) {
+        forceQueueVersus(sender, "queue", sender);
     }
 
     @Endpoint(target = {PLAYER})
-    public void queueArena(Player sender, @StringArg String arenaName) {
-        forceQueueArena(sender, "queue", sender, arenaName);
+    public void queueArena(Player sender, @LiteralArg("versus") String l, @StringArg String arenaName) {
+        forceQueueVersusArena(sender, "queue", sender, arenaName);
+    }
+    
+    @Endpoint(target = {PLAYER})
+    public void queueEndless(Player sender, @LiteralArg("endless") String l) {
+        forceQueueEndless(sender, "queue", sender);
+    }
+    
+    @Endpoint(target = {PLAYER})
+    public void setEndlessLevel(Player sender, @LiteralArg("endless") String l, @PlayerArg Player player, @IntArg Integer level) {
+        if(SpleefLeague.getInstance().getPlayerManager().get(sender).getRank().hasPermission(Rank.DEVELOPER)) {
+            Parkour.getInstance().getPlayerManager().get(player).setEndlessLevel(level);
+        }
+    }
+    
+    @Endpoint(target = {PLAYER})
+    public void getStats(Player sender, @LiteralArg("stats") String l, @StringArg String mode) {
+        SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(sender);
+        ParkourPlayer sjp = Parkour.getInstance().getPlayerManager().get(sender);
+        mode = mode.toLowerCase();
+        if(mode.equals("endless")) {
+                ChatManager.sendMessagePlayer(slp, Parkour.getInstance().getChatPrefix()
+                        + ChatColor.GREEN + " Your Endless Stats");
+                ChatManager.sendMessagePlayer(slp, Parkour.getInstance().getChatPrefix()
+                        + ChatColor.GREEN + " Total Falls: "
+                        + ChatColor.GOLD + sjp.getTotalEndlessFalls());
+                ChatManager.sendMessagePlayer(slp, Parkour.getInstance().getChatPrefix()
+                        + ChatColor.GREEN + " Current Level: "
+                        + ChatColor.GOLD + sjp.getEndlessLevel());
+                ChatManager.sendMessagePlayer(slp, Parkour.getInstance().getChatPrefix()
+                        + ChatColor.GREEN + " Best Level: "
+                        + ChatColor.GOLD + sjp.getEndlessLevelRecord());
+                ChatManager.sendMessagePlayer(slp, Parkour.getInstance().getChatPrefix()
+                        + ChatColor.GREEN + " Time Played: "
+                        + ChatColor.GOLD + sjp.getEndlessTimeFormatted());
+                ChatManager.sendMessagePlayer(slp, Parkour.getInstance().getChatPrefix()
+                        + ChatColor.GREEN + " Average Run Time: "
+                        + ChatColor.GOLD + "???");
+        }
+    }
+    
+    @Endpoint(target = {PLAYER})
+    public void getStats(Player sender, @LiteralArg("stats") String l, @StringArg String mode, @PlayerArg Player target) {
+        SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(sender);
+        ParkourPlayer sjp = Parkour.getInstance().getPlayerManager().get(target);
+        mode = mode.toLowerCase();
+        if(mode.equals("endless")) {
+                ChatManager.sendMessagePlayer(slp, Parkour.getInstance().getChatPrefix()
+                        + ChatColor.RED + " " + target.getName() + "'s"
+                        + ChatColor.GREEN + " Endless Stats");
+                ChatManager.sendMessagePlayer(slp, Parkour.getInstance().getChatPrefix()
+                        + ChatColor.GREEN + " Total Falls: "
+                        + ChatColor.GOLD + sjp.getTotalEndlessFalls());
+                ChatManager.sendMessagePlayer(slp, Parkour.getInstance().getChatPrefix()
+                        + ChatColor.GREEN + " Current Level: "
+                        + ChatColor.GOLD + sjp.getEndlessLevel());
+                ChatManager.sendMessagePlayer(slp, Parkour.getInstance().getChatPrefix()
+                        + ChatColor.GREEN + " Best Level: "
+                        + ChatColor.GOLD + sjp.getEndlessLevelRecord());
+                ChatManager.sendMessagePlayer(slp, Parkour.getInstance().getChatPrefix()
+                        + ChatColor.GREEN + " Time Played: "
+                        + ChatColor.GOLD + sjp.getEndlessTimeFormatted());
+                ChatManager.sendMessagePlayer(slp, Parkour.getInstance().getChatPrefix()
+                        + ChatColor.GREEN + " Average Run Time: "
+                        + ChatColor.GOLD + "???");
+        }
     }
 
     @Endpoint(target = {PLAYER, CONSOLE, COMMAND_BLOCK})
@@ -120,7 +208,7 @@ public class parkour extends BasicCommand {
                 return;
             }
         }
-        ClassicParkourArena arena = ClassicParkourArena.byName(arenaName);
+        VersusClassicParkourArena arena = VersusClassicParkourArena.byName(arenaName);
         if (arena == null) {
             error(sender, "This arena does not exist.");
             return;
@@ -162,7 +250,7 @@ public class parkour extends BasicCommand {
         if (checkIngame(sender)) {
             return;
         }
-        ClassicParkourArena arena = ClassicParkourArena.byName(arenaName);
+        VersusClassicParkourArena arena = VersusClassicParkourArena.byName(arenaName);
         if (arena == null) {
             error(sender, "This arena does not exist.");
             return;
@@ -240,7 +328,7 @@ public class parkour extends BasicCommand {
                 return;
             }
         }
-        ClassicParkourArena arena = ClassicParkourArena.byName(arenaName);
+        VersusClassicParkourArena arena = VersusClassicParkourArena.byName(arenaName);
         if (arena == null) {
             error(sender, "This arena does not exist.");
             return;
@@ -251,5 +339,11 @@ public class parkour extends BasicCommand {
         } else {
             success(sender, "You have unpaused the arena " + arena.getName());
         }
+    }
+
+    @Endpoint(target = {PLAYER})
+    public void showModes(Player sender, @LiteralArg("modes") String l) {
+        // TODO: Finish this line when ready for release
+        success(sender, "Valid modes are: Classic, Endless, TODO");
     }
 }

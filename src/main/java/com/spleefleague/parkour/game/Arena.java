@@ -5,6 +5,8 @@
  */
 package com.spleefleague.parkour.game;
 
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 import com.spleefleague.gameapi.events.BattleStartEvent.StartReason;
 import com.spleefleague.core.io.typeconverters.LocationConverter;
 import com.spleefleague.core.player.SLPlayer;
@@ -15,9 +17,11 @@ import com.spleefleague.entitybuilder.DBLoad;
 import com.spleefleague.entitybuilder.DBLoadable;
 import com.spleefleague.entitybuilder.DBSave;
 import com.spleefleague.entitybuilder.DBSaveable;
+import com.spleefleague.entitybuilder.EntityBuilder;
 import com.spleefleague.parkour.Parkour;
-import static com.spleefleague.parkour.game.ParkourMode.CLASSIC;
-import com.spleefleague.parkour.game.classic.ClassicParkourArena;
+import com.spleefleague.parkour.game.versus.classic.VersusClassicParkourArena;
+import com.spleefleague.parkour.game.endless.EndlessParkourArena;
+import com.spleefleague.parkour.game.versus.random.VersusRandomParkourArena;
 import com.spleefleague.parkour.player.ParkourPlayer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,6 +38,8 @@ import java.util.stream.Stream;
 import org.bson.Document;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
 
 /**
  *
@@ -43,7 +49,7 @@ public abstract class Arena<B extends ParkourBattle> extends DBEntity implements
 
     @DBLoad(fieldName = "border")
     private Area[] borders;
-    private Location[] spawns;
+    protected Location[] spawns;
     @DBLoad(fieldName = "requiredPlayers", priority = 2)
     private int requiredPlayers;
     @DBLoad(fieldName = "goals")
@@ -56,6 +62,8 @@ public abstract class Arena<B extends ParkourBattle> extends DBEntity implements
     private boolean tpBackSpectators = true;
     @DBLoad(fieldName = "rated")
     private boolean rated;
+    @DBLoad(fieldName = "difficultyStars")
+    private int difficultyStars;
     @DBLoad(fieldName = "queued")
     private boolean queued;
     @DBLoad(fieldName = "liquidLose")
@@ -78,9 +86,17 @@ public abstract class Arena<B extends ParkourBattle> extends DBEntity implements
     private int runningGames = 0;
     @DBLoad(fieldName = "description")
     private List<String> description = Collections.emptyList();
+    @DBLoad(fieldName = "menuPos")
+    private int menuPos = -1;
+    @DBLoad(fieldName = "menuMaterial")
+    private Material menuMaterial = Material.AIR;
+    @DBLoad(fieldName = "menuMeta")
+    private int menuMeta = 0;
+    @DBLoad(fieldName = "mapMultiplier")
+    private int mapMultiplier = 0;
     
     @DBLoad(fieldName = "spawns", typeConverter = LocationConverter.class, priority = 1)
-    private void setSpawns(Location[] spawns) {
+    public void setSpawns(Location[] spawns) {
         this.spawns = spawns;
         this.requiredPlayers = spawns.length;//Will be overwritten if requiredPlayers value exists
     }
@@ -93,18 +109,50 @@ public abstract class Arena<B extends ParkourBattle> extends DBEntity implements
         return parkourMode;
     }
     
+    public float getDifficulty() {
+        return difficultyStars;
+    }
+    
+    public void setGoals(Area[] goals) {
+        this.goals = goals;
+    }
+    
     public Area[] getGoals() {
         return goals;
     }
 
+    public void setArea(Area area) {
+        this.area = area;
+    }
+    
     public Area getArea() {
         return area;
     }
 
+    public void setBorders(Area[] borders) {
+        this.borders = borders;
+    }
+    
     public Area[] getBorders() {
         return borders;
     }
+    
+    public int getMenuPos() {
+        return menuPos;
+    }
 
+    public Material getMenuMaterial() {
+        return menuMaterial;
+    }
+    
+    public byte getMenuMeta() {
+        return (byte)menuMeta;
+    }
+    
+    public ItemStack getMenuItem() {
+        return new ItemStack(menuMaterial, 1, (byte)menuMeta);
+    }
+    
     public Location getSpectatorSpawn() {
         return spectatorSpawn;
     }
@@ -120,10 +168,27 @@ public abstract class Arena<B extends ParkourBattle> extends DBEntity implements
     public String getEndDebugger() {
         return debuggerEnd;
     }
+    
+    public void setName(String name) {
+        this.name = name;
+    }
 
     @Override
     public String getName() {
         return name;
+    }
+    
+    public String getDifficultyStars() {
+        String s = "";
+        for(int i = 0; i < 5; i++) {
+            if(i < this.difficultyStars) {
+                s += ChatColor.GOLD + "✫";
+            }
+            else {
+                s += ChatColor.GRAY + "✫";
+            }
+        }
+        return s;
     }
 
     @Override
@@ -145,6 +210,10 @@ public abstract class Arena<B extends ParkourBattle> extends DBEntity implements
 
     public boolean isRated() {
         return rated;
+    }
+    
+    public float getMapMultiplier() {
+        return mapMultiplier * 0.1f;
     }
     
     @Deprecated
@@ -192,11 +261,12 @@ public abstract class Arena<B extends ParkourBattle> extends DBEntity implements
             List<String> description = new ArrayList<>();
             ParkourPlayer sjp = Parkour.getInstance().getPlayerManager().get(slp.getUniqueId());
             if (Arena.this.isAvailable(sjp)) {
+                description.add("");
                 if (Arena.this.isPaused()) {
                     description.add(ChatColor.RED + "This arena is");
                     description.add(ChatColor.RED + "currently paused.");
                 } else if (getRunningGamesCount() == 0) {
-                    description.add(ChatColor.DARK_GRAY + "" + ChatColor.ITALIC + "Click to join the queue");
+                    description.add(ChatColor.GOLD + "Click to join the queue.");
                 }
             } else {
                 description.add(ChatColor.RED + "You have not discovered");
@@ -217,16 +287,18 @@ public abstract class Arena<B extends ParkourBattle> extends DBEntity implements
     
     public static Arena byName(String name, ParkourMode mode) {
         switch(mode) {
-            case CLASSIC: {
-                return ClassicParkourArena.byName(name);
-            }
+            case CLASSIC:
+                return VersusClassicParkourArena.byName(name);
+            case RANDOM:
+                return VersusRandomParkourArena.byName(name);
+            case ENDLESS:
+                return EndlessParkourArena.byName(name);
         }
         return null;
     }
 
     public static Collection<? extends Arena<?>> getAll() {
-        return Stream.of(
-                ClassicParkourArena.getAll()
+        return Stream.of(VersusClassicParkourArena.getAll()
         ).flatMap(c -> c.stream()).collect(Collectors.toList());  
     }
     
@@ -252,30 +324,45 @@ public abstract class Arena<B extends ParkourBattle> extends DBEntity implements
     }
 
     public static void init() {
-        Iterator<Document> arenaTypes = Parkour.getInstance().getPluginDB().getCollection("Arenas").aggregate(Arrays.asList(
-                new Document("$unwind", new Document("path", "$parkourMode")),
-                new Document("$group", new Document("_id", "$parkourMode").append("arenas", new Document("$addToSet", "$$ROOT")))
-        )).iterator();
-        while(arenaTypes.hasNext()) {
-            Document arenas = arenaTypes.next();
-            List<Document> arenaInstances = arenas.get("arenas", List.class);
+        Document query = new Document("disabled", new Document("$ne", true));
+        MongoCursor<Document> dbc = Parkour.getInstance().getPluginDB()
+                .getCollection("Arenas")
+                .find(query)
+                .iterator();
+        while (dbc.hasNext()) {
+            Document arenaDoc = dbc.next();
             try {
-                ParkourMode mode = ParkourMode.valueOf(arenas.get("_id", String.class));
-                int amount;
+                ParkourMode mode = ParkourMode.valueOf(arenaDoc.get("parkourMode", String.class));
                 switch(mode) {
-                    case CLASSIC: {
-                        amount = loadArenas(arenaInstances, ClassicParkourArena::loadArena);
+                    case CLASSIC:
+                        loadArena(arenaDoc, VersusClassicParkourArena::loadArena);
                         break;
-                    }
-                    default: {
+                    case RANDOM:
+                        loadArena(arenaDoc, VersusRandomParkourArena::loadArena);
+                        break;
+                    case ENDLESS:
+                        loadArena(arenaDoc, EndlessParkourArena::loadArena);
+                        break;
+                    default:
                         continue;
-                    }
                 }
-                String modeName = mode.toString().substring(0, 1).toUpperCase().concat(mode.toString().substring(1).toLowerCase());
-                Parkour.getInstance().log("Loaded " + amount + " " + modeName + " Spleef arenas.");
-            } catch(IllegalArgumentException e) {
-                System.err.println(arenas.get("_id") + " is not a valid spleef mode.");
+            } catch(Exception e) {
+                Parkour.getInstance().log("Error loading arena: " + arenaDoc.get("name"));
             }
+        }
+        EndlessParkourArena.initHighscores();
+    }
+    
+    public static void terminate() {
+        
+    }
+    
+    private static void loadArena(Document arena, Consumer<Document> arenaCreator) {
+        try {
+            arenaCreator.accept(arena);
+        } catch(Exception e) {
+            System.err.println("Error loading arena " + arena.get("name") + " (" + arena.get("type") + ")");
+            e.printStackTrace();
         }
     }
     
