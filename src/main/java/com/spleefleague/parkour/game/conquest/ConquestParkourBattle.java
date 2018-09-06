@@ -5,14 +5,18 @@
  */
 package com.spleefleague.parkour.game.conquest;
 
+import com.google.common.collect.Lists;
+import com.spleefleague.core.SpleefLeague;
 import com.spleefleague.core.chat.ChatManager;
-import static com.spleefleague.gameapi.queue.Battle.calculateEloRatingChange;
+import com.spleefleague.core.chat.Theme;
+import com.spleefleague.core.player.SLPlayer;
+import com.spleefleague.gameapi.events.BattleEndEvent;
 import com.spleefleague.parkour.Parkour;
 import com.spleefleague.parkour.game.ParkourBattle;
 import com.spleefleague.parkour.game.ParkourMode;
 import com.spleefleague.parkour.player.ParkourPlayer;
 import java.util.List;
-import org.bukkit.ChatColor;
+import org.bukkit.Bukkit;
 
 /**
  *
@@ -26,19 +30,11 @@ public class ConquestParkourBattle extends ParkourBattle<ConquestParkourArena>{
     
     @Override
     protected void applyRatingChange(ParkourPlayer winner) {
-        if(getPlayers().size() != 2) return;
-        ParkourPlayer p1 = getPlayers().get(0);
-        ParkourPlayer p2 = getPlayers().get(1);
-        if(winner != null && p1 != winner && p2 != winner) return;
-        ParkourMode mode = this.getParkourMode();
-        int winnerCase = p1 == winner ? -1 : p2 == winner ? 1 : 0;
-        int ratingChange = (int)Math.ceil(calculateEloRatingChange(p1.getRating(mode), p2.getRating(mode), winnerCase));
-        String playerList = "";
-        p1.setRating(mode, p1.getRating(mode) + ratingChange);
-        p2.setRating(mode, p2.getRating(mode) - ratingChange);
-        playerList += ChatColor.RED + p1.getName() + ChatColor.WHITE + " (" + p1.getRating(mode) + ")" + ChatColor.GREEN + " gets " + ChatColor.GRAY + ratingChange + ChatColor.GREEN + (ratingChange == 1 ? " point. " : " points. ");
-        playerList += ChatColor.RED + p2.getName() + ChatColor.WHITE + " (" + p2.getRating(mode) + ")" + ChatColor.GREEN + " gets " + ChatColor.GRAY + -ratingChange + ChatColor.GREEN + (ratingChange == 1 ? " point. " : " points. ");
-        ChatManager.sendMessage(mode.getChatPrefix(), ChatColor.GREEN + "Game in arena " + ChatColor.WHITE + getArena().getName() + ChatColor.GREEN + " is over. " + playerList, Parkour.getInstance().getEndMessageChannel());
+        if(winner == null) return;
+        winner.checkConquestScore(arena, this.ticksPassed);
+        //winner.addPoints((int)(10 * (winner.getPointMultiplier() + arena.getMapMultiplier())), "for winning " + ChatColor.WHITE + arena.getName());
+        SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(this.getPlayers().get(0).getPlayer());
+        slp.setCoins(slp.getCoins() + 1);
         this.getPlayers().forEach((p) -> {
             Parkour.getInstance().getPlayerManager().save(p);
         });
@@ -54,4 +50,19 @@ public class ConquestParkourBattle extends ParkourBattle<ConquestParkourArena>{
         Parkour.getInstance().getBattleManager(ParkourMode.CONQUEST).remove(this);
     }
     
+    @Override
+    public void end(ParkourPlayer winner, BattleEndEvent.EndReason reason) {
+        saveGameHistory(winner, reason);
+        if (reason == BattleEndEvent.EndReason.CANCEL) {
+            if (reason == BattleEndEvent.EndReason.CANCEL) {
+                ChatManager.sendMessage(Parkour.getInstance().getChatPrefix(), Theme.INCOGNITO.buildTheme(false) + "The battle has been cancelled by a moderator.", cc);
+            }
+        } else if (reason != BattleEndEvent.EndReason.ENDGAME) {
+            applyRatingChange(winner);
+        }
+        Lists.newArrayList(getSpectators()).forEach(this::resetPlayer);
+        Lists.newArrayList(getActivePlayers()).forEach(this::resetPlayer);
+        Bukkit.getPluginManager().callEvent(new BattleEndEvent(this, reason));
+        cleanup();
+    }
 }

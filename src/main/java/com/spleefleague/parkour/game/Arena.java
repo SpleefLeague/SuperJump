@@ -5,7 +5,6 @@
  */
 package com.spleefleague.parkour.game;
 
-import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.spleefleague.gameapi.events.BattleStartEvent.StartReason;
 import com.spleefleague.core.io.typeconverters.LocationConverter;
@@ -17,17 +16,16 @@ import com.spleefleague.entitybuilder.DBLoad;
 import com.spleefleague.entitybuilder.DBLoadable;
 import com.spleefleague.entitybuilder.DBSave;
 import com.spleefleague.entitybuilder.DBSaveable;
-import com.spleefleague.entitybuilder.EntityBuilder;
 import com.spleefleague.parkour.Parkour;
-import com.spleefleague.parkour.game.versus.classic.VersusClassicParkourArena;
+import com.spleefleague.parkour.game.conquest.ConquestParkourArena;
 import com.spleefleague.parkour.game.endless.EndlessParkourArena;
-import com.spleefleague.parkour.game.versus.random.VersusRandomParkourArena;
+import com.spleefleague.parkour.game.memory.MemoryParkourArena;
+import com.spleefleague.parkour.game.versus.classic.VersusClassicParkourArena;
+import com.spleefleague.parkour.game.versus.shuffle.VersusShuffleParkourArena;
 import com.spleefleague.parkour.player.ParkourPlayer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -92,8 +90,14 @@ public abstract class Arena<B extends ParkourBattle> extends DBEntity implements
     private Material menuMaterial = Material.AIR;
     @DBLoad(fieldName = "menuMeta")
     private int menuMeta = 0;
+    private double mapMultiplier = 0;
+    @DBLoad(fieldName = "banTime")
+    private int banTime = 0;
+    
     @DBLoad(fieldName = "mapMultiplier")
-    private int mapMultiplier = 0;
+    private void setMapMultiplier(Object multiplier) {
+        mapMultiplier = (double)multiplier;
+    }
     
     @DBLoad(fieldName = "spawns", typeConverter = LocationConverter.class, priority = 1)
     public void setSpawns(Location[] spawns) {
@@ -178,6 +182,18 @@ public abstract class Arena<B extends ParkourBattle> extends DBEntity implements
         return name;
     }
     
+    public boolean hasLeaderboard() {
+        return false;
+    }
+    
+    public void setHighscore(String player, long score) {
+        
+    }
+    
+    public List<String> getLeaderboard() {
+        return new ArrayList<>();
+    }
+    
     public String getDifficultyStars() {
         String s = "";
         for(int i = 0; i < 5; i++) {
@@ -213,7 +229,7 @@ public abstract class Arena<B extends ParkourBattle> extends DBEntity implements
     }
     
     public float getMapMultiplier() {
-        return mapMultiplier * 0.1f;
+        return (float)mapMultiplier;
     }
     
     @Deprecated
@@ -242,6 +258,10 @@ public abstract class Arena<B extends ParkourBattle> extends DBEntity implements
     @Override
     public int getRequiredPlayers() {
         return requiredPlayers;
+    }
+    
+    public int getBanTime() {
+        return banTime;
     }
     
     public abstract B startBattle(List<ParkourPlayer> player, StartReason reason);
@@ -289,10 +309,12 @@ public abstract class Arena<B extends ParkourBattle> extends DBEntity implements
         switch(mode) {
             case CLASSIC:
                 return VersusClassicParkourArena.byName(name);
-            case RANDOM:
-                return VersusRandomParkourArena.byName(name);
+            case SHUFFLE:
+                return VersusShuffleParkourArena.byName(name);
             case ENDLESS:
                 return EndlessParkourArena.byName(name);
+            case MEMORY:
+                return MemoryParkourArena.byName(name);
         }
         return null;
     }
@@ -337,11 +359,17 @@ public abstract class Arena<B extends ParkourBattle> extends DBEntity implements
                     case CLASSIC:
                         loadArena(arenaDoc, VersusClassicParkourArena::loadArena);
                         break;
-                    case RANDOM:
-                        loadArena(arenaDoc, VersusRandomParkourArena::loadArena);
+                    case SHUFFLE:
+                        loadArena(arenaDoc, VersusShuffleParkourArena::loadArena);
+                        break;
+                    case CONQUEST:
+                        loadArena(arenaDoc, ConquestParkourArena::loadArena);
                         break;
                     case ENDLESS:
                         loadArena(arenaDoc, EndlessParkourArena::loadArena);
+                        break;
+                    case MEMORY:
+                        loadArena(arenaDoc, MemoryParkourArena::loadArena);
                         break;
                     default:
                         continue;
@@ -351,6 +379,7 @@ public abstract class Arena<B extends ParkourBattle> extends DBEntity implements
             }
         }
         EndlessParkourArena.initHighscores();
+        ConquestParkourArena.initPacks();
     }
     
     public static void terminate() {

@@ -5,6 +5,7 @@
  */
 package com.spleefleague.parkour.game;
 
+import com.spleefleague.parkour.Parkour;
 import org.bukkit.ChatColor;
 
 /**
@@ -12,14 +13,16 @@ import org.bukkit.ChatColor;
  * @author jonas
  */
 public enum ParkourMode {
-    NONE     ("NoParkour"),
-    CONQUEST ("ConquestParkour"),
-    ENDLESS  ("EndlessParkour"),
-    PARTY    ("PartyParkour"),
-    PRACTICE ("PracticeParkour"),
-    PRO      ("ProParkour"),
-    CLASSIC  ("ClassicParkour"),
-    RANDOM   ("RandomParkour");
+    NONE        ("None"),
+    CONQUEST    ("Conquest"),
+    ENDLESS     ("Endless"),
+    MEMORY      ("Memory"),
+    PARTY       ("Party"),
+    PRACTICE    ("Practice"),
+    PRO         ("Pro"),
+    CLASSIC     ("Classic"),
+    SHUFFLE     ("Shuffle"),
+    REQUEUE     ("Requeueing");
     
     private final String name;
     
@@ -28,7 +31,7 @@ public enum ParkourMode {
     }
     
     public String getChatPrefix() {
-        return ChatColor.GRAY + "[" + ChatColor.GOLD + name + ChatColor.GRAY + "]" + ChatColor.RESET;
+        return Parkour.fillColor + "[" + Parkour.modeColor + name + Parkour.fillColor + "]" + ChatColor.RESET;
     }
     
     public String getName() {

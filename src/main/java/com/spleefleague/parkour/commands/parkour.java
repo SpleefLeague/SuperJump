@@ -5,6 +5,7 @@
  */
 package com.spleefleague.parkour.commands;
 
+import com.spleefleague.annotations.CommandSource;
 import static com.spleefleague.annotations.CommandSource.COMMAND_BLOCK;
 import static com.spleefleague.annotations.CommandSource.CONSOLE;
 import static com.spleefleague.annotations.CommandSource.PLAYER;
@@ -25,6 +26,7 @@ import com.spleefleague.core.plugin.CorePlugin;
 import com.spleefleague.gameapi.GamePlugin;
 import com.spleefleague.gameapi.queue.Challenge;
 import com.spleefleague.parkour.Parkour;
+import com.spleefleague.parkour.game.Arena;
 import com.spleefleague.parkour.game.ParkourMode;
 import com.spleefleague.parkour.game.versus.classic.VersusClassicParkourArena;
 import com.spleefleague.parkour.game.endless.EndlessParkourArena;
@@ -63,6 +65,18 @@ public class parkour extends BasicCommand {
         return false;
     }
     
+    @Endpoint(target = {COMMAND_BLOCK, PLAYER})
+    public void resetPlayer(CommandSender sender, @LiteralArg("reset") String l, @PlayerArg Player target) {
+        if(sender instanceof Player) {
+            ChatManager.sendMessagePlayer(SpleefLeague.getInstance().getPlayerManager().get((Player) sender)
+                    , Parkour.getInstance().getChatPrefix()
+                    + Parkour.fillColor + " You reset "
+                    + Parkour.playerColor + target.getName()
+                    + Parkour.fillColor + "'s SuperJump stats.");
+        }
+        Parkour.getInstance().getPlayerManager().get(target).resetDB();
+    }
+    
     @Endpoint(target = {COMMAND_BLOCK})
     public void forceQueueVersus(CommandSender sender, @LiteralArg("queue") String l, @PlayerArg Player target) {
         if (checkQueuesClosed(sender)) {
@@ -71,10 +85,8 @@ public class parkour extends BasicCommand {
         if (checkIngame(target)) {
             return;
         }
-        GamePlugin.dequeueGlobal(target);
         ParkourPlayer sjp = Parkour.getInstance().getPlayerManager().get(target);
-        Parkour.getInstance().getBattleManager(ParkourMode.CLASSIC).queue(sjp);
-        success(target, "You have been added to the queue for Versus");
+        Parkour.getInstance().queuePlayer(sjp, ParkourMode.CLASSIC, true);
     }
     
     @Endpoint(target = {COMMAND_BLOCK})
@@ -99,8 +111,7 @@ public class parkour extends BasicCommand {
             error(target, "You have not visited this arena yet!");
             return;
         }
-        Parkour.getInstance().getBattleManager(ParkourMode.CLASSIC).queue(sjp, arena);
-        success(target, "You have been added to the queue for Versus, " + ChatColor.GREEN + arena.getName());
+        Parkour.getInstance().queuePlayer(sjp, arena, true);
     }
     
     @Endpoint(target = {COMMAND_BLOCK})
@@ -115,14 +126,12 @@ public class parkour extends BasicCommand {
             error(target, "Endless is currently disabled for scheduled maintenance (11:55pm - 12:00am PST)");
             return;
         }
-        GamePlugin.dequeueGlobal(target);
         ParkourPlayer sjp = Parkour.getInstance().getPlayerManager().get(target);
-        Parkour.getInstance().getBattleManager(ParkourMode.ENDLESS).queue(sjp);
-        success(target, "You have been added to the queue for Endless");
+        Parkour.getInstance().queuePlayer(sjp, ParkourMode.ENDLESS, true);
     }
 
     @Endpoint(target = {PLAYER})
-    public void queueClassic(Player sender, @LiteralArg("versus") String l) {
+    public void queueClassic(Player sender, @LiteralArg("classic") String l) {
         forceQueueVersus(sender, "queue", sender);
     }
 
@@ -140,6 +149,31 @@ public class parkour extends BasicCommand {
     public void setEndlessLevel(Player sender, @LiteralArg("endless") String l, @PlayerArg Player player, @IntArg Integer level) {
         if(SpleefLeague.getInstance().getPlayerManager().get(sender).getRank().hasPermission(Rank.DEVELOPER)) {
             Parkour.getInstance().getPlayerManager().get(player).setEndlessLevel(level);
+        }
+    }
+    
+    @Endpoint(target = {PLAYER})
+    public void getLeaderboard(Player sender, @LiteralArg("leaderboard") String l, @StringArg String arena) {
+        Arena a = Parkour.getInstance().getArena(arena);
+        SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(sender);
+        ParkourPlayer sjp = Parkour.getInstance().getPlayerManager().get(sender);
+        if (a != null) {
+            if (a.hasLeaderboard()) {
+                ChatManager.sendMessagePlayer(slp, Parkour.getInstance().getChatPrefix()
+                        + Parkour.fillColor + " Top 5 players for "
+                        + Parkour.arenaColor + a.getName());
+                a.getLeaderboard().forEach(s -> ChatManager.sendMessagePlayer(slp, Parkour.getInstance().getChatPrefix() + " " + s));
+            }
+            else {
+                ChatManager.sendMessagePlayer(slp, Parkour.getInstance().getChatPrefix()
+                        + Parkour.arenaColor + " " + a.getName()
+                        + Parkour.fillColor + " does not have a Leaderboard.");
+            }
+        }
+        else {
+            ChatManager.sendMessagePlayer(slp, Parkour.getInstance().getChatPrefix()
+                    + Parkour.arenaColor + " " + arena
+                    + Parkour.fillColor + " does not exist.");
         }
     }
     

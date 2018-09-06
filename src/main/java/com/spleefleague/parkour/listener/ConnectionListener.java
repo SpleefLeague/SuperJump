@@ -22,7 +22,7 @@ import com.spleefleague.parkour.game.endless.EndlessParkourBattle;
 import com.spleefleague.parkour.game.party.PartyParkourBattle;
 import com.spleefleague.parkour.game.practice.PracticeParkourBattle;
 import com.spleefleague.parkour.game.pro.ProParkourBattle;
-import com.spleefleague.parkour.game.versus.random.VersusRandomParkourBattle;
+import com.spleefleague.parkour.game.versus.shuffle.VersusShuffleParkourBattle;
 import com.spleefleague.parkour.player.ParkourPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.v1_12_R1.entity.CraftPlayer;
@@ -111,8 +111,8 @@ public class ConnectionListener implements Listener {
             if(battle instanceof ProParkourBattle) {
                 Parkour.getInstance().getBattleManager(ParkourMode.PRO).remove((ProParkourBattle)battle);
             }
-            if(battle instanceof VersusRandomParkourBattle) {
-                Parkour.getInstance().getBattleManager(ParkourMode.RANDOM).remove((VersusRandomParkourBattle)battle);
+            if(battle instanceof VersusShuffleParkourBattle) {
+                Parkour.getInstance().getBattleManager(ParkourMode.SHUFFLE).remove((VersusShuffleParkourBattle)battle);
             }
         }
         Bukkit.getScheduler().runTaskLater(Parkour.getInstance(), () -> {

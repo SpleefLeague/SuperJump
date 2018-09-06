@@ -3,9 +3,8 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.spleefleague.parkour.game.endless;
+package com.spleefleague.parkour.game.memory;
 
-import com.spleefleague.parkour.game.endless.EndlessParkourArena;
 import com.google.common.collect.Lists;
 import com.spleefleague.core.SpleefLeague;
 import com.spleefleague.core.chat.ChatManager;
@@ -37,13 +36,13 @@ import org.bukkit.scoreboard.Objective;
  *
  * @author jonas
  */
-public class EndlessParkourBattle extends ParkourBattle<EndlessParkourArena>{
+public class MemoryParkourBattle extends ParkourBattle<MemoryParkourArena>{
 
     private int levelStart;
     private int ticksPassedTotal;
     private long periodResetStart; // Stores period reset at start, then subtracts ticks passed
     
-    protected EndlessParkourBattle(EndlessParkourArena arena, List<ParkourPlayer> players) {
+    protected MemoryParkourBattle(MemoryParkourArena arena, List<ParkourPlayer> players) {
         super(arena, players);
     }
     
@@ -86,7 +85,7 @@ public class EndlessParkourBattle extends ParkourBattle<EndlessParkourArena>{
         sidebar.setDisplayName(ChatColor.GREEN + "" + ChatColor.BOLD + "Endless");
         sidebar.getScore(ChatColor.BOLD + "Today").setScore(10);
         String post = "";
-        int place = EndlessParkourArena.getLeaderboardPlacement(players.get(0));
+        int place = MemoryParkourArena.getLeaderboardPlacement(players.get(0));
         if (place % 100 >= 10 && place % 100 <= 19) {
             post = "th";
         } else {
@@ -155,7 +154,7 @@ public class EndlessParkourBattle extends ParkourBattle<EndlessParkourArena>{
                 + TimeUnit.MINUTES.toMillis(Calendar.getInstance(SimpleDate.getTimeZone()).get(Calendar.MINUTE))
                 + TimeUnit.SECONDS.toMillis(Calendar.getInstance(SimpleDate.getTimeZone()).get(Calendar.SECOND));
         periodResetStart = (TimeUnit.DAYS.toMillis(1) - periodResetStart) / 50;
-        EndlessParkourArena.initPlayer(players.get(0));
+        MemoryParkourArena.initPlayer(players.get(0));
     }
     
     @Override
@@ -175,7 +174,7 @@ public class EndlessParkourBattle extends ParkourBattle<EndlessParkourArena>{
         slp.setState(PlayerState.INGAME);
         sjp.setIngame(true);
         sjp.setFrozen(true);
-        PlayerData pdata = new PlayerData(sjp, arena.getSpawns()[0], arena.getGoals()[0]);
+        ParkourBattle.PlayerData pdata = new ParkourBattle.PlayerData(sjp, arena.getSpawns()[0], arena.getGoals()[0]);
         this.data.putIfAbsent(sjp, pdata);
     }
     

@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.spleefleague.parkour.game.versus.classic;
+package com.spleefleague.parkour.game.versus.shuffle;
 
 import com.spleefleague.parkour.Parkour;
 import com.spleefleague.parkour.game.ParkourBattle;
@@ -16,9 +16,9 @@ import java.util.Random;
  *
  * @author jonas
  */
-public class VersusClassicParkourBattle extends ParkourBattle<VersusClassicParkourArena>{
+public class VersusShuffleParkourBattle extends ParkourBattle<VersusShuffleParkourArena>{
 
-    public VersusClassicParkourBattle(VersusClassicParkourArena arena, List<ParkourPlayer> players) {
+    public VersusShuffleParkourBattle(VersusShuffleParkourArena arena, List<ParkourPlayer> players) {
         super(arena, players);
     }
     
@@ -36,9 +36,8 @@ public class VersusClassicParkourBattle extends ParkourBattle<VersusClassicParko
             p2 = getPlayers().get(0);
         }
         p1.addVersusWin(); p2.addVersusLoss();
-        p1.checkVersusClassicScore(arena, ticksPassed);
-        p1.addPoints((int)(10 * (p1.getPointMultiplier() * arena.getMapMultiplier())), " for winning " + Parkour.arenaColor + arena.getName());
-        p2.addPoints((int)(2 * (p2.getPointMultiplier() * arena.getMapMultiplier())), " for participating in " + Parkour.arenaColor + arena.getName());
+        p1.addPoints((int)(10.f * (p1.getPointMultiplier() * VersusShuffleParkourArena.byName(arena.getName()).getMapMultiplier())), " for winning " + Parkour.arenaColor + "Shuffle " + arena.getName());
+        p2.addPoints((int)(2.f * (p2.getPointMultiplier() * VersusShuffleParkourArena.byName(arena.getName()).getMapMultiplier())), " for participating in " + Parkour.arenaColor + "Shuffle " + arena.getName());
         float ppChance = (p1.getParagonLevel() * 0.0001f) + (arena.getMapMultiplier() / 1000.f);
         if (new Random().nextFloat() < ppChance) {
             p1.addParagonPoints(1, ", spend it in the " + Parkour.shopColor + "Paragon Shop");
@@ -48,12 +47,12 @@ public class VersusClassicParkourBattle extends ParkourBattle<VersusClassicParko
 
     @Override
     protected void addToBattleManager() {
-        Parkour.getInstance().getBattleManager(ParkourMode.CLASSIC).add(this);
+        Parkour.getInstance().getBattleManager(ParkourMode.SHUFFLE).add(this);
     }
 
     @Override
     protected void removeFromBattleManager() {
-        Parkour.getInstance().getBattleManager(ParkourMode.CLASSIC).remove(this);
+        Parkour.getInstance().getBattleManager(ParkourMode.SHUFFLE).remove(this);
     }
     
 }

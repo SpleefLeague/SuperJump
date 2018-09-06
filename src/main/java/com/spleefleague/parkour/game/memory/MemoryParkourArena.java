@@ -3,9 +3,8 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.spleefleague.parkour.game.endless;
+package com.spleefleague.parkour.game.memory;
 
-import com.spleefleague.parkour.game.endless.EndlessParkourArena;
 import com.mongodb.client.MongoCursor;
 import com.spleefleague.core.SpleefLeague;
 import com.spleefleague.core.chat.ChatManager;
@@ -43,7 +42,7 @@ import org.bukkit.util.Vector;
  *
  * @author NickM13
  */
-public class EndlessParkourArena extends Arena<EndlessParkourBattle> {
+public class MemoryParkourArena extends Arena<MemoryParkourBattle> {
 
     @DBLoad(fieldName = "jumpcount")
     private int jumpCount;
@@ -82,7 +81,7 @@ public class EndlessParkourArena extends Arena<EndlessParkourBattle> {
                             Parkour.getInstance().getBattleManager(ParkourMode.ENDLESS).getGameQueue().dequeuePlayer(sjp);
                         });
                         Parkour.getInstance().getBattleManager(ParkourMode.ENDLESS).getAll().forEach(b -> {
-                            EndlessParkourBattle battle = (EndlessParkourBattle)b;
+                            MemoryParkourBattle battle = (MemoryParkourBattle)b;
                             if(battle != null) {
                                 battle.getActivePlayers().forEach(sjp -> {
                                     ChatManager.sendMessagePlayer(SpleefLeague.getInstance().getPlayerManager().get(sjp.getPlayer())
@@ -146,7 +145,7 @@ public class EndlessParkourArena extends Arena<EndlessParkourBattle> {
         return highscoreMap.get(highscoreDate).getPlayerPlacement(player.getName());
     }
     
-    private static final Map<String, EndlessParkourArena> ARENAS = new HashMap<>();
+    private static final Map<String, MemoryParkourArena> ARENAS = new HashMap<>();
     
     public static void initHighscores() {
         highscoreMap.clear();
@@ -170,11 +169,11 @@ public class EndlessParkourArena extends Arena<EndlessParkourBattle> {
         });
     }
     
-    public static Collection<EndlessParkourArena> getAll() {
+    public static Collection<MemoryParkourArena> getAll() {
         return ARENAS.values();
     }
     
-    public static EndlessParkourArena byName(String arena) {
+    public static MemoryParkourArena byName(String arena) {
         return ARENAS.get(arena.toLowerCase());
     }
     
@@ -295,7 +294,7 @@ public class EndlessParkourArena extends Arena<EndlessParkourBattle> {
     }
     
     public static void loadArena(Document document) {
-        EndlessParkourArena arena = EntityBuilder.load(document, EndlessParkourArena.class);
+        MemoryParkourArena arena = EntityBuilder.load(document, MemoryParkourArena.class);
         if(ARENAS.containsKey(arena.getName().toLowerCase())) {
             Arena.recursiveCopy(arena, byName(arena.getName()), Arena.class);
         }
@@ -306,7 +305,7 @@ public class EndlessParkourArena extends Arena<EndlessParkourBattle> {
     }
     
     @Override
-    public EndlessParkourBattle startBattle(List<ParkourPlayer> players, BattleStartEvent.StartReason reason) {
+    public MemoryParkourBattle startBattle(List<ParkourPlayer> players, BattleStartEvent.StartReason reason) {
         if (!isOccupied()) {
             players.get(0).validateEndless();
             ArenaData data = generate(this.spawns[0].clone(), this.jumpCount, players.get(0).getEndlessLevel());
@@ -318,7 +317,7 @@ public class EndlessParkourArena extends Arena<EndlessParkourBattle> {
             int jumpCount = this.jumpCount;
             Collection<BlockPrototype> fakeBlocks = data.fakeBlocks;
             //Create new arena object since each random arena has different spawns/goals/borders
-            EndlessParkourArena arena = new EndlessParkourArena() {
+            MemoryParkourArena arena = new MemoryParkourArena() {
                 @Override
                 public int getJumpCount() {
                     return jumpCount;
@@ -356,20 +355,20 @@ public class EndlessParkourArena extends Arena<EndlessParkourBattle> {
 
                 @Override
                 public String getName() {
-                    return EndlessParkourArena.this.getName();
+                    return MemoryParkourArena.this.getName();
                 }
                 
                 @Override
                 public boolean isRated() {
-                    return EndlessParkourArena.this.isRated();
+                    return MemoryParkourArena.this.isRated();
                 }
                 
                 @Override
                 public ParkourMode getParkourMode() {
-                    return EndlessParkourArena.this.getParkourMode();
+                    return MemoryParkourArena.this.getParkourMode();
                 }
             };
-            EndlessParkourBattle battle = new EndlessParkourBattle(arena, players);
+            MemoryParkourBattle battle = new MemoryParkourBattle(arena, players);
             for(BlockPrototype bp : arena.getFakeBlocks()) {
                 battle.getFakeWorld().getBlockAt(bp.location).setType(bp.type);
                 battle.getFakeWorld().getBlockAt(bp.location).setData(bp.data);
@@ -379,7 +378,7 @@ public class EndlessParkourArena extends Arena<EndlessParkourBattle> {
         return null;
     }
     
-    public EndlessParkourArena nextLevel(EndlessParkourArena arena, EndlessParkourBattle battle) {
+    public MemoryParkourArena nextLevel(MemoryParkourArena arena, MemoryParkourBattle battle) {
         battle.getFakeWorld().getUsedBlocks().forEach(fb -> {
             battle.getFakeWorld().getBlockAt(fb.getLocation()).setType(Material.AIR);
             //battle.getFakeWorld().getHandle().getBlockAt(fb.getLocation()).setType(Material.AIR);
@@ -399,7 +398,7 @@ public class EndlessParkourArena extends Arena<EndlessParkourBattle> {
         int jumpCount = arena.getJumpCount();
         Collection<BlockPrototype> fakeBlocks = data.fakeBlocks;
         //Create new arena object since each random arena has different spawns/goals/borders
-        arena = new EndlessParkourArena() {
+        arena = new MemoryParkourArena() {
             @Override
             public int getJumpCount() {
                 return jumpCount;
@@ -437,17 +436,17 @@ public class EndlessParkourArena extends Arena<EndlessParkourBattle> {
 
             @Override
             public String getName() {
-                return EndlessParkourArena.this.getName();
+                return MemoryParkourArena.this.getName();
             }
 
             @Override
             public boolean isRated() {
-                return EndlessParkourArena.this.isRated();
+                return MemoryParkourArena.this.isRated();
             }
 
             @Override
             public ParkourMode getParkourMode() {
-                return EndlessParkourArena.this.getParkourMode();
+                return MemoryParkourArena.this.getParkourMode();
             }
         };
         for(BlockPrototype bp : arena.getFakeBlocks()) {

@@ -3,8 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.spleefleague.parkour.game.versus.random;
+package com.spleefleague.parkour.game.versus.shuffle;
 
+import com.spleefleague.core.player.SLPlayer;
 import com.spleefleague.core.utils.Area;
 import com.spleefleague.entitybuilder.DBLoad;
 import com.spleefleague.entitybuilder.EntityBuilder;
@@ -20,7 +21,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.function.Function;
 import org.bson.Document;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.util.Vector;
@@ -29,20 +32,32 @@ import org.bukkit.util.Vector;
  *
  * @author Jonas
  */
-public class VersusRandomParkourArena extends Arena<VersusRandomParkourBattle> {
+public class VersusShuffleParkourArena extends Arena<VersusShuffleParkourBattle> {
 
     @DBLoad(fieldName = "jumpcount")
     private int jumpCount;
     @DBLoad(fieldName = "difficultyGenerate")
     private int difficultyGen;
     
-    private static final Map<String, VersusRandomParkourArena> ARENAS = new HashMap<>();
+    private static final Map<String, VersusShuffleParkourArena> ARENAS = new HashMap<>();
     
-    public static Collection<VersusRandomParkourArena> getAll() {
+    public static Collection<VersusShuffleParkourArena> getAll() {
         return ARENAS.values();
     }
+
+    @Override
+    public Function<SLPlayer, List<String>> getDynamicDescription() {
+        return (SLPlayer slp) -> {
+            List<String> description = new ArrayList<>();
+            ParkourPlayer sjp = Parkour.getInstance().getPlayerManager().get(slp.getUniqueId());
+            description.add("");
+            description.add(ChatColor.GRAY + "Map Multiplier: " 
+                    + ChatColor.GOLD + "x" + String.format("%.2f", this.getMapMultiplier()));
+            return description;
+        };
+    }
     
-    public static VersusRandomParkourArena byName(String arena) {
+    public static VersusShuffleParkourArena byName(String arena) {
         return ARENAS.get(arena.toLowerCase());
     }
     
@@ -52,7 +67,7 @@ public class VersusRandomParkourArena extends Arena<VersusRandomParkourBattle> {
     
     @Override
     public ParkourMode getParkourMode() {
-        return ParkourMode.RANDOM;
+        return ParkourMode.SHUFFLE;
     }
 
     @Override
@@ -61,18 +76,18 @@ public class VersusRandomParkourArena extends Arena<VersusRandomParkourBattle> {
     }
     
     public static void loadArena(Document document) {
-        VersusRandomParkourArena arena = EntityBuilder.load(document, VersusRandomParkourArena.class);
+        VersusShuffleParkourArena arena = EntityBuilder.load(document, VersusShuffleParkourArena.class);
         if(ARENAS.containsKey(arena.getName().toLowerCase())) {
             Arena.recursiveCopy(arena, byName(arena.getName()), Arena.class);
         }
         else {
-            Parkour.getInstance().getBattleManager(ParkourMode.RANDOM).registerArena(arena);
+            Parkour.getInstance().getBattleManager(ParkourMode.SHUFFLE).registerArena(arena);
             ARENAS.put(arena.getName().toLowerCase(), arena);
         }
     }
     
     @Override
-    public VersusRandomParkourBattle startBattle(List<ParkourPlayer> players, BattleStartEvent.StartReason reason) {
+    public VersusShuffleParkourBattle startBattle(List<ParkourPlayer> players, BattleStartEvent.StartReason reason) {
         if (!isOccupied()) {
             players.get(0).validateEndless();
             ArenaData data = generate(this.spawns[0].clone(), this.jumpCount, this.difficultyGen);
@@ -81,7 +96,7 @@ public class VersusRandomParkourArena extends Arena<VersusRandomParkourBattle> {
             goal[0] = data.goal;
             Area[] borders = data.borders;
             //Create new arena object since each random arena has different spawns/goals/borders
-            VersusRandomParkourArena arena = new VersusRandomParkourArena() {
+            VersusShuffleParkourArena arena = new VersusShuffleParkourArena() {
 
                 @Override
                 public Area[] getGoals() {
@@ -110,15 +125,15 @@ public class VersusRandomParkourArena extends Arena<VersusRandomParkourBattle> {
 
                 @Override
                 public String getName() {
-                    return VersusRandomParkourArena.this.getName();
+                    return VersusShuffleParkourArena.this.getName();
                 }
                 
                 @Override
                 public boolean isRated() {
-                    return VersusRandomParkourArena.this.isRated();
+                    return VersusShuffleParkourArena.this.isRated();
                 }
             };
-            VersusRandomParkourBattle battle = new VersusRandomParkourBattle(arena, players);
+            VersusShuffleParkourBattle battle = new VersusShuffleParkourBattle(arena, players);
             for(BlockPrototype bp : data.fakeBlocks) {
                 battle.getFakeWorld().getBlockAt(bp.location).setType(bp.type);
                 battle.getFakeWorld().getBlockAt(bp.location).setData(bp.data);
@@ -145,6 +160,9 @@ public class VersusRandomParkourArena extends Arena<VersusRandomParkourBattle> {
         Collection<BlockPrototype> fakeBlocks = new ArrayList<>();
         Location goal = null, lastLoc = spawn1.clone().add(0, -1, 0);
         Location locSmallest = spawn1.clone(), locHighest = spawn1.clone();
+        for (int i = 0; i < 9; i++) {
+            fakeBlocks.add(new BlockPrototype(lastLoc.clone().add(new Vector(-1 + (i % 3), 0, -1 + Math.floorDiv(i, 3))), Material.QUARTZ_BLOCK, (byte)0));
+        }
         fakeBlocks.add(new BlockPrototype(lastLoc, Material.REDSTONE_LAMP_ON, (byte)0));
         
         frequencySum = 0;
@@ -176,6 +194,9 @@ public class VersusRandomParkourArena extends Arena<VersusRandomParkourBattle> {
                 spawn[1] = lastLoc.clone();
                 spawn[1].setYaw(spawn[1].getYaw() + 180);
                 spawn[1].add(new Vector(0, 1, 0));
+                for (int i = 0; i < 9; i++) {
+                    fakeBlocks.add(new BlockPrototype(lastLoc.clone().add(new Vector(-1 + (i % 3), 0, -1 + Math.floorDiv(i, 3))), Material.QUARTZ_BLOCK, (byte)0));
+                }
                 fakeBlocks.add(new BlockPrototype(lastLoc.clone(), Material.REDSTONE_LAMP_ON, (byte)0));
             }
         }

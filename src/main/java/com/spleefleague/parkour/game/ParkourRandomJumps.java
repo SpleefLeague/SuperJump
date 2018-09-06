@@ -24,6 +24,18 @@ import org.bukkit.Location;
  */
 public class ParkourRandomJumps {
     
+    public static ArrayList<Jump> getJumpsByDifficultyBB(float difficulty) {
+        ArrayList<Jump> possibleJumps = new ArrayList<>();
+        if(difficulty < 0) difficulty = 0;
+        if(difficulty > 4) difficulty = 4;
+        for(Jump j : POSSIBLE_JUMPS_BB) {
+            if(j.getFrequency(difficulty) > 0) {
+                possibleJumps.add(j);
+            }
+        }
+        return possibleJumps;
+    }
+    
     public static ArrayList<Jump> getJumpsByDifficultyB(float difficulty) {
         ArrayList<Jump> possibleJumps = new ArrayList<>();
         if(difficulty < 0) difficulty = 0;

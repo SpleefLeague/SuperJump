@@ -15,15 +15,12 @@ import com.spleefleague.core.SpleefLeague;
 import com.spleefleague.core.chat.ChatChannel;
 import com.spleefleague.core.chat.ChatManager;
 import com.spleefleague.core.chat.Theme;
-import com.spleefleague.core.menus.SLMenu;
 import com.spleefleague.gameapi.events.BattleEndEvent;
 import com.spleefleague.gameapi.events.BattleEndEvent.EndReason;
 import com.spleefleague.gameapi.events.BattleStartEvent;
 import com.spleefleague.core.player.*;
 import com.spleefleague.core.utils.Area;
 import com.spleefleague.core.utils.debugger.RuntimeCompiler;
-import com.spleefleague.core.utils.inventorymenu.InventoryMenuFlag;
-import com.spleefleague.core.utils.inventorymenu.InventoryMenuTemplateBuilder;
 import com.spleefleague.entitybuilder.EntityBuilder;
 import com.spleefleague.gameapi.GamePlugin;
 import com.spleefleague.gameapi.events.BattleStartEvent.StartReason;
@@ -41,10 +38,11 @@ import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.ComponentBuilder;
 import org.bson.Document;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -52,7 +50,6 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Team;
-import org.bukkit.util.Vector;
 
 /**
  *
@@ -70,11 +67,11 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
     protected long ticksPassed = 0;
     protected long timeLastLap = 0;
     protected BukkitTask clockScoreboard; // Updates time until reset (and high scores)
-    protected BukkitTask clockExperience; // Time is displayed on the exp bar
+    protected BukkitTask clockExperience; // 
+    protected BukkitTask clockAction;     // Time is displayed above the item text
     protected Scoreboard scoreboard;
     protected boolean inCountdown;
     protected boolean isOver;
-    private final Collection<Vector> spawnCageDefinition;
     private final ParkourMode mode;
     private static ItemStack itemEndGame;
 
@@ -89,7 +86,6 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
         this.spectators = new ArrayList<>();
         this.data = new HashMap<>();
         this.fakeWorld = VirtualWorld.getInstance().getFakeWorldManager().createWorld(arena.getSpawns()[0].getWorld());
-        this.spawnCageDefinition = generateSpawnCageDefinition();
         this.cc = ChatChannel.createTemporaryChannel("GAMECHANNEL" + this.hashCode(), null, Rank.DEFAULT, false, false);
     }
     
@@ -132,18 +128,41 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
     }
     
     public void announceStart() {
-        String playerNames = "";
-        for(int i = 0; i < players.size(); i++) {
-            ParkourPlayer sjp = players.get(i);
-            if (i == 0) {
-                playerNames = sjp.getName();
-            } else if (i == players.size() - 1) {
-                playerNames += ChatColor.GREEN + " and " + ChatColor.RED + sjp.getName();
-            } else {
-                playerNames += ChatColor.GREEN + ", " + ChatColor.RED + sjp.getName();
-            }
+        if(players.size() == 1) {
+            ParkourPlayer sjp = players.get(0);
+            ChatManager.sendMessagePlayer(SpleefLeague.getInstance().getPlayerManager().get(players.get(0)), Parkour.getInstance().getChatPrefix()
+                    + Parkour.fillColor + " You have begun a match on "
+                    + Parkour.arenaColor + arena.getName()
+                    + Parkour.fillColor + ".");
         }
-        ChatManager.sendMessage(Parkour.getInstance().getChatPrefix(), Theme.SUCCESS.buildTheme(false) + "Beginning match on " + ChatColor.WHITE + arena.getName() + ChatColor.GREEN + " between " + ChatColor.RED + playerNames + "!", Parkour.getInstance().getStartMessageChannel());
+        else {
+            String playerNames = "";
+            for(int i = 0; i < players.size(); i++) {
+                ParkourPlayer sjp = players.get(i);
+                String format = Parkour.playerColor + sjp.getName() + Parkour.fillColor + " (" + Parkour.pointColor + sjp.getParagonLevel() + Parkour.fillColor + ")";
+                if (i == 0) {
+                    playerNames = format;
+                } else if (i == players.size() - 1) {
+                    playerNames += Parkour.fillColor + " and " + format;
+                } else {
+                    playerNames += Parkour.fillColor + ", " + format;
+                }
+            }
+            ChatManager.sendMessage(Parkour.getInstance().getChatPrefix(), Parkour.fillColor + "A match on "
+                    + Parkour.arenaColor + arena.getName()
+                    + Parkour.fillColor + " has begun between "
+                    + playerNames
+                    + Parkour.fillColor + "."
+                    , Parkour.getInstance().getStartMessageChannel());
+        }
+    }
+    
+    public String getTimeString() {
+        return DurationFormatUtils.formatDuration(ticksPassed * 50, "HH:mm:ss", true);
+    }
+    
+    public String getLapTimeString() {
+        return DurationFormatUtils.formatDuration((timeLastLap - System.currentTimeMillis()) * 50, "ss.SSS", true);
     }
     
     public void initPlayers() {
@@ -160,6 +179,7 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
             p.setFoodLevel(20);
             sjp.setIngame(true);
             sjp.setFrozen(true);
+            sjp.setMovedInMatch(false);
             PlayerData pdata = new PlayerData(sjp, arena.getSpawns()[i], arena.getGoals()[i % arena.getGoals().length]);
             this.data.putIfAbsent(sjp, pdata);
             p.setGameMode(GameMode.ADVENTURE);
@@ -230,36 +250,7 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
         return data.get(sjp).getGoal();
     }
     
-    
-    private void setSpawnCageBlock(Material type) {
-        for (Location spawn : this.arena.getSpawns()) {
-            for (Vector vector : spawnCageDefinition) {
-                fakeWorld.getBlockAt(spawn.clone().add(vector)).setType(type);
-            }
-        }
-    }
-
-    public Collection<Vector> generateSpawnCageDefinition() {
-        Collection<Vector> col = new ArrayList<>();
-        for (int x = -1; x <= 1; x++) {
-            for (int z = -1; z <= 1; z++) {
-                if (x == 0 && z == 0) {
-                    col.add(new Vector(x, 2, z));
-                } else {
-                    for (int y = 0; y <= 2; y++) {
-                        col.add(new Vector(x, y, z));
-                    }
-                }
-            }
-        }
-        return col;
-    }
-
-    public void addSpectator(ParkourPlayer sp) {
-        Location spawn = arena.getSpectatorSpawn();
-        if (spawn != null) {
-            sp.teleport(spawn);
-        }
+    public void addSpectator(ParkourPlayer sp, ParkourPlayer target) {
         sp.setScoreboard(scoreboard);
         SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(sp.getPlayer());
         VirtualWorld.getInstance().getFakeWorldManager().addWorld(sp.getPlayer(), fakeWorld, 10);
@@ -274,7 +265,12 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
             sp.showPlayer(sjp.getPlayer());
         }
         spectators.add(sp);
+        sp.setIngame(true);
         hidePlayers(sp);
+        sp.setParkourMode(target.getParkourMode());
+        sp.teleport(target.getPlayer());
+        sp.setGameMode(GameMode.SPECTATOR);
+        sp.setParkourSpectatorTarget(null);
     }
 
     public boolean isSpectating(ParkourPlayer sjp) {
@@ -321,7 +317,7 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
         if (activePlayers.size() == 1) {
             end(activePlayers.get(0), EndReason.ENDGAME);
         }
-        else if(activePlayers.size() == 0) {
+        else if(activePlayers.isEmpty()) {
             end(null, EndReason.ENDGAME);
         }
     }
@@ -383,10 +379,15 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
         });
         */
     }
+    
+    protected void updateActionBar() {
+        this.getActivePlayers().forEach(sjp -> {
+            sjp.spigot().sendMessage(ChatMessageType.ACTION_BAR, new ComponentBuilder(ChatColor.YELLOW + "" + String.format("%.2f", (float)ticksPassed / 20.f) + " seconds").create());
+        });
+    }
 
     public void startCountdown() {
         inCountdown = true;
-        setSpawnCageBlock(Material.GLASS);
         for (ParkourPlayer sjp : getActivePlayers()) {
             sjp.setFrozen(true);
             sjp.setFireTicks(0);
@@ -413,7 +414,6 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
             }
 
             public void onDone() {
-                setSpawnCageBlock(Material.AIR);
                 for (ParkourPlayer sp : getActivePlayers()) {
                     sp.setFrozen(false);
                 }
@@ -429,9 +429,6 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
         clockScoreboard = new BukkitRunnable() {
             @Override
             public void run() {
-                if (!inCountdown) {
-                    ticksPassed += 20;
-                }
                 updateScoreboardTime();
             }
         }.runTaskTimer(Parkour.getInstance(), 0, 20);
@@ -443,6 +440,15 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
                 }
             }
         }.runTaskTimer(Parkour.getInstance(), 0, 100);
+        clockAction = new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (!inCountdown) {
+                    ticksPassed++;
+                    updateActionBar();
+                }
+            }
+        }.runTaskTimer(Parkour.getInstance(), 0, 1);
     }
 
     public void cancel() {
@@ -456,12 +462,31 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
                 ChatManager.sendMessage(Parkour.getInstance().getChatPrefix(), Theme.INCOGNITO.buildTheme(false) + "The battle has been cancelled by a moderator.", cc);
             }
         } else if (reason != BattleEndEvent.EndReason.ENDGAME) {
+            SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(winner.getPlayer());
+            float levelTime = Math.floorDiv((System.currentTimeMillis() - timeLastLap), 10) / 100.f;
+            if(levelTime < arena.getBanTime()) {
+                if(!slp.getRank().hasPermission(Rank.DEVELOPER)) {
+                    slp.performBan(null,
+                            "Console",
+                            "Cheating on " + this.arena.getName());
+                }
+                else {
+                    ChatManager.sendMessage(slp.getName() + " abused their power!", Parkour.getInstance().getEndMessageChannel());
+                }
+            }
+            players.forEach(sjp -> {
+                slp.setCoins(slp.getCoins() + 1);
+            });
             if (arena.isRated()) {
                 applyRatingChange(winner);
             }
         }
         Lists.newArrayList(getSpectators()).forEach(this::resetPlayer);
-        Lists.newArrayList(getActivePlayers()).forEach(this::resetPlayer);
+        ArrayList<ParkourPlayer> players = Lists.newArrayList(getActivePlayers());
+        players.forEach(this::resetPlayer);
+        if (reason == BattleEndEvent.EndReason.NORMAL) {
+            players.forEach(sjp -> Parkour.getInstance().requeuePlayer(sjp));
+        }
         Bukkit.getPluginManager().callEvent(new BattleEndEvent(this, reason));
         cleanup();
     }
@@ -470,6 +495,7 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
         isOver = true;
         clockScoreboard.cancel();
         clockExperience.cancel();
+        clockAction.cancel();
         arena.registerGameEnd();
         removeFromBattleManager();
         ChatManager.unregisterChannel(cc);
@@ -498,35 +524,60 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
         if (spectators.contains(sp)) {
             spectators.remove(sp);
         } else {
-            sp.setIngame(false);
             sp.setFrozen(false);
             sp.setRequestingEndgame(false);
-            sp.setParkourMode(ParkourMode.NONE);
-            sp.closeInventory();
             data.get(sp).restoreOldData();
         }
-        if (sp.getPlayer().getGameMode() == GameMode.SPECTATOR) {
-            sp.getPlayer().setSpectatorTarget(null);
-        }
+        sp.setIngame(false);
         sp.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
-        sp.teleport(SpleefLeague.getInstance().getSpawnManager().getNext().getLocation());
         hidePlayers(sp);
         slp.removeChatChannel(cc);
         slp.setState(PlayerState.IDLE);
         slp.resetVisibility();
         sp.setExp(0);
         sp.setLevel(0);
+        sp.setParkourMode(ParkourMode.NONE);
+        sp.closeInventory();
+        if (sp.getGameMode() == GameMode.SPECTATOR) {
+            sp.setParkourSpectatorTarget(null);
+        }
+        if (slp.getRank().hasPermission(Rank.DEVELOPER)) {
+            sp.setGameMode(GameMode.CREATIVE);
+        }
+        else {
+            sp.setGameMode(GameMode.SURVIVAL);
+        }
+        sp.teleport(SpleefLeague.getInstance().getSpawnManager().getNext().getLocation());
     }
-
+    
+    public void focusSpectators() {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                getSpectators().forEach(spectator -> spectator.focusParkourSpectatorTarget());
+            }
+        }.runTaskLater(Parkour.getInstance(), 5);
+    }
+    
     public void onArenaLeave(ParkourPlayer sjp) {
-        if (inCountdown) {
-            sjp.teleport(data.get(sjp).getSpawn());
+        if (getActivePlayers().contains(sjp)) {
+            if (inCountdown) {
+                sjp.teleport(data.get(sjp).getSpawn());
+            }
+            data.get(sjp).increaseFalls();
+            if (!sjp.getGameMode().equals(GameMode.CREATIVE)) {
+                sjp.teleport(data.get(sjp).getSpawn());
+            }
+            focusSpectators();
         }
-        data.get(sjp).increaseFalls();
-        if(!sjp.getGameMode().equals(GameMode.CREATIVE)) {
-            sjp.teleport(data.get(sjp).getSpawn());
+        else if (spectators.contains(sjp)) {
+            if (sjp.getParkourSpectatorTarget() != null) {
+                sjp.teleport(sjp.getParkourSpectatorTarget());
+            }
+            else {
+                sjp.teleport(arena.getSpawns()[0]);
+            }
         }
-        scoreboard.getObjective("rounds").getScore(sjp.getName()).setScore(data.get(sjp).getFalls());
     }
 
     public PlayerData getData(ParkourPlayer sjp) {

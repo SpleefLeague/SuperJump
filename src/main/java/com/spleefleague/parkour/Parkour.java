@@ -15,25 +15,18 @@ import com.spleefleague.gameapi.events.BattleEndEvent.EndReason;
 import com.spleefleague.gameapi.events.BattleStartEvent.StartReason;
 import com.spleefleague.core.menus.SLMenu;
 import com.spleefleague.core.player.DBPlayerManager;
-import com.spleefleague.core.player.SLPlayer;
 import com.spleefleague.gameapi.GamePlugin;
 import com.spleefleague.core.plugin.PlayerHandling;
 import com.spleefleague.gameapi.queue.BattleManager;
 import com.spleefleague.gameapi.queue.RatedBattleManager;
-import com.spleefleague.core.utils.inventorymenu.InventoryMenuTemplateBuilder;
 import com.spleefleague.parkour.game.Arena;
 import com.spleefleague.parkour.listener.ConnectionListener;
 import com.spleefleague.parkour.listener.EnvironmentListener;
 import com.spleefleague.parkour.listener.GameListener;
 import com.spleefleague.parkour.player.ParkourPlayer;
 import org.bukkit.ChatColor;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
-
-import static com.spleefleague.core.utils.inventorymenu.InventoryMenuAPI.item;
-import com.spleefleague.core.utils.inventorymenu.InventoryMenuFlag;
 import com.spleefleague.entitybuilder.EntityBuilder;
 import com.spleefleague.parkour.game.ParkourBattle;
 import com.spleefleague.parkour.game.ParkourMode;
@@ -43,20 +36,26 @@ import com.spleefleague.parkour.game.conquest.ConquestParkourArena;
 import com.spleefleague.parkour.game.conquest.ConquestParkourBattle;
 import com.spleefleague.parkour.game.endless.EndlessParkourArena;
 import com.spleefleague.parkour.game.endless.EndlessParkourBattle;
+import com.spleefleague.parkour.game.memory.MemoryParkourArena;
+import com.spleefleague.parkour.game.memory.MemoryParkourBattle;
 import com.spleefleague.parkour.game.party.PartyParkourArena;
 import com.spleefleague.parkour.game.party.PartyParkourBattle;
 import com.spleefleague.parkour.game.practice.PracticeParkourArena;
 import com.spleefleague.parkour.game.practice.PracticeParkourBattle;
 import com.spleefleague.parkour.game.pro.ProParkourArena;
 import com.spleefleague.parkour.game.pro.ProParkourBattle;
-import com.spleefleague.parkour.game.versus.random.VersusRandomParkourArena;
-import com.spleefleague.parkour.game.versus.random.VersusRandomParkourBattle;
+import com.spleefleague.parkour.game.versus.shuffle.VersusShuffleParkourArena;
+import com.spleefleague.parkour.game.versus.shuffle.VersusShuffleParkourBattle;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
-import java.util.function.Function;
-import org.bukkit.inventory.ItemStack;
+import com.spleefleague.parkour.menu.ParkourMenu;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
 
 /**
  *
@@ -67,13 +66,22 @@ public class Parkour extends GamePlugin implements PlayerHandling {
     private static Parkour instance;
 
     private DBPlayerManager<ParkourPlayer> playerManager;
-    private Map<ParkourMode, RatedBattleManager> battleManagers = new HashMap<>();
+    private Map<ParkourMode, RatedBattleManager> battleManagers;
     private boolean queuesOpen = true;
     private ChatChannel start, end;
-    private ItemStack itemEndGame;
+    
+    public static final String modeColor = ChatColor.GOLD + "";
+    public static final String fillColor = ChatColor.GRAY + "";
+    public static final String arenaColor = ChatColor.RED + "";
+    public static final String pointColor = ChatColor.YELLOW + "";
+    public static final String timeColor = ChatColor.YELLOW + "";
+    public static final String levelColor = ChatColor.YELLOW + "";
+    public static final String playerColor = ChatColor.RED + "";
+    public static final String shopColor = ChatColor.AQUA + "";
 
     public Parkour() {
         super(ChatColor.GRAY + "[" + ChatColor.GOLD + "SuperJump" + ChatColor.GRAY + "]" + ChatColor.RESET);
+        this.battleManagers = new HashMap<>();
     }
 
     @Override
@@ -82,17 +90,41 @@ public class Parkour extends GamePlugin implements PlayerHandling {
         playerManager = new DBPlayerManager<>(this, ParkourPlayer.class);
         battleManagers.put(ParkourMode.CLASSIC, new RatedBattleManager<VersusClassicParkourArena, ParkourPlayer, VersusClassicParkourBattle>(
                 m -> {
-                    m.getQueue().startBattle(m.getPlayers(), StartReason.QUEUE);
-                    m.getPlayers().forEach(slp -> slp.setParkourMode(ParkourMode.CLASSIC));
+                    boolean isRandom = true;
+                    for (ParkourPlayer sjp : m.getPlayers()) {
+                        if (!sjp.isRandomQueued()) {
+                            isRandom = false;
+                            break;
+                        }
+                    }
+                    if (isRandom) {
+                        startRandomBattle(m.getPlayers());
+                    }
+                    else {
+                        m.getQueue().startBattle(m.getPlayers(), StartReason.QUEUE);
+                        m.getPlayers().forEach(slp -> slp.setParkourMode(ParkourMode.CLASSIC));
+                    }
                 }, 
                 sp -> sp.getRating(ParkourMode.CLASSIC)
         ));
-        battleManagers.put(ParkourMode.RANDOM, new RatedBattleManager<VersusRandomParkourArena, ParkourPlayer, VersusRandomParkourBattle>(
+        battleManagers.put(ParkourMode.SHUFFLE, new RatedBattleManager<VersusShuffleParkourArena, ParkourPlayer, VersusShuffleParkourBattle>(
                 m -> {
-                    m.getQueue().startBattle(m.getPlayers(), StartReason.QUEUE);
-                    m.getPlayers().forEach(slp -> slp.setParkourMode(ParkourMode.RANDOM));
+                    boolean isRandom = true;
+                    for (ParkourPlayer sjp : m.getPlayers()) {
+                        if (!sjp.isRandomQueued()) {
+                            isRandom = false;
+                            break;
+                        }
+                    }
+                    if (isRandom) {
+                        startRandomBattle(m.getPlayers());
+                    }
+                    else {
+                        m.getQueue().startBattle(m.getPlayers(), StartReason.QUEUE);
+                        m.getPlayers().forEach(slp -> slp.setParkourMode(ParkourMode.SHUFFLE));
+                    }
                 }, 
-                sp -> sp.getRating(ParkourMode.RANDOM)
+                sp -> sp.getRating(ParkourMode.SHUFFLE)
         ));
         battleManagers.put(ParkourMode.CONQUEST, new RatedBattleManager<ConquestParkourArena, ParkourPlayer, ConquestParkourBattle>(
                 m -> {
@@ -107,6 +139,13 @@ public class Parkour extends GamePlugin implements PlayerHandling {
                     m.getPlayers().forEach(slp -> slp.setParkourMode(ParkourMode.ENDLESS));
                 }, 
                 sp -> sp.getRating(ParkourMode.ENDLESS)
+        ));
+        battleManagers.put(ParkourMode.MEMORY, new RatedBattleManager<MemoryParkourArena, ParkourPlayer, MemoryParkourBattle>(
+                m -> {
+                    m.getQueue().startBattle(m.getPlayers(), StartReason.QUEUE);
+                    m.getPlayers().forEach(slp -> slp.setParkourMode(ParkourMode.MEMORY));
+                }, 
+                sp -> sp.getRating(ParkourMode.MEMORY)
         ));
         battleManagers.put(ParkourMode.PARTY, new RatedBattleManager<PartyParkourArena, ParkourPlayer, PartyParkourBattle>(
                 m -> {
@@ -146,14 +185,17 @@ public class Parkour extends GamePlugin implements PlayerHandling {
                 case CLASSIC:
                     ((BattleManager<VersusClassicParkourArena, ParkourPlayer, VersusClassicParkourBattle>) entry.getValue()).getAll().forEach(ParkourBattle::cancel);
                     break;
-                case RANDOM:
-                    ((BattleManager<VersusRandomParkourArena, ParkourPlayer, VersusRandomParkourBattle>) entry.getValue()).getAll().forEach(ParkourBattle::cancel);
+                case SHUFFLE:
+                    ((BattleManager<VersusShuffleParkourArena, ParkourPlayer, VersusShuffleParkourBattle>) entry.getValue()).getAll().forEach(ParkourBattle::cancel);
                     break;
                 case CONQUEST:
                     ((BattleManager<ConquestParkourArena, ParkourPlayer, ConquestParkourBattle>) entry.getValue()).getAll().forEach(ParkourBattle::cancel);
                     break;
                 case ENDLESS:
                     ((BattleManager<EndlessParkourArena, ParkourPlayer, EndlessParkourBattle>) entry.getValue()).getAll().forEach(ParkourBattle::cancel);
+                    break;
+                case MEMORY:
+                    ((BattleManager<MemoryParkourArena, ParkourPlayer, MemoryParkourBattle>) entry.getValue()).getAll().forEach(ParkourBattle::cancel);
                     break;
                 case PARTY:
                     ((BattleManager<PartyParkourArena, ParkourPlayer, PartyParkourBattle>) entry.getValue()).getAll().forEach(ParkourBattle::cancel);
@@ -194,14 +236,17 @@ public class Parkour extends GamePlugin implements PlayerHandling {
             case CLASSIC:
                 battle = ((BattleManager<VersusClassicParkourArena, ParkourPlayer, VersusClassicParkourBattle>)(battleManagers.get(ParkourMode.CLASSIC))).getBattle(sjp);
                 break;
-            case RANDOM:
-                battle = ((BattleManager<VersusRandomParkourArena, ParkourPlayer, VersusRandomParkourBattle>)(battleManagers.get(ParkourMode.RANDOM))).getBattle(sjp);
+            case SHUFFLE:
+                battle = ((BattleManager<VersusShuffleParkourArena, ParkourPlayer, VersusShuffleParkourBattle>)(battleManagers.get(ParkourMode.SHUFFLE))).getBattle(sjp);
                 break;
             case CONQUEST:
                 battle = ((BattleManager<ConquestParkourArena, ParkourPlayer, ConquestParkourBattle>)(battleManagers.get(ParkourMode.CONQUEST))).getBattle(sjp);
                 break;
             case ENDLESS:
                 battle = ((BattleManager<EndlessParkourArena, ParkourPlayer, EndlessParkourBattle>)(battleManagers.get(ParkourMode.ENDLESS))).getBattle(sjp);
+                break;
+            case MEMORY:
+                battle = ((BattleManager<MemoryParkourArena, ParkourPlayer, MemoryParkourBattle>)(battleManagers.get(ParkourMode.MEMORY))).getBattle(sjp);
                 break;
             case PARTY:
                 battle = ((BattleManager<PartyParkourArena, ParkourPlayer, PartyParkourBattle>)(battleManagers.get(ParkourMode.PARTY))).getBattle(sjp);
@@ -225,34 +270,42 @@ public class Parkour extends GamePlugin implements PlayerHandling {
 
     @Override
     public boolean spectate(Player target, Player p) {
-        /*
         ParkourPlayer tsjp = getPlayerManager().get(target);
         ParkourPlayer sjp = getPlayerManager().get(p);
-        if (tsjp.getCurrentBattle().getArena().isAvailable(sjp)) {
-            tsjp.getCurrentBattle().addSpectator(sjp);
+        if(tsjp.getCurrentBattle() != null) {
+            tsjp.getCurrentBattle().addSpectator(sjp, tsjp);
             return true;
-        } else {
-            p.sendMessage(Parkour.getInstance().getChatPrefix() + Theme.ERROR.buildTheme(false) + " You can only spectate arenas you have already visited!");
-            return false;
         }
-        */
         return false;
     }
 
     @Override
     public void unspectate(Player p) {
-        /*
         ParkourPlayer sjp = getPlayerManager().get(p);
-        getClassicBattleManager().getAll().stream().filter(b -> b.isSpectating(sjp)).forEach(b -> b.removeSpectator(sjp));
-        */
+        if (sjp.getParkourMode().equals(ParkourMode.NONE)
+                || sjp.getParkourMode().equals(ParkourMode.REQUEUE)) {
+            return;
+        }
+        getBattleManager(sjp.getParkourMode()).getAll().forEach(b -> {
+            ParkourBattle pb = (ParkourBattle) b;
+            if (pb.isSpectating(sjp)) {
+                pb.removeSpectator(sjp);
+            }
+        });
     }
 
     @Override
     public boolean isSpectating(Player p) {
-        /*
         ParkourPlayer sjp = getPlayerManager().get(p);
-        return getClassicBattleManager().getAll().stream().anyMatch(b -> b.isSpectating(sjp));
-        */
+        if (sjp.getParkourMode().equals(ParkourMode.NONE)
+                || sjp.getParkourMode().equals(ParkourMode.REQUEUE)) {
+            return false;
+        }
+        for (Object o : getBattleManager(sjp.getParkourMode()).getAll()) {
+            if (((ParkourBattle) o).isSpectating(sjp)) {
+                return true;
+            }
+        }
         return false;
     }
 
@@ -262,57 +315,60 @@ public class Parkour extends GamePlugin implements PlayerHandling {
         for(Map.Entry<ParkourMode, RatedBattleManager> entry : battleManagers.entrySet()) {
             switch(entry.getKey()) {
                 case CLASSIC:
-                    BattleManager<VersusClassicParkourArena, ParkourPlayer, VersusClassicParkourBattle> classic = (BattleManager<VersusClassicParkourArena, ParkourPlayer, VersusClassicParkourBattle>) entry.getValue();
-                    classic.dequeue(sjp);
+                    ((BattleManager<VersusClassicParkourArena, ParkourPlayer, VersusClassicParkourBattle>) entry.getValue()).dequeue(sjp);
                     break;
                 case CONQUEST:
-                    BattleManager<ConquestParkourArena, ParkourPlayer, ConquestParkourBattle> conquest = (BattleManager<ConquestParkourArena, ParkourPlayer, ConquestParkourBattle>) entry.getValue();
-                    conquest.dequeue(sjp);
+                    ((BattleManager<ConquestParkourArena, ParkourPlayer, ConquestParkourBattle>) entry.getValue()).dequeue(sjp);
                     break;
                 case ENDLESS:
-                    BattleManager<EndlessParkourArena, ParkourPlayer, EndlessParkourBattle> endless = (BattleManager<EndlessParkourArena, ParkourPlayer, EndlessParkourBattle>) entry.getValue();
-                    endless.dequeue(sjp);
+                    ((BattleManager<EndlessParkourArena, ParkourPlayer, EndlessParkourBattle>) entry.getValue()).dequeue(sjp);
+                    break;
+                case MEMORY:
+                    ((BattleManager<MemoryParkourArena, ParkourPlayer, MemoryParkourBattle>) entry.getValue()).dequeue(sjp);
                     break;
                 case PARTY:
-                    BattleManager<PartyParkourArena, ParkourPlayer, PartyParkourBattle> party = (BattleManager<PartyParkourArena, ParkourPlayer, PartyParkourBattle>) entry.getValue();
-                    party.dequeue(sjp);
+                    ((BattleManager<PartyParkourArena, ParkourPlayer, PartyParkourBattle>) entry.getValue()).dequeue(sjp);
                     break;
                 case PRACTICE:
-                    BattleManager<PracticeParkourArena, ParkourPlayer, PracticeParkourBattle> practice = (BattleManager<PracticeParkourArena, ParkourPlayer, PracticeParkourBattle>) entry.getValue();
-                    practice.dequeue(sjp);
+                    ((BattleManager<PracticeParkourArena, ParkourPlayer, PracticeParkourBattle>) entry.getValue()).dequeue(sjp);
                     break;
                 case PRO:
-                    BattleManager<ProParkourArena, ParkourPlayer, ProParkourBattle> pro = (BattleManager<ProParkourArena, ParkourPlayer, ProParkourBattle>) entry.getValue();
-                    pro.dequeue(sjp);
+                    ((BattleManager<ProParkourArena, ParkourPlayer, ProParkourBattle>) entry.getValue()).dequeue(sjp);
                     break;
-                case RANDOM:
-                    BattleManager<VersusRandomParkourArena, ParkourPlayer, VersusRandomParkourBattle> random = (BattleManager<VersusRandomParkourArena, ParkourPlayer, VersusRandomParkourBattle>) entry.getValue();
-                    random.dequeue(sjp);
+                case SHUFFLE:
+                    ((BattleManager<VersusShuffleParkourArena, ParkourPlayer, VersusShuffleParkourBattle>) entry.getValue()).dequeue(sjp);
                     break;
                 default: break;
             }
         }
+        if (sjp.getParkourMode() == ParkourMode.REQUEUE) {
+            sjp.setParkourMode(ParkourMode.NONE);
+        }
     }
     
     public ParkourBattle<?> getParkourBattle(ParkourPlayer sjp) {
-        for(Map.Entry<ParkourMode, RatedBattleManager> entry : battleManagers.entrySet()) {
-            if(entry.getKey() != sjp.getParkourMode()) continue;
-            switch(entry.getKey()) {
-                case CLASSIC:
-                    return((BattleManager<VersusClassicParkourArena, ParkourPlayer, VersusClassicParkourBattle>) entry.getValue()).getBattle(sjp);
-                case CONQUEST:
-                    return((BattleManager<ConquestParkourArena, ParkourPlayer, ConquestParkourBattle>) entry.getValue()).getBattle(sjp);
-                case ENDLESS:
-                    return((BattleManager<EndlessParkourArena, ParkourPlayer, EndlessParkourBattle>) entry.getValue()).getBattle(sjp);
-                case PARTY:
-                    return((BattleManager<PartyParkourArena, ParkourPlayer, PartyParkourBattle>) entry.getValue()).getBattle(sjp);
-                case PRACTICE:
-                    return((BattleManager<PracticeParkourArena, ParkourPlayer, PracticeParkourBattle>) entry.getValue()).getBattle(sjp);
-                case PRO:
-                    return((BattleManager<ProParkourArena, ParkourPlayer, ProParkourBattle>) entry.getValue()).getBattle(sjp);
-                case RANDOM:
-                    return((BattleManager<VersusRandomParkourArena, ParkourPlayer, VersusRandomParkourBattle>) entry.getValue()).getBattle(sjp);
-                default: break;
+        if (sjp.getParkourMode() != ParkourMode.NONE && sjp.getParkourMode() != ParkourMode.REQUEUE) {
+            for(Map.Entry<ParkourMode, RatedBattleManager> entry : battleManagers.entrySet()) {
+                if(entry.getKey() != sjp.getParkourMode()) continue;
+                switch(entry.getKey()) {
+                    case CLASSIC:
+                        return((BattleManager<VersusClassicParkourArena, ParkourPlayer, VersusClassicParkourBattle>) entry.getValue()).getBattle(sjp);
+                    case CONQUEST:
+                        return((BattleManager<ConquestParkourArena, ParkourPlayer, ConquestParkourBattle>) entry.getValue()).getBattle(sjp);
+                    case ENDLESS:
+                        return((BattleManager<EndlessParkourArena, ParkourPlayer, EndlessParkourBattle>) entry.getValue()).getBattle(sjp);
+                    case MEMORY:
+                        return((BattleManager<MemoryParkourArena, ParkourPlayer, MemoryParkourBattle>) entry.getValue()).getBattle(sjp);
+                    case PARTY:
+                        return((BattleManager<PartyParkourArena, ParkourPlayer, PartyParkourBattle>) entry.getValue()).getBattle(sjp);
+                    case PRACTICE:
+                        return((BattleManager<PracticeParkourArena, ParkourPlayer, PracticeParkourBattle>) entry.getValue()).getBattle(sjp);
+                    case PRO:
+                        return((BattleManager<ProParkourArena, ParkourPlayer, ProParkourBattle>) entry.getValue()).getBattle(sjp);
+                    case SHUFFLE:
+                        return((BattleManager<VersusShuffleParkourArena, ParkourPlayer, VersusShuffleParkourBattle>) entry.getValue()).getBattle(sjp);
+                    default: break;
+                }
             }
         }
         return null;
@@ -345,13 +401,44 @@ public class Parkour extends GamePlugin implements PlayerHandling {
     public boolean isQueued(Player p) {
         for(Map.Entry<ParkourMode, RatedBattleManager> entry : battleManagers.entrySet())
             if(entry.getValue().isQueued(getPlayerManager().get(p))) return true;
-        return false;
+        return (getPlayerManager().get(p).getParkourMode() == ParkourMode.REQUEUE);
     }
 
     @Override
     public boolean isIngame(Player p) {
         ParkourPlayer sjp = getPlayerManager().get(p);
-        return sjp.getParkourMode() != ParkourMode.NONE;
+        return (sjp != null && !(sjp.getParkourMode().equals(ParkourMode.NONE)));
+    }
+    
+    public String getPlayerName(Player p) {
+        ParkourPlayer sjp = getPlayerManager().get(p);
+        return (Parkour.playerColor + sjp.getName()
+                + Parkour.fillColor + " ("
+                + Parkour.pointColor + sjp.getParagonLevel()
+                + Parkour.fillColor + ")");
+    }
+    
+    public List<String> getPlayerDescription(Player p) {
+        ParkourPlayer sjp = getPlayerManager().get(p);
+        List<String> description = new ArrayList<>();
+        ParkourBattle battle = sjp.getCurrentBattle();
+        description.add("");
+        description.add(Parkour.fillColor + "GameMode: " + Parkour.modeColor + "SuperJump");
+        if (sjp.isIngame()) {
+            description.add(Parkour.fillColor + "Arena: " + Parkour.arenaColor + battle.getArena().getName());
+            if (sjp.getParkourMode() == ParkourMode.ENDLESS) {
+                EndlessParkourBattle ebattle = (EndlessParkourBattle) battle;
+                description.add(Parkour.fillColor + "Level: " + Parkour.levelColor + ebattle.getLevel());
+            }
+            else {
+                String opponent = sjp.getOpponentFormatted();
+                if (!opponent.equals("")) {
+                    description.add(Parkour.fillColor + "Players: " + Parkour.playerColor + opponent);
+                }
+            }
+            description.add(Parkour.fillColor + "Time: " + Parkour.timeColor + sjp.getCurrentBattle().getTimeString());
+        }
+        return description;
     }
 
     @Override
@@ -367,6 +454,9 @@ public class Parkour extends GamePlugin implements PlayerHandling {
                 case ENDLESS:
                     ((BattleManager<EndlessParkourArena, ParkourPlayer, EndlessParkourBattle>) entry.getValue()).getAll().forEach(ParkourBattle::cancel);
                     break;
+                case MEMORY:
+                    ((BattleManager<MemoryParkourArena, ParkourPlayer, MemoryParkourBattle>) entry.getValue()).getAll().forEach(ParkourBattle::cancel);
+                    break;
                 case PARTY:
                     ((BattleManager<PartyParkourArena, ParkourPlayer, PartyParkourBattle>) entry.getValue()).getAll().forEach(ParkourBattle::cancel);
                     break;
@@ -376,8 +466,8 @@ public class Parkour extends GamePlugin implements PlayerHandling {
                 case PRO:
                     ((BattleManager<ProParkourArena, ParkourPlayer, ProParkourBattle>) entry.getValue()).getAll().forEach(ParkourBattle::cancel);
                     break;
-                case RANDOM:
-                    ((BattleManager<VersusRandomParkourArena, ParkourPlayer, VersusRandomParkourBattle>) entry.getValue()).getAll().forEach(ParkourBattle::cancel);
+                case SHUFFLE:
+                    ((BattleManager<VersusShuffleParkourArena, ParkourPlayer, VersusShuffleParkourBattle>) entry.getValue()).getAll().forEach(ParkourBattle::cancel);
                     break;
                 default: break;
             }
@@ -407,23 +497,34 @@ public class Parkour extends GamePlugin implements PlayerHandling {
         ParkourPlayer sp = Parkour.getInstance().getPlayerManager().get(p);
         ParkourBattle<?> battle = sp.getCurrentBattle();
         if (battle != null) {
-            sp.setRequestingEndgame(true);
-            boolean shouldEnd = true;
-            for (ParkourPlayer spleefplayer : battle.getActivePlayers()) {
-                if (!spleefplayer.isRequestingEndgame()) {
-                    shouldEnd = false;
-                    break;
-                }
-            }
-            if (shouldEnd) {
-                battle.end(null, EndReason.ENDGAME);
-            } else {
+            if(!sp.isRequestingEndgame()) {
+                sp.setRequestingEndgame(true);
+                boolean shouldEnd = true;
                 for (ParkourPlayer spleefplayer : battle.getActivePlayers()) {
                     if (!spleefplayer.isRequestingEndgame()) {
-                        spleefplayer.sendMessage(Parkour.getInstance().getChatPrefix() + " " + Theme.WARNING.buildTheme(false) + "Your opponent wants to end this game. To agree enter " + ChatColor.YELLOW + "/endgame.");
+                        shouldEnd = false;
+                        break;
                     }
                 }
-                sp.sendMessage(Parkour.getInstance().getChatPrefix() + " " + Theme.WARNING.buildTheme(false) + "You requested this game to be cancelled.");
+                if (shouldEnd) {
+                    battle.end(null, EndReason.ENDGAME);
+                } else {
+                    for (ParkourPlayer spleefplayer : battle.getActivePlayers()) {
+                        if (!spleefplayer.isRequestingEndgame() && !spleefplayer.equals(sp)) {
+                            spleefplayer.sendMessage(Parkour.getInstance().getChatPrefix() + " " + Theme.WARNING.buildTheme(false) + "Your opponent wants to end this game. To agree enter " + ChatColor.YELLOW + "/endgame.");
+                        }
+                    }
+                    sp.sendMessage(Parkour.getInstance().getChatPrefix() + " " + Theme.WARNING.buildTheme(false) + "You requested this game to be cancelled.");
+                }
+            }
+            else {
+                sp.setRequestingEndgame(false);
+                for (ParkourPlayer spleefplayer : battle.getActivePlayers()) {
+                    if (!spleefplayer.isRequestingEndgame() && !spleefplayer.equals(sp)) {
+                        spleefplayer.sendMessage(Parkour.getInstance().getChatPrefix() + " " + Theme.WARNING.buildTheme(false) + "Your opponent no longer wants to end this game." + ChatColor.YELLOW + "/endgame.");
+                    }
+                }
+                sp.sendMessage(Parkour.getInstance().getChatPrefix() + " " + Theme.WARNING.buildTheme(false) + "You are no longer requesting to end this game.");
             }
         }
     }
@@ -453,215 +554,172 @@ public class Parkour extends GamePlugin implements PlayerHandling {
         return end;
     }
     
-    private Function<SLPlayer, List<String>> getSoloDescription() {
-        return (SLPlayer slp) -> {
-            List<String> description = new ArrayList<>();
-            ParkourPlayer sjp = Parkour.getInstance().getPlayerManager().get(slp.getUniqueId());
-            description.add(ChatColor.GRAY + "");
-            description.add(ChatColor.GRAY + "Relax and play a variety of different parkour gametypes in");
-            description.add(ChatColor.GRAY + "this singleplayer take on Superjump.");
-            description.add(ChatColor.GRAY + "");
-            description.add(ChatColor.WHITE + "" + ChatColor.BOLD + "Currently Playing: " + ChatColor.GOLD 
-                    + (this.getBattleManager(ParkourMode.ENDLESS).getAll().size()));
-            return description;
-        };
+    public void startRandomBattle(List<ParkourPlayer> players) {
+        Set<Arena> arenas = new HashSet<>();
+        for (ParkourPlayer sjp : players) {
+            for (Arena arena : sjp.getLastArenas()) {
+                arenas.add(arena);
+            }
+        }
+        Random random = new Random(System.currentTimeMillis());
+        Arena arena = (Arena) arenas.toArray()[random.nextInt(arenas.size())];
+        players.forEach(sjp -> sjp.setParkourMode(arena.getParkourMode()));
+        arena.startBattle(players, StartReason.QUEUE);
     }
     
-    private Function<SLPlayer, List<String>> getVersusDescription() {
-        return (SLPlayer slp) -> {
-            List<String> description = new ArrayList<>();
-            ParkourPlayer sjp = Parkour.getInstance().getPlayerManager().get(slp.getUniqueId());
-            description.add(ChatColor.GRAY + "");
-            description.add(ChatColor.GRAY + "Clash against other players in a race to the finish line");
-            description.add(ChatColor.GRAY + "in this competitive take on SuperJump.");
-            description.add(ChatColor.GRAY + "");
-            description.add(ChatColor.WHITE + "" + ChatColor.BOLD + "Currently Playing: " + ChatColor.GOLD 
-                    + (this.getBattleManager(ParkourMode.CLASSIC).getAll().size() 
-                            + this.getBattleManager(ParkourMode.RANDOM).getAll().size()));
-            return description;
-        };
+    public void dequeuePlayer(ParkourPlayer sjp) {
+        this.battleManagers.forEach((mode, manager) -> {
+            manager.dequeue(sjp);
+        });
+        sjp.stopRequeue();
+        sjp.clearLastArenas();
     }
     
-    private Function<SLPlayer, List<String>> getClassicDescription() {
-        return (SLPlayer slp) -> {
-            List<String> description = new ArrayList<>();
-            ParkourPlayer sjp = Parkour.getInstance().getPlayerManager().get(slp.getUniqueId());
-            description.add(ChatColor.GRAY + "");
-            description.add(ChatColor.GRAY + "Play against another player on a preset field of preset jumps.");
-            description.add(ChatColor.GRAY + "The first to reach the finish line wins!");
-            description.add(ChatColor.GRAY + "");
-            description.add(ChatColor.WHITE + "" + ChatColor.BOLD + "Currently Playing: " + ChatColor.GOLD 
-                    + (this.getBattleManager(ParkourMode.CLASSIC).getAll().size()));
-            return description;
-        };
+    public void queuePlayerSilent(ParkourPlayer sjp, Arena arena, boolean dequeue) {
+        if(arena.getParkourMode().equals(ParkourMode.ENDLESS) && EndlessParkourArena.isDisabled()) {
+            ChatManager.sendMessagePlayer(SpleefLeague.getInstance().getPlayerManager().get(sjp.getPlayer())
+                    , Parkour.getInstance().getChatPrefix()
+                        + arenaColor + " Endless"
+                        + fillColor + " is currently disabled for scheduled maintenance "
+                        + timeColor + "(11:55pm - 12:00am PST)"
+                        + fillColor + ".");
+            return;
+        }
+        if (dequeue) {
+            dequeuePlayer(sjp);
+        }
+        this.battleManagers.get(arena.getParkourMode()).queue(sjp, arena, dequeue);
+        sjp.setRandomQueued(false);
+        sjp.addLastArena(arena);
     }
     
-    private Function<SLPlayer, List<String>> getRandomDescription() {
-        return (SLPlayer slp) -> {
-            List<String> description = new ArrayList<>();
-            ParkourPlayer sjp = Parkour.getInstance().getPlayerManager().get(slp.getUniqueId());
-            description.add(ChatColor.GRAY + "");
-            description.add(ChatColor.GRAY + "Compete against another player on a field of randomly");
-            description.add(ChatColor.GRAY + "generated jumps of four different difficulties.");
-            description.add(ChatColor.GRAY + "");
-            description.add(ChatColor.WHITE + "" + ChatColor.BOLD + "Currently Playing: " + ChatColor.GOLD 
-                    + (this.getBattleManager(ParkourMode.RANDOM).getAll().size()));
-            return description;
-        };
+    public void queuePlayer(ParkourPlayer sjp, Arena arena, boolean dequeue) {
+        queuePlayerSilent(sjp, arena, dequeue);
+        ChatManager.sendMessagePlayer(SpleefLeague.getInstance().getPlayerManager().get(sjp.getPlayer())
+                , Parkour.getInstance().getChatPrefix()
+                        + fillColor + " Queued for "
+                        + arenaColor + arena.getName()
+                        + fillColor +  "."
+                        + fillColor + " Type `/leave` to leave the queue.");
     }
     
-    private Function<SLPlayer, List<String>> getEndlessDescription() {
-        return (SLPlayer slp) -> {
-            List<String> description = new ArrayList<>();
-            ParkourPlayer sjp = Parkour.getInstance().getPlayerManager().get(slp.getUniqueId());
-            description.add(ChatColor.GRAY + "");
-            description.add(ChatColor.GRAY + "In this singleplayer mode, move on endlessly through");
-            description.add(ChatColor.GRAY + "random, progressively more challenging levels!");
-            description.add(ChatColor.GRAY + "");
-            description.add(ChatColor.WHITE + "" + ChatColor.BOLD + "Currently Playing: " + ChatColor.GOLD 
-                    + (this.getBattleManager(ParkourMode.ENDLESS).getAll().size()));
-            return description;
-        };
+    public void queuePlayerRandom(ParkourPlayer sjp) {
+        dequeuePlayer(sjp);
+        VersusClassicParkourArena.getAll().forEach(arena -> {
+            if(!sjp.getVersusRandomBlacklist().contains(arena)) {
+                this.battleManagers.get(arena.getParkourMode()).queue(sjp, arena, false);
+                sjp.addLastArena(arena);
+            }
+        });
+        VersusShuffleParkourArena.getAll().forEach(arena -> {
+            if(!sjp.getVersusRandomBlacklist().contains(arena)) {
+                this.battleManagers.get(arena.getParkourMode()).queue(sjp, arena, false);
+                sjp.addLastArena(arena);
+            }
+        });
+        ChatManager.sendMessagePlayer(SpleefLeague.getInstance().getPlayerManager().get(sjp.getPlayer())
+                , Parkour.getInstance().getChatPrefix()
+                        + fillColor + " Queued for all "
+                        + arenaColor + "Versus"
+                        + fillColor + " maps."
+                        + fillColor + " Type `/leave` to leave the queue.");
+        sjp.setRandomQueued(true);
     }
     
-    private Function<SLPlayer, List<String>> getSuperJumpDescription() {
-        return (SLPlayer slp) -> {
-            List<String> description = new ArrayList<>();
-            ParkourPlayer sjp = Parkour.getInstance().getPlayerManager().get(slp.getUniqueId());
-            description.add(ChatColor.GRAY + "");
-            description.add(ChatColor.GRAY + "Jump and run your way to the finish line in this");
-            description.add(ChatColor.GRAY + "fast paced parkour gamemode.");
-            description.add(ChatColor.GRAY + "");
-            description.add(ChatColor.WHITE + "" + ChatColor.BOLD + "Currently Playing: " + ChatColor.GOLD 
-                    + (this.getBattleManager(ParkourMode.CLASSIC).getAll().size()
-                            + this.getBattleManager(ParkourMode.CONQUEST).getAll().size()
-                            + this.getBattleManager(ParkourMode.ENDLESS).getAll().size()
-                            + this.getBattleManager(ParkourMode.PARTY).getAll().size()
-                            + this.getBattleManager(ParkourMode.PRACTICE).getAll().size()
-                            + this.getBattleManager(ParkourMode.PRO).getAll().size()
-                            + this.getBattleManager(ParkourMode.RANDOM).getAll().size()));
-            return description;
-        };
+    public void queuePlayer(ParkourPlayer sjp, ParkourMode mode, boolean dequeue) {
+        if(mode.equals(ParkourMode.ENDLESS) && EndlessParkourArena.isDisabled()) {
+            ChatManager.sendMessagePlayer(SpleefLeague.getInstance().getPlayerManager().get(sjp.getPlayer())
+                    , Parkour.getInstance().getChatPrefix()
+                        + arenaColor + " Endless"
+                        + fillColor + " is currently disabled for scheduled maintenance "
+                        + timeColor + "(11:55pm - 12:00am PST)"
+                        + fillColor + ".");
+            return;
+        }
+        if (dequeue) {
+            dequeuePlayer(sjp);
+            
+        }
+        this.battleManagers.get(mode).queue(sjp);
+        ChatManager.sendMessagePlayer(SpleefLeague.getInstance().getPlayerManager().get(sjp.getPlayer())
+                , Parkour.getInstance().getChatPrefix()
+                    + fillColor + " Queued for "
+                    + modeColor + mode.getName()
+                    + fillColor +  ".");
     }
     
-    private void addGameMenuMode(InventoryMenuTemplateBuilder menu, ParkourMode parkourMode) {
-        switch(parkourMode) {
-            case CLASSIC:
-                menu.description(getClassicDescription());
-                VersusClassicParkourArena.getAll().stream().forEach(arena -> {
-                    menu.component(arena.getMenuPos(), item()
-                            .displayName(ChatColor.WHITE + "" + ChatColor.BOLD + arena.getName() + " " + arena.getDifficultyStars())
-                            .description(arena.getDynamicDescription())
-                            .displayIcon((slp) -> (arena.isAvailable(playerManager.get(slp)) ? Material.MAP : Material.EMPTY_MAP))
-                            .onClick((event) -> {
-                                ParkourPlayer sjp = getPlayerManager().get(event.getPlayer());
-                                if (arena.isAvailable(sjp)) {
-                                    if (arena.isOccupied()) {
-                                        ((VersusClassicParkourBattle)this.getBattleManager(ParkourMode.CLASSIC).getBattle(arena)).addSpectator(sjp);
-                                    } else if (!arena.isPaused()) {
-                                        this.getBattleManager(ParkourMode.CLASSIC).queue(sjp, arena);
-                                        event.getItem().getParent().update();
-                                        ChatManager.sendMessagePlayer(SpleefLeague.getInstance().getPlayerManager().get(event.getPlayer())
-                                                , Parkour.getInstance().getChatPrefix()
-                                                + Theme.SUCCESS.buildTheme(false) + " You have been added to the queue for Classic: " + arena.getName());
-                                    }
-                                }
-                            })
-                    );
-                });
-                break;
-            case RANDOM:
-                menu.description(getRandomDescription());
-                VersusRandomParkourArena.getAll().stream().forEach(arena -> {
-                    menu.component(arena.getMenuPos(), item()
-                            .displayName(ChatColor.WHITE + "" + ChatColor.BOLD + arena.getName() + " " + arena.getDifficultyStars())
-                            .description(arena.getDynamicDescription())
-                            .displayItem(arena.getMenuItem())
-                            .onClick((event) -> {
-                                ParkourPlayer sjp = getPlayerManager().get(event.getPlayer());
-                                if (arena.isAvailable(sjp)) {
-                                    if (arena.isOccupied()) {
-                                        ((VersusRandomParkourBattle)this.getBattleManager(ParkourMode.RANDOM).getBattle(arena)).addSpectator(sjp);
-                                    } else if (!arena.isPaused()) {
-                                        this.getBattleManager(ParkourMode.RANDOM).queue(sjp, arena);
-                                        event.getItem().getParent().update();
-                                        ChatManager.sendMessagePlayer(SpleefLeague.getInstance().getPlayerManager().get(event.getPlayer())
-                                                , Parkour.getInstance().getChatPrefix()
-                                                + Theme.SUCCESS.buildTheme(false) + " You have been added to the queue for Random: " + arena.getName());
-                                    }
-                                }
-                            })
-                    );
-                });
-                break;
-            default: break;
+    public void requeuePlayer(ParkourPlayer sjp) {
+        if (SpleefLeague.getInstance().getPlayerManager().get(sjp.getPlayer()).isRequeueing()) {
+            if (sjp.getMovedLastMatch()) {
+                ChatManager.sendMessagePlayer(SpleefLeague.getInstance().getPlayerManager().get(sjp.getPlayer())
+                        , Parkour.getInstance().getChatPrefix()
+                            + fillColor + " You will be requeued in "
+                            + timeColor + "5"
+                            + fillColor + " seconds.");
+                sjp.startRequeue();
+            }
+            else {
+                ChatManager.sendMessagePlayer(SpleefLeague.getInstance().getPlayerManager().get(sjp.getPlayer())
+                        , Parkour.getInstance().getChatPrefix()
+                            + fillColor + " You didn't move last game and have been removed from the queue.");
+            }
         }
     }
 
     private void createGameMenu() {
-        InventoryMenuTemplateBuilder menu = SLMenu.getNewGamemodeMenu()
-                .title("SuperJump")
-                .displayName(ChatColor.GREEN + "" + ChatColor.BOLD + "SuperJump")
-                .description(getSuperJumpDescription())
-                .displayIcon(Material.DIAMOND_BOOTS)
-                .flags(InventoryMenuFlag.EXIT_ON_CLICK_OUTSIDE)
-                .visibilityController((slp) -> (queuesOpen));
-        InventoryMenuTemplateBuilder menuVersus = new InventoryMenuTemplateBuilder()
-                .title("SJ Versus")
-                .displayName(ChatColor.AQUA + "" + ChatColor.BOLD + "Versus")
-                .description(getVersusDescription())
-                .displayIcon(Material.ARMOR_STAND)
-                .flags(InventoryMenuFlag.EXIT_ON_CLICK_OUTSIDE);
-        InventoryMenuTemplateBuilder menuVersusClassic = new InventoryMenuTemplateBuilder()
-                .title("SJ Classic")
-                .displayName(ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD + "Classic")
-                .description(getClassicDescription())
-                .displayIcon(Material.IRON_BOOTS)
-                .flags(InventoryMenuFlag.EXIT_ON_CLICK_OUTSIDE);
-        InventoryMenuTemplateBuilder menuVersusRandom = new InventoryMenuTemplateBuilder()
-                .title("SJ Random")
-                .displayName(ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD + "Random")
-                .description(getRandomDescription())
-                .displayIcon(Material.GOLD_BOOTS)
-                .flags(InventoryMenuFlag.EXIT_ON_CLICK_OUTSIDE);
-        InventoryMenuTemplateBuilder menuSolo = new InventoryMenuTemplateBuilder()
-                .title("SJ Solo")
-                .displayName(ChatColor.AQUA + "" + ChatColor.BOLD + "Solo")
-                .description(getSoloDescription())
-                .displayIcon(Material.BED)
-                .flags(InventoryMenuFlag.EXIT_ON_CLICK_OUTSIDE);
-        EndlessParkourArena.getAll().stream().forEach(arena -> {
-            menuSolo.component(item()
-                    .displayName(ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD + arena.getName())
-                    .description(getEndlessDescription())
-                    .displayIcon(Material.EYE_OF_ENDER)
-                    .onClick((event) -> {
-                        ParkourPlayer sjp = getPlayerManager().get(event.getPlayer());
-                        if(EndlessParkourArena.isDisabled()) {
-                            ChatManager.sendMessagePlayer(SpleefLeague.getInstance().getPlayerManager().get(event.getPlayer())
-                                    , Parkour.getInstance().getChatPrefix()
-                                    + Theme.ERROR.buildTheme(false) + " Endless is currently disabled for scheduled maintenance (11:55pm - 12:00am PST)");
-                        }
-                        else {
-                            this.getBattleManager(ParkourMode.ENDLESS).queue(sjp, arena);
-                            event.getItem().getParent().update();
-                            ChatManager.sendMessagePlayer(SpleefLeague.getInstance().getPlayerManager().get(event.getPlayer())
-                                    , Parkour.getInstance().getChatPrefix()
-                                    + Theme.SUCCESS.buildTheme(false) + " You have been added to the queue for Endless");
-                        }
-                    })
-            );
-        });
-        addGameMenuMode(menuVersusClassic, ParkourMode.CLASSIC);
-        addGameMenuMode(menuVersusRandom, ParkourMode.RANDOM);
-        menuVersus.component(3, menuVersusClassic);
-        menuVersus.component(5, menuVersusRandom);
-        menu.component(3, menuVersus);
-        menu.component(5, menuSolo);
+        ParkourMenu.createSuperJumpMenu(SLMenu.getMenuBuilder());
+    }
+    
+    public Arena getArena(String name) {
+        for (ConquestParkourArena arena : ConquestParkourArena.getAll()) {
+            if (arena.getName().equalsIgnoreCase(name)) {
+                return arena;
+            }
+        }
+        for (EndlessParkourArena arena : EndlessParkourArena.getAll()) {
+            if (arena.getName().equalsIgnoreCase(name)) {
+                return arena;
+            }
+        }
+        for (PartyParkourArena arena : PartyParkourArena.getAll()) {
+            if (arena.getName().equalsIgnoreCase(name)) {
+                return arena;
+            }
+        }
+        for (PracticeParkourArena arena : PracticeParkourArena.getAll()) {
+            if (arena.getName().equalsIgnoreCase(name)) {
+                return arena;
+            }
+        }
+        for (ProParkourArena arena : ProParkourArena.getAll()) {
+            if (arena.getName().equalsIgnoreCase(name)) {
+                return arena;
+            }
+        }
+        for (VersusClassicParkourArena arena : VersusClassicParkourArena.getAll()) {
+            if (arena.getName().equalsIgnoreCase(name)) {
+                return arena;
+            }
+        }
+        for (VersusShuffleParkourArena arena : VersusShuffleParkourArena.getAll()) {
+            if (arena.getName().equalsIgnoreCase(name)) {
+                return arena;
+            }
+        }
+        return null;
     }
 
     @Override
     public BattleManager<? extends Arena, ParkourPlayer, ? extends ParkourBattle>[] getBattleManagers() {
-        return ((BattleManager<? extends Arena, ParkourPlayer, ? extends ParkourBattle>[])(battleManagers.values().toArray()));
+        return new BattleManager[]{ 
+            battleManagers.get(ParkourMode.CLASSIC),
+            battleManagers.get(ParkourMode.CONQUEST),
+            battleManagers.get(ParkourMode.ENDLESS),
+            battleManagers.get(ParkourMode.MEMORY),
+            battleManagers.get(ParkourMode.PARTY),
+            battleManagers.get(ParkourMode.PRACTICE),
+            battleManagers.get(ParkourMode.PRO),
+            battleManagers.get(ParkourMode.SHUFFLE)
+        };
     }
 }
