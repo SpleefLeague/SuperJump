@@ -17,7 +17,7 @@ import com.spleefleague.parkour.game.ParkourBattle;
 import com.spleefleague.parkour.game.classic.ClassicParkourBattle;
 import com.spleefleague.parkour.player.ParkourPlayer;
 import org.bukkit.Bukkit;
-import org.bukkit.craftbukkit.v1_13_R1.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_13_R2.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
