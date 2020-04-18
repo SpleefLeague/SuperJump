@@ -6,19 +6,14 @@
 package com.spleefleague.parkour;
 
 import com.mongodb.client.MongoDatabase;
+import com.spleefleague.commands.command.CommandLoader;
 import com.spleefleague.core.SpleefLeague;
 import com.spleefleague.core.chat.ChatChannel;
 import com.spleefleague.core.chat.ChatManager;
 import com.spleefleague.core.chat.Theme;
-import com.spleefleague.commands.command.CommandLoader;
-import com.spleefleague.gameapi.events.BattleEndEvent.EndReason;
-import com.spleefleague.gameapi.events.BattleStartEvent.StartReason;
 import com.spleefleague.core.menus.SLMenu;
 import com.spleefleague.core.player.DBPlayerManager;
-import com.spleefleague.gameapi.GamePlugin;
 import com.spleefleague.core.plugin.PlayerHandling;
-import com.spleefleague.gameapi.queue.BattleManager;
-import com.spleefleague.gameapi.queue.RatedBattleManager;
 import com.spleefleague.core.utils.inventorymenu.InventoryMenuTemplateBuilder;
 import com.spleefleague.parkour.game.Arena;
 import com.spleefleague.parkour.listener.ConnectionListener;
@@ -34,6 +29,11 @@ import java.util.ArrayList;
 import static com.spleefleague.core.utils.inventorymenu.InventoryMenuAPI.item;
 import com.spleefleague.core.utils.inventorymenu.InventoryMenuFlag;
 import com.spleefleague.entitybuilder.EntityBuilder;
+import com.spleefleague.gameapi.GamePlugin;
+import com.spleefleague.gameapi.events.BattleEndEvent.EndReason;
+import com.spleefleague.gameapi.events.BattleStartEvent.StartReason;
+import com.spleefleague.gameapi.queue.BattleManager;
+import com.spleefleague.gameapi.queue.RatedBattleManager;
 import com.spleefleague.parkour.game.ParkourBattle;
 import com.spleefleague.parkour.game.ParkourMode;
 import com.spleefleague.parkour.game.classic.ClassicParkourArena;
@@ -247,7 +247,7 @@ public class Parkour extends GamePlugin implements PlayerHandling {
             menu.component(item()
                     .displayName(arena.getName())
                     .description(arena.getDynamicDescription())
-                    .displayIcon((slp) -> (arena.isAvailable(playerManager.get(slp)) ? Material.MAP : Material.EMPTY_MAP))
+                    .displayIcon((slp) -> (arena.isAvailable(playerManager.get(slp)) ? Material.MAP : Material.MAP))
                     .onClick((event) -> {
                         ParkourPlayer sp = getPlayerManager().get(event.getPlayer());
                         if (arena.isAvailable(sp)) {

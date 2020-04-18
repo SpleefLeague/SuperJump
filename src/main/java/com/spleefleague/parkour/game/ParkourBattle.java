@@ -5,7 +5,9 @@
  */
 package com.spleefleague.parkour.game;
 
-import com.comphenix.packetwrapper.WrapperPlayServerPlayerInfo;
+import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.comphenix.protocol.wrappers.PlayerInfoData;
 import com.comphenix.protocol.wrappers.WrappedChatComponent;
@@ -28,9 +30,8 @@ import com.spleefleague.parkour.Parkour;
 import com.spleefleague.parkour.player.ParkourPlayer;
 import com.spleefleague.virtualworld.VirtualWorld;
 import com.spleefleague.virtualworld.api.FakeWorld;
-import org.apache.commons.lang3.time.DurationFormatUtils;
+import java.lang.reflect.InvocationTargetException;
 import org.bukkit.*;
-import org.bukkit.craftbukkit.v1_12_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -42,7 +43,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.bson.Document;
+import org.bukkit.craftbukkit.libs.org.apache.commons.lang3.time.DurationFormatUtils;
+import org.bukkit.craftbukkit.v1_15_R1.entity.CraftPlayer;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Team;
@@ -240,20 +244,42 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
             ingamePlayers.add(p.getPlayer());
         }
         Bukkit.getScheduler().runTaskLater(Parkour.getInstance(), () -> {
-            List<PlayerInfoData> list = new ArrayList<>();
-            SpleefLeague.getInstance().getPlayerManager().getAll().forEach((SLPlayer slPlayer) -> list.add(new PlayerInfoData(WrappedGameProfile.fromPlayer(slPlayer.getPlayer()), ((CraftPlayer) slPlayer.getPlayer()).getHandle().ping, EnumWrappers.NativeGameMode.SURVIVAL, WrappedChatComponent.fromText(slPlayer.getRank().getColor() + slPlayer.getName()))));
-            WrapperPlayServerPlayerInfo packet = new WrapperPlayServerPlayerInfo();
-            packet.setAction(EnumWrappers.PlayerInfoAction.ADD_PLAYER);
-            packet.setData(list);
-            ingamePlayers.forEach((Player p) -> packet.sendPacket(p));
-
-            list.clear();
-            ingamePlayers.forEach((Player p) -> {
+            PacketContainer packetContainer = new PacketContainer(PacketType.Play.Server.PLAYER_INFO);
+            packetContainer.getPlayerInfoAction().write(0, EnumWrappers.PlayerInfoAction.ADD_PLAYER);
+            List<PlayerInfoData> playerInfoDatas = new ArrayList<>();
+            for (SLPlayer slPlayer : SpleefLeague.getInstance().getPlayerManager().getAll()) {
+                playerInfoDatas.add(new PlayerInfoData(
+                        WrappedGameProfile.fromPlayer(slPlayer.getPlayer()),
+                        ((CraftPlayer) slPlayer.getPlayer()).getHandle().ping,
+                        EnumWrappers.NativeGameMode.SURVIVAL,
+                        WrappedChatComponent.fromText(slPlayer.getRank().getColor() + slPlayer.getName())));
+            }
+            packetContainer.getPlayerInfoDataLists().write(0, playerInfoDatas);
+            for (Player p : ingamePlayers) {
+                try {
+                    ProtocolLibrary.getProtocolManager().sendServerPacket(p, packetContainer);
+                } catch (InvocationTargetException ex) {
+                    Logger.getLogger(ParkourBattle.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            
+            packetContainer = new PacketContainer(PacketType.Play.Server.PLAYER_INFO);
+            packetContainer.getPlayerInfoAction().write(0, EnumWrappers.PlayerInfoAction.ADD_PLAYER);
+            playerInfoDatas.clear();
+            for (Player p : ingamePlayers) {
                 SLPlayer generalPlayer = SpleefLeague.getInstance().getPlayerManager().get(p);
-                list.add(new PlayerInfoData(WrappedGameProfile.fromPlayer(p), ((CraftPlayer) p).getHandle().ping, EnumWrappers.NativeGameMode.SURVIVAL, WrappedChatComponent.fromText(generalPlayer.getRank().getColor() + generalPlayer.getName())));
-            });
-            packet.setData(list);
-            packet.sendPacket(sp.getPlayer());
+                playerInfoDatas.add(new PlayerInfoData(
+                        WrappedGameProfile.fromPlayer(p),
+                        ((CraftPlayer) p).getHandle().ping,
+                        EnumWrappers.NativeGameMode.SURVIVAL,
+                        WrappedChatComponent.fromText(generalPlayer.getRank().getColor() + generalPlayer.getName())));
+            }
+            packetContainer.getPlayerInfoDataLists().write(0, playerInfoDatas);
+            try {
+                ProtocolLibrary.getProtocolManager().sendServerPacket(sp.getPlayer(), packetContainer);
+            } catch (InvocationTargetException ex) {
+                Logger.getLogger(ParkourBattle.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }, 10);
         resetPlayer(sp);
     }

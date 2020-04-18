@@ -5,7 +5,9 @@
  */
 package com.spleefleague.parkour.listener;
 
-import com.comphenix.packetwrapper.WrapperPlayServerPlayerInfo;
+import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.comphenix.protocol.wrappers.PlayerInfoData;
 import com.comphenix.protocol.wrappers.WrappedChatComponent;
@@ -16,8 +18,8 @@ import com.spleefleague.parkour.Parkour;
 import com.spleefleague.parkour.game.ParkourBattle;
 import com.spleefleague.parkour.game.classic.ClassicParkourBattle;
 import com.spleefleague.parkour.player.ParkourPlayer;
+import java.lang.reflect.InvocationTargetException;
 import org.bukkit.Bukkit;
-import org.bukkit.craftbukkit.v1_12_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -26,6 +28,9 @@ import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.bukkit.craftbukkit.v1_15_R1.entity.CraftPlayer;
 
 /**
  *
@@ -88,17 +93,29 @@ public class ConnectionListener implements Listener {
         Bukkit.getScheduler().runTaskLater(Parkour.getInstance(), () -> {
             List<PlayerInfoData> list = new ArrayList<>();
             SpleefLeague.getInstance().getPlayerManager().getAll().forEach((SLPlayer slPlayer) -> list.add(new PlayerInfoData(WrappedGameProfile.fromPlayer(slPlayer.getPlayer()), ((CraftPlayer) slPlayer.getPlayer()).getHandle().ping, EnumWrappers.NativeGameMode.SURVIVAL, WrappedChatComponent.fromText(slPlayer.getRank().getColor() + slPlayer.getName()))));
-            WrapperPlayServerPlayerInfo packet = new WrapperPlayServerPlayerInfo();
-            packet.setAction(EnumWrappers.PlayerInfoAction.ADD_PLAYER);
-            packet.setData(list);
-            ingamePlayers.forEach((Player p) -> packet.sendPacket(p));
+            PacketContainer packetContainer = new PacketContainer(PacketType.Play.Server.PLAYER_INFO);
+            packetContainer.getPlayerInfoAction().write(0, EnumWrappers.PlayerInfoAction.ADD_PLAYER);
+            packetContainer.getPlayerInfoDataLists().write(0, list);
+            for (Player p : ingamePlayers) {
+                try {
+                    ProtocolLibrary.getProtocolManager().sendServerPacket(p, packetContainer);
+                } catch (InvocationTargetException ex) {
+                    Logger.getLogger(ConnectionListener.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
             list.clear();
             ingamePlayers.forEach((Player p) -> {
                 SLPlayer generalPlayer = SpleefLeague.getInstance().getPlayerManager().get(p);
                 list.add(new PlayerInfoData(WrappedGameProfile.fromPlayer(p), ((CraftPlayer) p).getHandle().ping, EnumWrappers.NativeGameMode.SURVIVAL, WrappedChatComponent.fromText(generalPlayer.getRank().getColor() + generalPlayer.getName())));
             });
-            packet.setData(list);
-            SpleefLeague.getInstance().getPlayerManager().getAll().forEach((SLPlayer slPlayer) -> packet.sendPacket(slPlayer.getPlayer()));
+            packetContainer.getPlayerInfoDataLists().write(0, list);
+            for (Player p : SpleefLeague.getInstance().getPlayerManager().getAll()) {
+                try {
+                    ProtocolLibrary.getProtocolManager().sendServerPacket(p, packetContainer);
+                } catch (InvocationTargetException ex) {
+                    Logger.getLogger(ConnectionListener.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
         }, 10);
     }
 }
