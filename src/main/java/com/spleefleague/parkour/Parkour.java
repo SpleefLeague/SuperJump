@@ -54,7 +54,7 @@ public class Parkour extends GamePlugin implements PlayerHandling {
     private ChatChannel start, end;
 
     public Parkour() {
-        super(ChatColor.GRAY + "[" + ChatColor.GOLD + "Parkour" + ChatColor.GRAY + "]" + ChatColor.RESET);
+        super(ChatColor.GRAY + "[" + ChatColor.GOLD + "SuperJump" + ChatColor.GRAY + "]" + ChatColor.RESET);
     }
 
     @Override
@@ -172,7 +172,7 @@ public class Parkour extends GamePlugin implements PlayerHandling {
     public void printStats(Player p, Player target) {
         ParkourPlayer sjp = playerManager.get(target);
         StringJoiner sj = new StringJoiner("\n");
-        sj.add(Theme.INFO + sjp.getName() + "'s Parkour stats");
+        sj.add(Theme.INFO + sjp.getName() + "'s SuperJump stats");
         boolean print = false;
         for (ParkourMode mode : ParkourMode.values()) {
             print = true;

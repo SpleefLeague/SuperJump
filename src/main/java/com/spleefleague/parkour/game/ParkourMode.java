@@ -12,7 +12,7 @@ import org.bukkit.ChatColor;
  * @author jonas
  */
 public enum ParkourMode {
-    CLASSIC("ClassicParkour");
+    CLASSIC("SuperJump");
     
     private final String name;
     

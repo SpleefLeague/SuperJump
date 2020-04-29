@@ -98,7 +98,7 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
     
     public void start(StartReason reason) {
         for(ParkourPlayer sjp : players) {
-            VirtualWorld.getInstance().getFakeWorldManager().addWorld(sjp.getPlayer(), fakeWorld, 10);
+            VirtualWorld.getInstance().getFakeWorldManager().addWorld(sjp.getPlayer().getUniqueId(), fakeWorld, 10);
         }
         players.forEach(p -> {
             GamePlugin.unspectateGlobal(p);
@@ -217,8 +217,9 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
         }
         sp.setScoreboard(scoreboard);
         SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(sp.getPlayer());
-        VirtualWorld.getInstance().getFakeWorldManager().addWorld(sp.getPlayer(), fakeWorld, 10);
+        VirtualWorld.getInstance().getFakeWorldManager().addWorld(sp.getPlayer().getUniqueId(), fakeWorld, 10);
         slp.setState(PlayerState.SPECTATING);
+        sp.setGameMode(GameMode.SPECTATOR);
         slp.addChatChannel(cc);
         for (ParkourPlayer sjp : getActivePlayers()) {
             sjp.showPlayer(sp.getPlayer());
@@ -444,7 +445,7 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
 
     private void resetPlayer(ParkourPlayer sp) {
         SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(sp.getPlayer());
-        VirtualWorld.getInstance().getFakeWorldManager().removeWorld(sp.getPlayer(), fakeWorld);
+        VirtualWorld.getInstance().getFakeWorldManager().removeWorld(sp.getPlayer().getUniqueId(), fakeWorld);
         if (spectators.contains(sp)) {
             spectators.remove(sp);
         } else {
@@ -459,6 +460,7 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
         }
         sp.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
         sp.teleport(SpleefLeague.getInstance().getSpawnManager().getNext().getLocation());
+        sp.setGameMode(GameMode.SURVIVAL);
         hidePlayers(sp);
         slp.removeChatChannel(cc);
         slp.setState(PlayerState.IDLE);
