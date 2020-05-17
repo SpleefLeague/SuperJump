@@ -219,7 +219,7 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
         SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(sp.getPlayer());
         VirtualWorld.getInstance().getFakeWorldManager().addWorld(sp.getPlayer().getUniqueId(), fakeWorld, 10);
         slp.setState(PlayerState.SPECTATING);
-        sp.setGameMode(GameMode.SPECTATOR);
+        sp.setGameMode(GameMode.ADVENTURE);
         slp.addChatChannel(cc);
         for (ParkourPlayer sjp : getActivePlayers()) {
             sjp.showPlayer(sp.getPlayer());
