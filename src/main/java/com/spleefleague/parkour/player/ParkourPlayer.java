@@ -165,4 +165,5 @@ public class ParkourPlayer extends RatedPlayer<ParkourMode> {
     public PersistentDataContainer getPersistentDataContainer() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
+
 }
