@@ -438,7 +438,6 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
                 Parkour.LOG.log(Level.WARNING, "Could not save GameHistory!");
                 Document doc = EntityBuilder.serialize(gh).get("$set", Document.class);
                 Parkour.LOG.log(Level.WARNING, doc.toJson());
-                e.printStackTrace();
             }
         });
     }
