@@ -20,6 +20,8 @@ import com.spleefleague.parkour.listener.ConnectionListener;
 import com.spleefleague.parkour.listener.EnvironmentListener;
 import com.spleefleague.parkour.listener.GameListener;
 import com.spleefleague.parkour.player.ParkourPlayer;
+import com.spleefleague.parkour.records.RecordManager;
+import com.spleefleague.parkour.signs.GameSign;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -52,6 +54,7 @@ public class Parkour extends GamePlugin implements PlayerHandling {
     private RatedBattleManager<ClassicParkourArena, ParkourPlayer, ClassicParkourBattle> battleManagerClassic;
     private boolean queuesOpen = true;
     private ChatChannel start, end;
+    private RecordManager recordManager;
 
     public Parkour() {
         super(ChatColor.GRAY + "[" + ChatColor.GOLD + "SuperJump" + ChatColor.GRAY + "]" + ChatColor.RESET);
@@ -72,6 +75,8 @@ public class Parkour extends GamePlugin implements PlayerHandling {
         ConnectionListener.init();
         GameListener.init();
         EnvironmentListener.init();
+        recordManager = new RecordManager();
+        GameSign.init();
         CommandLoader.loadCommands(this, "com.spleefleague.parkour.commands");
     }
 
@@ -250,7 +255,7 @@ public class Parkour extends GamePlugin implements PlayerHandling {
                     .displayIcon((slp) -> (arena.isAvailable(playerManager.get(slp)) ? Material.MAP : Material.MAP))
                     .onClick((event) -> {
                         ParkourPlayer sp = getPlayerManager().get(event.getPlayer());
-                        if (arena.isAvailable(sp)) {
+                        if (Parkour.getInstance().queuesOpen() && arena.isAvailable(sp)) {
                             if (arena.isOccupied()) {
                                 battleManagerClassic.getBattle(arena).addSpectator(sp);
                             } else if (!arena.isPaused()) {

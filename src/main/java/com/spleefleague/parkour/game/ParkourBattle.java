@@ -38,6 +38,9 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -72,6 +75,7 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
     protected boolean isOver;
     private final Collection<Vector> spawnCageDefinition;
     private final ParkourMode mode;
+    protected Instant startTime, endTime;
 
     protected ParkourBattle(A arena, List<ParkourPlayer> players) {
         this(arena, players, arena.getParkourMode());
@@ -91,6 +95,9 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
     protected abstract void addToBattleManager();
     protected abstract void removeFromBattleManager();
     protected abstract void applyRatingChange(ParkourPlayer winner);
+    protected GameHistory getGameHistory(ParkourPlayer winner, EndReason reason) {
+        return new GameHistory(this, winner, reason);
+    }
 
     public ParkourMode getParkourMode() {
         return mode;
@@ -299,6 +306,9 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
         if (activePlayers.size() == 1) {
             end(activePlayers.get(0), EndReason.NORMAL);
         }
+        else if (activePlayers.size() < 1) {
+            end(null, EndReason.ENDGAME);
+        }
     }
 
     @Override
@@ -347,6 +357,10 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
     }
 
     public void startCountdown() {
+        startCountdown(3);
+    }
+
+    public void startCountdown(final int seconds) {
         inCountdown = true;
         setSpawnCageBlock(Material.GLASS);
         for (ParkourPlayer sjp : getActivePlayers()) {
@@ -355,7 +369,7 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
             sjp.teleport(this.data.get(sjp).getSpawn());
         }
         BukkitRunnable br = new BukkitRunnable() {
-            private int secondsLeft = 3;
+            private int secondsLeft = seconds;
 
             @Override
             public void run() {
@@ -373,6 +387,7 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
             }
 
             public void onDone() {
+                ParkourBattle.this.startTime = Instant.now();
                 setSpawnCageBlock(Material.AIR);
                 for (ParkourPlayer sp : getActivePlayers()) {
                     sp.setFrozen(false);
@@ -385,6 +400,10 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
     }
     
     protected void startClock() {
+        if(clock != null) {
+            ticksPassed = 0;
+            return;
+        }
         clock = new BukkitRunnable() {
             @Override
             public void run() {
@@ -402,6 +421,7 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
     }
 
     public void end(ParkourPlayer winner, EndReason reason) {
+        endTime = Instant.now();
         saveGameHistory(winner, reason);
         if (reason == BattleEndEvent.EndReason.CANCEL) {
             if (reason == BattleEndEvent.EndReason.CANCEL) {
@@ -430,8 +450,8 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
     }
 
     protected void saveGameHistory(ParkourPlayer winner, EndReason reason) {
+        GameHistory gh = getGameHistory(winner, reason);
         Bukkit.getScheduler().runTaskAsynchronously(Parkour.getInstance(), () -> {
-            GameHistory gh = new GameHistory(this, winner, reason);
             try {
                 EntityBuilder.save(gh, Parkour.getInstance().getPluginDB().getCollection("GameHistory"));
             } catch(Exception e) {
@@ -467,8 +487,6 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
         slp.resetVisibility();
     }
 
-    
-
     public void onArenaLeave(ParkourPlayer sjp) {
         if (inCountdown) {
             sjp.teleport(data.get(sjp).getSpawn());
@@ -483,7 +501,10 @@ public abstract class ParkourBattle<A extends Arena> implements com.spleefleague
     }
 
     protected int getDuration() {
-        return ticksPassed;
+        if(startTime == null) return 0;
+        Instant endTime = this.endTime == null ? Instant.now() : this.endTime;
+        long millis = Duration.between(startTime, endTime).toMillis();
+        return ((int)millis + 49) / 50; //Get ticks instead of ms
     }
 
     public static class PlayerData {

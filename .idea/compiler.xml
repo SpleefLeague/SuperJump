@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Annotation profile for Parkour" enabled="true">
+        <sourceOutputDir name="target/generated-sources/apt" />
+        <sourceTestOutputDir name="target/generated-sources/apt-test" />
+        <outputRelativeToContentRoot value="true" />
+        <processor name="com.spleefleague.annotations.processor.Processor" />
+        <module name="Parkour (1)" />
+      </profile>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="Parkour" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="Parkour" target="1.9" />
+      <module name="Parkour (1)" target="1.8" />
+      <module name="Parkour (2)" target="1.9" />
+    </bytecodeTargetLevel>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="Parkour (1)" options="-proc:none" />
+    </option>
+  </component>
+</project>

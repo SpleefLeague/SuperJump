@@ -12,6 +12,9 @@ import com.spleefleague.parkour.game.ParkourBattle;
 import com.spleefleague.parkour.game.ParkourMode;
 import com.spleefleague.parkour.player.ParkourPlayer;
 import java.util.List;
+
+import com.spleefleague.virtualworld.VirtualWorld;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.craftbukkit.libs.org.apache.commons.lang3.time.DurationFormatUtils;
 
@@ -39,14 +42,13 @@ public class ClassicParkourBattle extends ParkourBattle<ClassicParkourArena>{
         p2.setRating(mode, p2.getRating(mode) - ratingChange);
         playerList += ChatColor.RED + p1.getName() + ChatColor.WHITE + " (" + p1.getRating(mode) + ")" + ChatColor.GREEN + " gets " + ChatColor.GRAY + ratingChange + ChatColor.GREEN + (ratingChange == 1 ? " point. " : " points. ");
         playerList += ChatColor.RED + p2.getName() + ChatColor.WHITE + " (" + p2.getRating(mode) + ")" + ChatColor.GREEN + " gets " + ChatColor.GRAY + -ratingChange + ChatColor.GREEN + (ratingChange == 1 ? " point. " : " points. ");
-        String s = DurationFormatUtils.formatDuration(ticksPassed * 50, "HH:mm:ss", true);
+        String s = DurationFormatUtils.formatDuration(getDuration() * 50, "HH:mm:ss", true) + "." + (getDuration() % 20) * 5;
         ChatManager.sendMessage(mode.getChatPrefix(),
                 ChatColor.GREEN + "Game in arena "
                 + ChatColor.WHITE + getArena().getName()
                         + ChatColor.GREEN + " is over in " + s + ". " + playerList, Parkour.getInstance().getEndMessageChannel());
-        this.getPlayers().forEach((p) -> {
-            Parkour.getInstance().getPlayerManager().save(p);
-        });
+
+        Bukkit.getScheduler().runTaskAsynchronously(Parkour.getInstance(), () -> this.getPlayers().forEach((p) -> Parkour.getInstance().getPlayerManager().save(p)));
     }
 
     @Override

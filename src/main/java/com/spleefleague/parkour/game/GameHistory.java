@@ -5,12 +5,11 @@
  */
 package com.spleefleague.parkour.game;
 
+import com.spleefleague.entitybuilder.*;
 import com.spleefleague.gameapi.events.BattleEndEvent.EndReason;
-import com.spleefleague.entitybuilder.DBEntity;
-import com.spleefleague.entitybuilder.DBSave;
-import com.spleefleague.entitybuilder.DBSaveable;
-import com.spleefleague.entitybuilder.TypeConverter;
 import com.spleefleague.parkour.player.ParkourPlayer;
+import org.bson.Document;
+
 import java.util.Collection;
 import java.util.Date;
 import java.util.UUID;
@@ -26,7 +25,7 @@ public class GameHistory extends DBEntity implements DBSaveable {
     @DBSave(fieldName = "date")
     private final Date startDate;
     @DBSave(fieldName = "duration")
-    private final int duration; //In ticks
+    private final int duration; //In ms
     @DBSave(fieldName = "endReason")
     private final EndReason endReason;
     @DBSave(fieldName = "superjumpMode")
@@ -43,7 +42,7 @@ public class GameHistory extends DBEntity implements DBSaveable {
             players[i++] = new PlayerData(sjp.getUniqueId(), battle.getData(sjp).getFalls(), sjp == winner, !activePlayers.contains(sjp));
         }
         this.duration = battle.getDuration();
-        startDate = new Date(System.currentTimeMillis() - this.duration * 50);
+        this.startDate = new Date(System.currentTimeMillis() - this.duration * 50);
         this.arena = battle.getArena().getName();
         this.superjumpMode = battle.getArena().getParkourMode();
     }

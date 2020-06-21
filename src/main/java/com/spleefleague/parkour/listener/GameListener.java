@@ -50,12 +50,10 @@ public class GameListener implements Listener {
         ParkourPlayer sjp = Parkour.getInstance().getPlayerManager().get(event.getPlayer());
         if (sjp != null) {
             if (sjp.isFrozen()) {
-                Location from = event.getFrom();
-                Location to = event.getTo();
-                from.setY(to.getY());
-                from.setYaw(to.getYaw());
-                from.setPitch(to.getPitch());
-                event.setTo(from);
+                Location spawn = sjp.getCurrentBattle().getData(sjp).getSpawn();
+                if (spawn.distanceSquared(sjp.getLocation()) > 2) {
+                    sjp.teleport(spawn);
+                }
             } else if (!sjp.isIngame()) {
                 SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(event.getPlayer());
                 if (slp != null && !(slp.getRank().hasPermission(Rank.MODERATOR) || slp.getRank() == Rank.ORGANIZER)) {

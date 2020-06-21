@@ -71,7 +71,7 @@ public class parkour extends BasicCommand {
         Parkour.getInstance().getClassicBattleManager().queue(sjp);
         success(target, "You have been added to the queue");
     }
-    
+
     @Endpoint(target = {COMMAND_BLOCK})
     public void forceQueueArena(CommandSender sender, @LiteralArg("queue") String l, @PlayerArg Player target, @StringArg String arenaName) {
         if (checkQueuesClosed(sender)) {
@@ -96,6 +96,32 @@ public class parkour extends BasicCommand {
         }
         Parkour.getInstance().getClassicBattleManager().queue(sjp, arena);
         success(target, "You have been added to the queue for: " + ChatColor.GREEN + arena.getName());
+    }
+
+    @Endpoint(target = {COMMAND_BLOCK})
+    public void forceQueueSingleArena(CommandSender sender, @LiteralArg("queue") String l, @LiteralArg(value = "single", aliases = {"s"}) String s, @PlayerArg Player target, @StringArg String arenaName) {
+        if (checkIngame(sender)) {
+            return;
+        }
+        ClassicParkourArena arena = ClassicParkourArena.byName(arenaName);
+        if (arena == null) {
+            error(sender, "This arena does not exist.");
+            return;
+        }
+        if (arena.isOccupied()) {
+            error(sender, "This arena is currently occupied.");
+            return;
+        }
+        if (arena.isPaused()) {
+            error(sender, "This arena is currently paused.");
+            return;
+        }
+        ParkourPlayer sjp = Parkour.getInstance().getPlayerManager().get(target);
+        if (!arena.isAvailable(sjp)) {
+            error(sender, "You have not visited this arena yet!");
+            return;
+        }
+        arena.startSingleplayerBattle(sjp, StartReason.QUEUE);
     }
 
     @Endpoint(target = {PLAYER})
@@ -143,6 +169,32 @@ public class parkour extends BasicCommand {
                 .collect(Collectors.toList());
         arena.startBattle(sjplayers, StartReason.FORCE);
         success(sender, "You started a battle on the arena " + arena.getName());
+    }
+
+    @Endpoint(target = {PLAYER})
+    public void single(SLPlayer sender, @LiteralArg(value = "single", aliases = {"s"}) String l, @StringArg String arenaName) {
+        if (checkIngame(sender)) {
+            return;
+        }
+        ClassicParkourArena arena = ClassicParkourArena.byName(arenaName);
+        if (arena == null) {
+            error(sender, "This arena does not exist.");
+            return;
+        }
+        if (arena.isOccupied()) {
+            error(sender, "This arena is currently occupied.");
+            return;
+        }
+        if (arena.isPaused()) {
+            error(sender, "This arena is currently paused.");
+            return;
+        }
+        ParkourPlayer sjp = Parkour.getInstance().getPlayerManager().get(sender);
+        if (!arena.isAvailable(sjp)) {
+            error(sender, "You have not visited this arena yet!");
+            return;
+        }
+        arena.startSingleplayerBattle(sjp, StartReason.QUEUE);
     }
 
     @Endpoint(target = {PLAYER})

@@ -10,10 +10,8 @@ import com.spleefleague.gameapi.events.BattleStartEvent;
 import com.spleefleague.parkour.Parkour;
 import com.spleefleague.parkour.game.Arena;
 import com.spleefleague.parkour.player.ParkourPlayer;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bson.Document;
@@ -33,6 +31,19 @@ public class ClassicParkourArena extends Arena<ClassicParkourBattle> {
         }
         return null;
     }
+
+    public SinglePlayerParkourBattle startSingleplayerBattle(ParkourPlayer player, BattleStartEvent.StartReason reason) {
+        List<ParkourPlayer> players = new ArrayList<>();
+        for(int i = 0; i < getRequiredPlayers(); i++) {
+            players.add(player);
+        }
+        if (!isOccupied()) { //Shouldn't be necessary
+            SinglePlayerParkourBattle battle = new SinglePlayerParkourBattle(this, players);
+            battle.start(reason);
+            return battle;
+        }
+        return null;
+    }
     
     private static final Map<String, ClassicParkourArena> arenas = new HashMap<>();
     
@@ -43,8 +54,10 @@ public class ClassicParkourArena extends Arena<ClassicParkourBattle> {
     public static ClassicParkourArena byName(String arena) {
         return arenas.get(arena.toLowerCase());
     }
-    
+
+
     public static void loadArena(Document document) {
+
         Class<? extends ClassicParkourArena> c = ClassicParkourArena.class;
         if (document.containsKey("arenaClass")) {
             try {

@@ -19,6 +19,8 @@ import com.spleefleague.parkour.Parkour;
 import static com.spleefleague.parkour.game.ParkourMode.CLASSIC;
 import com.spleefleague.parkour.game.classic.ClassicParkourArena;
 import com.spleefleague.parkour.player.ParkourPlayer;
+
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -234,6 +236,7 @@ public abstract class Arena<B extends ParkourBattle> extends DBEntity implements
         Class srcClass = src.getClass();
         while(true) {
             for(java.lang.reflect.Field f : srcClass.getDeclaredFields()) {
+                if((f.getModifiers() & Modifier.STATIC) != 0) continue;
                 try {
                     f.setAccessible(true);
                     f.set(target, f.get(src));
