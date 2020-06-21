@@ -1,4 +1,4 @@
 /SuperJump/target/
 target/
-/SuperJump.iml
-/.idea
+*.iml
+.idea
