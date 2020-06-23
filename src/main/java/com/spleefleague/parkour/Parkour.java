@@ -168,6 +168,10 @@ public class Parkour extends GamePlugin implements PlayerHandling {
         return getClassicBattleManager().isIngame(sjp);
     }
 
+    public RecordManager getRecordManager() {
+        return recordManager;
+    }
+
     @Override
     public void cancelAll() {
         new ArrayList<>(battleManagerClassic.getAll()).forEach(ParkourBattle::cancel);

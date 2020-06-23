@@ -1,23 +1,22 @@
 package com.spleefleague.parkour.signs;
 
 import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCollection;
 import com.spleefleague.core.utils.DatabaseConnection;
 import com.spleefleague.entitybuilder.DBLoad;
 import com.spleefleague.entitybuilder.EntityBuilder;
 import com.spleefleague.parkour.Parkour;
-import com.spleefleague.parkour.game.ParkourMode;
+import com.spleefleague.parkour.records.RecordManager;
 import org.bson.Document;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Sign;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.text.SimpleDateFormat;
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GameRecordSign extends GameSign {
 
@@ -59,30 +58,25 @@ public class GameRecordSign extends GameSign {
     }
 
     protected void refresh() {
-        Sign sign = getSign();
-        if(sign == null) return;
-        Bukkit.getScheduler().runTaskAsynchronously(Parkour.getInstance(), () -> {
-            MongoCollection<Document> collection = Parkour.getInstance().getPluginDB().getCollection("Records");
-            if(collection == null) return;
-            Document doc = collection.aggregate(Arrays.asList(
-                    new Document("$match", new Document("_id", arena)),
-                    new Document("$unwind", "$records"),
-                    new Document("$skip", rank - 1))
-            ).first();
-            if(doc == null) return;
-            Document recordDoc = doc.get("records", Document.class);
-            String username = DatabaseConnection.getUsername(UUID.fromString(recordDoc.getString("player")));
-            String date = new SimpleDateFormat("YYYY-MM-dd").format(recordDoc.getDate("date"));
-            String mode = ParkourMode.valueOf(recordDoc.getString("superjumpMode")).getName();
-            Duration duration = Duration.ofMillis(recordDoc.getInteger("duration") * 50);
-            String time = String.format("%02d:%02d.%02d", (duration.getSeconds() % 3600) / 60, (duration.getSeconds() % 60), (duration.toMillis() % 1000) / 10);
-            Bukkit.getScheduler().runTask(Parkour.getInstance(), () -> {
-                for(int i = 0; i < 4; i++) {
-                    String line = getLine(i, username, time, mode, date);
-                    if(line == null) line = sign.getLine(i);
-                    sign.setLine(i, line);
-                }
-                sign.update();
+        if (getSign() == null) return;
+        RecordManager rm = Parkour.getInstance().getRecordManager();
+        rm.getRecord(this.arena, this.rank - 1).ifPresent(record -> {
+            Bukkit.getScheduler().runTaskAsynchronously(Parkour.getInstance(), () -> {
+                String username = DatabaseConnection.getUsername(record.getPlayer());
+                String date = new SimpleDateFormat("YYYY-MM-dd").format(record.getDate());
+                Duration duration = Duration.ofMillis(record.getDuration() * 50);
+                String time = String.format("%02d:%02d.%02d", (duration.getSeconds() % 3600) / 60, (duration.getSeconds() % 60), (duration.toMillis() % 1000) / 10);
+                Bukkit.getScheduler().runTask(Parkour.getInstance(), () -> {
+                    Sign sign = getSign();
+                    for (int i = 0; i < 4; i++) {
+                        String line = getLine(i, username, time, record.getParkourMode().name(), date);
+                        if (line == null) {
+                            line = sign.getLine(i);
+                        }
+                        sign.setLine(i, line);
+                    }
+                    sign.update();
+                });
             });
         });
     }
@@ -115,7 +109,7 @@ public class GameRecordSign extends GameSign {
         Parkour.getInstance().log("Loaded " + gameSigns.size() + " game record signs.");
         refreshTask = Bukkit.getScheduler().runTaskTimer(Parkour.getInstance(), () -> {
             gameSigns.forEach(GameRecordSign::refresh);
-        },0,20*30);
+        },0,20*5);
         return gameSigns;
     }
 }

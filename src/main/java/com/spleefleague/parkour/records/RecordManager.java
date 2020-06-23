@@ -20,11 +20,11 @@ public class RecordManager {
     public RecordManager() {
         recordCache = new ConcurrentHashMap<>();
         cacheSize = new ConcurrentHashMap<>();
-        Bukkit.getScheduler().runTaskTimerAsynchronously(Parkour.getInstance(), this::refresh, 0, 20*10);
+        Bukkit.getScheduler().runTaskTimerAsynchronously(Parkour.getInstance(), this::refresh, 0, 20*60);
     }
 
-    private int getCacheSize(String arena) {
-        return cacheSize.getOrDefault(arena, 0);
+    public int getCacheSize(String arena) {
+        return cacheSize.getOrDefault(arena, -1);
     }
 
     public void submitRecord(String arena, Record record) {
@@ -51,7 +51,7 @@ public class RecordManager {
     }
 
     public void refreshRecords(String arena, List<Record> records) {
-        int cacheSize = getCacheSize(arena);
+        int cacheSize = getCacheSize(arena) + 1;
         if(cacheSize == 0) return;
         recordCache.put(arena, records.subList(0, Math.min(cacheSize, records.size())));
     }

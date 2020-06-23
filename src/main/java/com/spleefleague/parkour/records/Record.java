@@ -19,6 +19,16 @@ public class Record implements DBLoadable {
     @DBLoad(fieldName = "superjumpMode")
     private ParkourMode parkourMode;
 
+    public Record() {
+    }
+
+    public Record(UUID player, int duration, Date date, ParkourMode parkourMode) {
+        this.date = date;
+        this.duration = duration;
+        this.player = player;
+        this.parkourMode = parkourMode;
+    }
+
     public Date getDate() {
         return date;
     }

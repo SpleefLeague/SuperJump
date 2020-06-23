@@ -85,7 +85,7 @@ public class GameListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH)
     public void onInteract(PlayerInteractEvent event) {
         ParkourPlayer sjp = Parkour.getInstance().getPlayerManager().get(event.getPlayer());
-        if (sjp.isIngame()) {
+        if (sjp == null || sjp.isIngame()) {
             event.setCancelled(true);
         }
     }
@@ -93,7 +93,7 @@ public class GameListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH)
     public void onBlockBreak(BlockBreakEvent event) {
         ParkourPlayer sjp = Parkour.getInstance().getPlayerManager().get(event.getPlayer());
-        if (sjp.isIngame()) {
+        if (sjp == null || sjp.isIngame()) {
             event.setCancelled(true);
         }
     }
@@ -101,7 +101,7 @@ public class GameListener implements Listener {
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
         ParkourPlayer sjp = Parkour.getInstance().getPlayerManager().get(event.getPlayer());
-        if (sjp.isIngame()) {
+        if (sjp == null || sjp.isIngame()) {
             event.setCancelled(true);
         }
     }

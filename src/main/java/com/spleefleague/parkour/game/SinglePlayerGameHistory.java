@@ -16,6 +16,7 @@ import org.bson.types.ObjectId;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -30,6 +31,8 @@ public class SinglePlayerGameHistory extends GameHistory {
     private Integer pingStart;
     @DBSave(fieldName = "pingEnd")
     private Integer pingEnd;
+    @DBSave(fieldName = "pingLog")
+    private List<Integer> pingLog;
     @DBSave(fieldName = "recordingId")
     private ObjectId recordingId;
 
@@ -37,6 +40,7 @@ public class SinglePlayerGameHistory extends GameHistory {
         super(battle, winner, endReason);
         this.pingStart = battle.getPingStart();
         this.pingEnd = battle.getPingEnd();
+        this.pingLog = battle.getPingLog();
         this.adjustedDuration = battle.getAdjustedDuration();
     }
 
