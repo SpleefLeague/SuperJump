@@ -4,8 +4,10 @@ import com.spleefleague.entitybuilder.DBLoad;
 import com.spleefleague.entitybuilder.DBLoadable;
 import com.spleefleague.entitybuilder.TypeConverter;
 import com.spleefleague.parkour.game.ParkourMode;
+import org.bson.types.ObjectId;
 
 import java.util.Date;
+import java.util.Optional;
 import java.util.UUID;
 
 public class Record implements DBLoadable {
@@ -18,6 +20,9 @@ public class Record implements DBLoadable {
     private UUID player;
     @DBLoad(fieldName = "superjumpMode")
     private ParkourMode parkourMode;
+    @DBLoad(fieldName = "recordingId")
+    private ObjectId recordingId;
+
 
     public Record() {
     }
@@ -43,5 +48,9 @@ public class Record implements DBLoadable {
 
     public ParkourMode getParkourMode() {
         return parkourMode;
+    }
+
+    public Optional<ObjectId> getRecordingId() {
+        return Optional.ofNullable(recordingId);
     }
 }

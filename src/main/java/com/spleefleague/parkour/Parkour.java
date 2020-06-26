@@ -13,6 +13,7 @@ import com.spleefleague.core.chat.ChatManager;
 import com.spleefleague.core.chat.Theme;
 import com.spleefleague.core.menus.SLMenu;
 import com.spleefleague.core.player.DBPlayerManager;
+import com.spleefleague.core.player.PlayerOptions;
 import com.spleefleague.core.plugin.PlayerHandling;
 import com.spleefleague.core.utils.inventorymenu.InventoryMenuTemplateBuilder;
 import com.spleefleague.parkour.game.Arena;
@@ -40,6 +41,8 @@ import com.spleefleague.parkour.game.ParkourBattle;
 import com.spleefleague.parkour.game.ParkourMode;
 import com.spleefleague.parkour.game.classic.ClassicParkourArena;
 import com.spleefleague.parkour.game.classic.ClassicParkourBattle;
+
+import java.util.Arrays;
 import java.util.StringJoiner;
 
 /**
@@ -270,6 +273,33 @@ public class Parkour extends GamePlugin implements PlayerHandling {
                     })
             );
         });
+        menu.component(26, item()
+                .displayName("Parkour Record Ghost")
+                .displayIcon(Material.CLOCK)
+                .description(slp -> {
+                    String current = "";
+                    switch(slp.getOptions().getParkourRecordGhostType()) {
+                        case NONE: current = ChatColor.RED + "No ghost"; break;
+                        case BEST: current = ChatColor.GREEN + "Best time overall"; break;
+                        case OWN: current = ChatColor.RED + "Your best time"; break;
+                    }
+                    return Arrays.asList(current, ChatColor.DARK_GRAY + "Click to change");
+                })
+                .onClick(event -> {
+                    PlayerOptions opt = SpleefLeague.getInstance().getPlayerManager().get(event.getPlayer()).getOptions();
+                    PlayerOptions.ParkourRecordGhostType currentType = opt.getParkourRecordGhostType();
+                    if(currentType == null || currentType == PlayerOptions.ParkourRecordGhostType.NONE) {
+                        opt.setParkourRecordGhostType(PlayerOptions.ParkourRecordGhostType.BEST);
+                    }
+                    else if(currentType == PlayerOptions.ParkourRecordGhostType.BEST) {
+                        opt.setParkourRecordGhostType(PlayerOptions.ParkourRecordGhostType.NONE);
+                    }
+                    else if(currentType == PlayerOptions.ParkourRecordGhostType.OWN) {
+                        opt.setParkourRecordGhostType(PlayerOptions.ParkourRecordGhostType.NONE);
+                    }
+                    event.getItem().getParent().update();
+                })
+        );
     }
 
     @Override

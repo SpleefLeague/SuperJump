@@ -60,7 +60,7 @@ public class GameRecordSign extends GameSign {
     protected void refresh() {
         if (getSign() == null) return;
         RecordManager rm = Parkour.getInstance().getRecordManager();
-        rm.getRecord(this.arena, this.rank - 1).ifPresent(record -> {
+        rm.getArenaRecord(this.arena, this.rank - 1).ifPresent(record -> {
             Bukkit.getScheduler().runTaskAsynchronously(Parkour.getInstance(), () -> {
                 String username = DatabaseConnection.getUsername(record.getPlayer());
                 String date = new SimpleDateFormat("YYYY-MM-dd").format(record.getDate());

@@ -2,13 +2,19 @@ package com.spleefleague.parkour.game.classic;
 
 import com.spleefleague.core.SpleefLeague;
 import com.spleefleague.core.chat.ChatManager;
+import com.spleefleague.core.player.PlayerOptions;
+import com.spleefleague.core.player.SLPlayer;
 import com.spleefleague.core.utils.recording.Recording;
+import com.spleefleague.core.utils.recording.RecordingManager;
+import com.spleefleague.core.utils.recording.Replay;
 import com.spleefleague.entitybuilder.EntityBuilder;
 import com.spleefleague.gameapi.events.BattleEndEvent;
 import com.spleefleague.parkour.Parkour;
-import com.spleefleague.parkour.game.*;
+import com.spleefleague.parkour.game.GameHistory;
+import com.spleefleague.parkour.game.SinglePlayerGameHistory;
 import com.spleefleague.parkour.player.ParkourPlayer;
 import com.spleefleague.parkour.records.Record;
+import com.spleefleague.parkour.records.RecordManager;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.bukkit.Bukkit;
@@ -22,7 +28,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 
 public class SinglePlayerParkourBattle extends ClassicParkourBattle {
@@ -33,11 +39,45 @@ public class SinglePlayerParkourBattle extends ClassicParkourBattle {
     private Recording recording;
     private List<Integer> pingLog;
     private BukkitTask pingLoggingTask;
+    private Replay recordReplay;
+    private CompletableFuture<Recording> recordingFuture;
+    private int replayOffset = 0;
 
     protected SinglePlayerParkourBattle(ClassicParkourArena arena, List<ParkourPlayer> players) {
         super(arena, players);
         player = players.get(0);
         pingLog = new ArrayList<>();
+        recordingFuture = initRecording();
+    }
+
+    private CompletableFuture<Recording> initRecording() {
+        return initRecord()
+                .flatMap(record -> record.getRecordingId())
+                .map(recordingId -> {
+                    CompletableFuture<Recording> recordingFuture = new CompletableFuture<>();
+                    Bukkit.getScheduler().runTaskAsynchronously(Parkour.getInstance(), () -> {
+                        Recording recording = SpleefLeague.getInstance().getRecordingManager().loadRecording(recordingId);
+                        recordingFuture.complete(recording);
+                    });
+                    return recordingFuture;
+                })
+                .orElse(CompletableFuture.completedFuture(null));
+    }
+
+    private Optional<Record> initRecord() {
+        SLPlayer slp = SpleefLeague.getInstance().getPlayerManager().get(player);
+        this.replayOffset = slp.getOptions().getParkourRecordGhostOffset();
+        PlayerOptions.ParkourRecordGhostType ghostType = slp.getOptions().getParkourRecordGhostType();
+        if(ghostType == null) {
+            ghostType = PlayerOptions.ParkourRecordGhostType.NONE;
+        }
+        RecordManager recordManager = Parkour.getInstance().getRecordManager();
+        switch (ghostType) {
+            case NONE: return Optional.empty();
+            case OWN: return recordManager.getPlayerRecord(slp.getUniqueId(), this.getArena().getName());
+            case BEST: return recordManager.getArenaRecord(this.getArena().getName(), 0);
+        }
+        return Optional.empty();
     }
 
     public int getPingStart() {
@@ -75,6 +115,9 @@ public class SinglePlayerParkourBattle extends ClassicParkourBattle {
             Parkour.getInstance().getRecordManager().submitRecord(this.arena.getName(), record);
             recording = SpleefLeague.getInstance().getRecordingManager().stopRecording(player.getUniqueId());
         }
+        if(recordReplay != null) {
+            recordReplay.cancel();
+        }
         pingLoggingTask.cancel();
         pingLog.add(player.getPing());
         this.pingEnd = player.getPing();
@@ -101,6 +144,7 @@ public class SinglePlayerParkourBattle extends ClassicParkourBattle {
     }
 
     public Integer getAdjustedDuration() {
+        if(startTime == null || endTime == null) return 0;
         int minPing = pingLog.stream().mapToInt(i -> i).min().orElse(0);
         if(minPing == 0) return 0;
         Instant endTime = this.endTime == null ? Instant.now() : this.endTime;
@@ -112,6 +156,15 @@ public class SinglePlayerParkourBattle extends ClassicParkourBattle {
     protected void startClock() {
         super.startClock();
         pingLog.clear();
+        if(recordReplay != null) {
+            recordReplay.cancel();
+        }
+        Recording recordingToPlay = recordingFuture.getNow(null);
+        if(recordingToPlay != null) {
+            RecordingManager recordingManager = SpleefLeague.getInstance().getRecordingManager();
+            recordReplay = recordingManager.playRecording(recordingToPlay, player, true);
+            recordReplay.adjustTicks(replayOffset);
+        }
         if(pingLoggingTask == null) {
             pingLoggingTask = Bukkit.getScheduler().runTaskTimer(Parkour.getInstance(), () -> pingLog.add(player.getPing()), 0, 20);
         }
